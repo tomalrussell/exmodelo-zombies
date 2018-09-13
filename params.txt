@@ -1,0 +1,6 @@
+TimeStep = 10s
+Total Simu = 6h
+
+Tps de panique = 25 (4 min 10)
+
+
