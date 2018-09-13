@@ -1,0 +1,57 @@
+
+;;
+; main
+
+
+
+
+to go
+  
+  update-display
+  
+  update-patches
+  
+  action-militaries  
+
+  action-zombies
+
+  action-humans
+
+  update-agents
+
+  tick
+end
+
+
+to update-agents
+  
+  ask turtles with [paralysis-time > 0] [
+    set paralysis-time paralysis-time - 1
+  ]
+
+  if(ticks mod 100 = 0) [
+    set humans-history lput (count humans) humans-history
+    set zombies-history lput (count zombies) zombies-history
+  ]
+  
+end
+
+
+;;
+; doesn't quite always uninfect, if num-zombies was increased
+;
+; FIXME this procedure is not used
+to uninfect
+  ;; Reduce the number of zombies to num-zombies.
+  ask zombies with [who >= num-zombies] [
+    set breed humans
+    set color magenta
+  ]
+  ask humans with [who < num-zombies] [
+    set breed zombies
+    set color green
+  ]
+end
+
+
+

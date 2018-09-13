@@ -1,3 +1,21 @@
+
+__includes [
+
+  "setup.nls"
+
+  "main.nls"
+
+  ; agents
+  "patch.nls"
+  "military.nls"
+  "human.nls"
+  "zombie.nls"
+
+  "display.nls"
+
+]
+
+
 globals [turn-probability humans-history zombies-history]
 
 ;; diggers are used only for setup
@@ -6,308 +24,23 @@ breed [ humans human ]
 breed [ zombies zombie ]
 breed [ military militian ]
 
-humans-own [panic-time]
-zombies-own [chasing-time lifespan ]
-patches-own [fade-time]
-turtles-own [paralysis-time kills]
+humans-own [
+  panic-time
+]
 
-to go
-  set-current-plot "Population vs. time"
-  set-current-plot-pen _clarify-duplicate-plot-pen-name "Zombies"
-  plot count zombies
+zombies-own [
+  chasing-time
+  lifespan
+]
 
-  set-current-plot-pen _clarify-duplicate-plot-pen-name "Military"
-  plot count military
+patches-own [
+  fade-time
+]
 
-  set-current-plot-pen _clarify-duplicate-plot-pen-name "Humans"
-  plot count humans
-
-  set-current-plot "Zombie lifespan"
-  plot ifelse-value any? zombies [ mean [lifespan] of zombies / zombie-lifespan ] [0]
-
-  ask patches with [fade-time > 0] [
-    set fade-time fade-time - 1
-    if-else fade-time <= 0 [ set pcolor black ] [ set pcolor scale-color red fade-time 0 120 ]
-  ]
-
-  ask military with [paralysis-time <= 0] [
-    if (who - ticks) mod 5 = 0 [
-      let beings-seen turtles in-cone vision-distance vision-angle with [self != myself]
-      ;; run towards zombies
-      ifelse any? beings-seen with [breed = zombies] [
-        let target one-of beings-seen with [breed = zombies]
-        face target
-        step 1
-      ] [
-        ;; or failing that, towards the most panic
-        if any? beings-seen with [breed = humans and panic-time > 0] [
-          let target max-one-of beings-seen with [breed = humans and panic-time > 0] [panic-time]
-          face target
-          step 1
-        ]
-      ]
-
-      if nukes-authorized? [
-        let nuke-zone-seen turtles in-cone nuke-distance vision-angle with [breed = zombies]
-        if count nuke-zone-seen > nuke-minimum-kill [
-          detonate-nuke
-        ]
-      ]
-    ]
-
-    step-turnily 1
-
-    set kills kills + count zombies-here
-
-    ask zombies-here [ die ]
-
-    ;; Military will recruit civilians back up to their starting population
-    ;; aka "Hey you, here's a gun and a pocket nuke. Have fun."
-    if random-float 100.0 < recruit-%age and  count military < num-military and any? humans-here [
-      ask one-of humans-here [
-        set breed military
-        set color red
-      ]
-    ]
-  ]
-
-  ask zombies with [paralysis-time <= 0] [
-    ifelse chasing-time > 0 [
-      set chasing-time chasing-time - 1
-    ] [
-      if random 4 = 0 [set heading random 360]
-    ]
-
-    if (who - ticks) mod 5 = 0 [
-      let beings-seen turtles in-cone (vision-distance * zombie-acuteness) vision-angle with [self != myself]
-      if any? beings-seen [
-        let target one-of beings-seen
-        face target
-        set chasing-time 20
-      ]
-    ]
-
-    ;; Zombies can break down walls if they're following something
-    corrode-step 0.2 (random-float 100 < wall-break-%age and chasing-time > 0)
-
-    if zombies-age? [
-      set lifespan lifespan - 1
-      if lifespan <= 0 [ die ]
-    ]
-
-    if any? turtles-here with [breed != zombies]
-    [
-      set kills kills + count turtles-here with [breed != zombies]
-      ask turtles-here with [breed != zombies] [
-        set paralysis-time nom-time
-        set breed zombies
-        set color green
-        set shape "face neutral"
-        set lifespan zombie-lifespan
-      ]
-      set lifespan lifespan + zombie-lifespan * nom-boost
-      set paralysis-time nom-time
-    ]
-  ]
-
-  ask humans with [paralysis-time <= 0] [
-    step-turnily 1
-    if panic-time > 0 [
-      set shape "face happy"
-       set panic-time panic-time - 1
-       if panic-time = 0 [set color white - 4]
-       step 1
-    ]
-
-    if (who - ticks) mod 5 = 0 [
-      let beings-seen turtles in-cone vision-distance vision-angle with [self != myself and (breed = zombies or (breed = humans and panic-time > 0))]
-      if any? beings-seen [
-        lt 157.5 + random-float 45
-        set shape "face sad"
-        set color magenta + 3
-
-        ;; panicked humans are infectious
-        if any? beings-seen with [breed = humans and panic-time > 0] [
-          set panic-time (max [panic-time] of beings-seen with [breed = humans])
-        ]
-        ;; oh noes teh zombie
-        if any? beings-seen with [breed = zombies] [ set panic-time panic-duration ]
-      ]
-
-    ]
-
-  ]
-
-  ask turtles with [paralysis-time > 0] [
-    set paralysis-time paralysis-time - 1
-  ]
-
-  if(ticks mod 100 = 0) [
-    set humans-history lput (count humans) humans-history
-    set zombies-history lput (count zombies) zombies-history
-  ]
-
-  tick
-end
-
-to detonate-nuke
-  ask patches in-radius nuke-radius [
-    ifelse random-float 1 > nuke-damage and ([pcolor] of one-of patches in-radius 3) != black [ set pcolor gray - 3 ] [ set fade-time 60 ]
-  ]
-  ask turtles in-radius nuke-radius [ die ]
-end
-
-;; Step without running into things.  dist, the distance to step, should not
-;; exceed 1, else the turtle might jump through a wall.
-to step [dist] ;; kludge for default parameter
-  corrode-step dist false
-end
-
-to step-turnily [dist]
-  corrode-step dist false
-  if random-float 1 < turn-probability [ lt random-normal 0 60 ]
-end
-
-to corrode-step [dist corrode]
-  if [pcolor] of patch-ahead dist != black [
-    ;; Turn so that we're facing parallel to the wall, ie. find the black neighbouring
-    ;; patch closest to where we would have gone (at distance 1), and turn to face it.
-    if-else corrode [
-      ask patch-ahead dist [ set pcolor black ]
-    ][
-      let x dx + xcor
-      let y dy + ycor
-      if not any? neighbors with [pcolor = black] [die]
-      face min-one-of neighbors with [pcolor = black] [distancexy x y]
-    ]
-  ]
-  fd dist
-end
-
-;; doesn't quite always uninfect, if num-zombies was increased
-to uninfect
-  ;; Reduce the number of zombies to num-zombies.
-  ask zombies with [who >= num-zombies] [
-    set breed humans
-    set color magenta
-  ]
-  ask humans with [who < num-zombies] [
-    set breed zombies
-    set color green
-  ]
-end
-
-to setup
-  setup-town
-  setup-beings
-
-  set humans-history []
-  set zombies-history []
-
-  ;; globals
-  set turn-probability 1 / 60.0
-end
-
-to setup-beings
-  ct
-  ;; this stuff is in this function just so it always happens
-  clear-all-plots
-
-  reset-ticks
-
-  ;; Zombies get the earliest who numbers; we use this elsewhere.
-  ;; Make sure the beings are on non-built squares.
-  create-zombies num-zombies [
-    set color green
-    set lifespan zombie-lifespan
-    set shape "face neutral"
-    set size 0.5
-    set pen-size 0.5
-
-  ]
-
-  create-humans num-humans [
-    set color white - 4
-    set shape "face happy"
-    set size 0.5
-    set pen-size 0.5
-  ]
-
-  create-military num-military [
-    set color red
-    set shape "face neutral"
-    set size 0.5
-    set pen-size 0.5
-  ]
-
-  ask turtles [
-    setxy random-float world-width random-float world-height
-    set heading random-float 360
-    set paralysis-time 0
-    set kills 0
-    while [pcolor != black] [fd 1]
-  ]
-end
-
-to setup-town
-  cp
-  ask patches [
-    set pcolor gray - 3
-    set fade-time 0
-  ]
-
-  ;; Make the alleyways.  Instead of the rectangle-placing approach, which proves slow,
-  ;; let a special kind of turtle dig them.
-  ;; The number of diggers here and later will need changing if the screen size is changed.
-  ct
-  create-diggers 154;; 112
-
-  ;; Set the diggers up in pairs facing away from each other, so we don't get dead end passages
-  ask diggers with [who mod 2 = 0] [
-    setxy random-float world-width random-float world-height
-    set heading 90 * random 4
-  ]
-  ask diggers with [who mod 2 = 1] [
-    setxy [xcor] of turtle (who - 1) [ycor] of turtle (who - 1)
-    set heading 180 + [heading] of turtle (who - 1)
-    fd 1
-  ]
-
-  ask diggers [
-    while [pcolor != black] [
-      set pcolor black
-      fd 1
-      if random-float 1 < (1 / 30) [lt 90 + 180 * random 2]
-    ]
-  ]
-
-  ;; Make the squares, by getting a few diggers to dig them out.
-  ct
-  create-diggers num-squares [
-    setxy random-float world-width random-float world-height
-    let xsize 2 + random 60
-    let ysize 2 + random 60
-    foreach n-values xsize [ ?1 -> ?1 ] [ ?1 ->
-      let x ?1
-      foreach n-values ysize [ ??1 -> ??1 ] [ ??1 -> ask patch-at x ??1 [set pcolor black] ]
-    ]
-  ]
-  ;hello
-  ct
-end
-
-to-report _clarify-duplicate-plot-pen-name [ name ]
-  let name-map [["humans" "humans"] ["Humans" "Humans_1"] ["military" "military"] ["Military" "Military_1"] ["zombies" "zombies"] ["Zombies" "Zombies_1"]]
-  let replacement filter [ rename -> first rename = name] name-map
-  let reported-name name
-  if not empty? replacement [
-    set reported-name item 1 item 0 replacement
-  ]
-  report reported-name
-end
-
-
-;; updated 2014
+turtles-own [
+  paralysis-time
+  kills
+]
 @#$#@#$#@
 GRAPHICS-WINDOW
 561
@@ -1376,7 +1109,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.4
+NetLogo 6.0.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

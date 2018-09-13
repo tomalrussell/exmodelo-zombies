@@ -1,0 +1,38 @@
+
+;;
+; display
+
+
+
+
+to update-display
+  set-current-plot "Population vs. time"
+  set-current-plot-pen _clarify-duplicate-plot-pen-name "Zombies"
+  plot count zombies
+
+  set-current-plot-pen _clarify-duplicate-plot-pen-name "Military"
+  plot count military
+
+  set-current-plot-pen _clarify-duplicate-plot-pen-name "Humans"
+  plot count humans
+
+  set-current-plot "Zombie lifespan"
+  plot ifelse-value any? zombies [ mean [lifespan] of zombies / zombie-lifespan ] [0]
+
+end
+
+
+
+
+
+
+to-report _clarify-duplicate-plot-pen-name [ name ]
+  let name-map [["humans" "humans"] ["Humans" "Humans_1"] ["military" "military"] ["Military" "Military_1"] ["zombies" "zombies"] ["Zombies" "Zombies_1"]]
+  let replacement filter [ rename -> first rename = name] name-map
+  let reported-name name
+  if not empty? replacement [
+    set reported-name item 1 item 0 replacement
+  ]
+  report reported-name
+end
+
