@@ -1,4 +1,4 @@
-globals [turn-probability]
+globals [turn-probability humans-history zombies-history]
 
 ;; diggers are used only for setup
 breed [ diggers digger ]
@@ -57,22 +57,9 @@ to go
 
     step-turnily 1
 
-    ;; set kills kills + count zombies-here
+    set kills kills + count zombies-here
 
-    ;;ask zombies-here [ die ]
-
-    ;; new mechanism for killing zombies
-    let alive? true
-    ask zombies-here [
-      ifelse alive? and random-float 100.0 < military-kill-probability [
-        set kills kills + 1
-        die
-      ] [
-        set alive? false
-      ]
-    ]
-
-    if not alive? [ die ]
+    ask zombies-here [ die ]
 
     ;; Military will recruit civilians back up to their starting population
     ;; aka "Hey you, here's a gun and a pocket nuke. Have fun."
@@ -155,6 +142,11 @@ to go
     set paralysis-time paralysis-time - 1
   ]
 
+  if(ticks mod 100 = 0) [
+    set humans-history lput (count humans) humans-history
+    set zombies-history lput (count zombies) zombies-history
+  ]
+
   tick
 end
 
@@ -208,6 +200,9 @@ end
 to setup
   setup-town
   setup-beings
+
+  set humans-history []
+  set zombies-history []
 
   ;; globals
   set turn-probability 1 / 60.0
@@ -484,7 +479,7 @@ num-military
 num-military
 0
 64
-32.0
+10.0
 1
 1
 NIL
@@ -568,7 +563,7 @@ nuke-radius
 nuke-radius
 0
 60
-35.0
+25.0
 1
 1
 NIL
@@ -583,7 +578,7 @@ panic-duration
 panic-duration
 0
 50
-0.0
+25.0
 1
 1
 NIL
@@ -598,7 +593,7 @@ recruit-%age
 recruit-%age
 0
 100
-28.0
+0.0
 0.2
 1
 NIL
@@ -628,7 +623,7 @@ zombie-acuteness
 zombie-acuteness
 0
 4
-2.18
+1.5
 0.01
 1
 NIL
@@ -656,7 +651,7 @@ SWITCH
 194
 zombies-age?
 zombies-age?
-1
+0
 1
 -1000
 
@@ -765,7 +760,7 @@ nom-boost
 nom-boost
 0
 1
-0.11
+0.0
 0.01
 1
 NIL
@@ -936,21 +931,6 @@ TEXTBOX
 11
 65.0
 1
-
-SLIDER
-332
-92
-542
-125
-military-kill-probability
-military-kill-probability
-0
-100
-90.0
-1
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
