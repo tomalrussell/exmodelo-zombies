@@ -1,0 +1,21 @@
+
+;;
+; patch procedures
+
+
+to update-patches
+  ask patches with [fade-time > 0] [
+    set fade-time fade-time - 1
+    if-else fade-time <= 0 [ set pcolor black ] [ set pcolor scale-color red fade-time 0 120 ]
+  ]
+end
+
+
+
+to detonate-nuke
+  ask patches in-radius nuke-radius [
+    ifelse random-float 1 > nuke-damage and ([pcolor] of one-of patches in-radius 3) != black [ set pcolor gray - 3 ] [ set fade-time 60 ]
+  ]
+  ask turtles in-radius nuke-radius [ die ]
+end
+

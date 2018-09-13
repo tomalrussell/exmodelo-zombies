@@ -3,15 +3,21 @@
 ; main
 
 
+to run-model
+  clear-all
+  setup
+  while [ ticks <= 2160 and (count humans > 0) and (count zombies > 0) ] [go]
+end
+
 
 
 to go
-  
+
   update-display
-  
+
   update-patches
-  
-  action-militaries  
+
+  action-militaries
 
   action-zombies
 
@@ -24,7 +30,7 @@ end
 
 
 to update-agents
-  
+
   ask turtles with [paralysis-time > 0] [
     set paralysis-time paralysis-time - 1
   ]
@@ -33,7 +39,7 @@ to update-agents
     set humans-history lput (count humans) humans-history
     set zombies-history lput (count zombies) zombies-history
   ]
-  
+
 end
 
 
@@ -52,6 +58,3 @@ to uninfect
     set color green
   ]
 end
-
-
-

@@ -6,18 +6,30 @@
 
 
 to setup
-  setup-town
-  setup-beings
 
+  setup-world
+
+  setup-agents
+
+  setup-globals
+  
+end
+
+
+to setup-globals
+  
   set humans-history []
   set zombies-history []
 
   ;; globals
   set turn-probability 1 / 60.0
+  
 end
 
-to setup-beings
-  ct
+
+
+to setup-agents
+  clear-turtles
   ;; this stuff is in this function just so it always happens
   clear-all-plots
 
@@ -25,14 +37,7 @@ to setup-beings
 
   ;; Zombies get the earliest who numbers; we use this elsewhere.
   ;; Make sure the beings are on non-built squares.
-  create-zombies num-zombies [
-    set color green
-    set lifespan zombie-lifespan
-    set shape "face neutral"
-    set size 0.5
-    set pen-size 0.5
-
-  ]
+  create-zombies num-zombies [new-zombie]
 
   create-humans num-humans [
     set color white - 4
@@ -50,16 +55,22 @@ to setup-beings
 
   ask turtles [
     setxy random-float world-width random-float world-height
-    set heading random-float 360
+    ; FIXME useless, heading is already random
+    ;set heading random-float 360
     set paralysis-time 0
     set kills 0
+    
+    ; FIXME better locate directly on non built patches
     while [pcolor != black] [fd 1]
   ]
 end
 
-to setup-town
-  cp
+
+
+to setup-world
+  clear-patches
   ask patches [
+    ;; FIXME patch color should not be used as a state variable
     set pcolor gray - 3
     set fade-time 0
   ]
@@ -67,7 +78,9 @@ to setup-town
   ;; Make the alleyways.  Instead of the rectangle-placing approach, which proves slow,
   ;; let a special kind of turtle dig them.
   ;; The number of diggers here and later will need changing if the screen size is changed.
-  ct
+  clear-turtles
+  
+  ;; FIXME this should not be hardcoded
   create-diggers 154;; 112
 
   ;; Set the diggers up in pairs facing away from each other, so we don't get dead end passages
@@ -100,6 +113,6 @@ to setup-town
       foreach n-values ysize [ ??1 -> ??1 ] [ ??1 -> ask patch-at x ??1 [set pcolor black] ]
     ]
   ]
-  ;hello
-  ct
+  
+  clear-turtles
 end

@@ -1,0 +1,37 @@
+
+;;
+; human procedures
+
+
+to action-humans
+
+ask humans with [paralysis-time <= 0] [
+  step-turnily 1
+  if panic-time > 0 [
+    set shape "face happy" ; FIXME this should be in display
+     set panic-time panic-time - 1
+     if panic-time = 0 [set color white - 4]
+     step 1
+  ]
+
+    ; FIXME random selection
+  if (who - ticks) mod 5 = 0 [
+    let beings-seen turtles in-cone vision-distance vision-angle with [self != myself and (breed = zombies or (breed = humans and panic-time > 0))]
+    if any? beings-seen [
+      lt 157.5 + random-float 45 ; FIXME why the fuck these values ?
+      set shape "face sad" ; FIXME this should be in display
+      set color magenta + 3
+
+      ;; panicked humans are infectious
+      if any? beings-seen with [breed = humans and panic-time > 0] [
+        set panic-time (max [panic-time] of beings-seen with [breed = humans])
+      ]
+      ;; oh noes teh zombie
+      if any? beings-seen with [breed = zombies] [ set panic-time panic-duration ]
+    ]
+
+  ]
+
+]
+
+end

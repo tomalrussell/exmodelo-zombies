@@ -1,0 +1,51 @@
+
+;;
+; military procedures
+
+to action-militaries
+
+
+ask military with [paralysis-time <= 0] [
+    
+    ; FIXME should better use a random selection with n-of instead of misusing who
+  if (who - ticks) mod 5 = 0 [
+    let beings-seen turtles in-cone vision-distance vision-angle with [self != myself]
+    ;; run towards zombies
+    ifelse any? beings-seen with [breed = zombies] [
+      let target one-of beings-seen with [breed = zombies]
+      face target
+      step 1
+    ] [
+      ;; or failing that, towards the most panic
+      if any? beings-seen with [breed = humans and panic-time > 0] [
+        let target max-one-of beings-seen with [breed = humans and panic-time > 0] [panic-time]
+        face target
+        step 1
+      ]
+    ]
+
+    if nukes-authorized? [
+      let nuke-zone-seen turtles in-cone nuke-distance vision-angle with [breed = zombies]
+      if count nuke-zone-seen > nuke-minimum-kill [
+        detonate-nuke
+      ]
+    ]
+  ]
+
+  step-turnily 1
+
+  set kills kills + count zombies-here
+
+  ask zombies-here [ die ]
+
+  ;; Military will recruit civilians back up to their starting population
+  ;; aka "Hey you, here's a gun and a pocket nuke. Have fun."
+  if random-float 100.0 < recruit-%age and  count military < num-military and any? humans-here [
+    ask one-of humans-here [
+      set breed military
+      set color red
+    ]
+  ]
+]
+
+end

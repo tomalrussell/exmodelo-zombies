@@ -1,5 +1,6 @@
 TimeStep = 10s
 Total Simu = 6h
+Zombies speed = 0.27
 
 Tps de panique = 25 (4 min 10)
 

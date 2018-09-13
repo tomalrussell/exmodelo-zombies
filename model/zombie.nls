@@ -1,0 +1,61 @@
+
+;;
+; zombie
+
+to action-zombies
+
+
+ask zombies with [paralysis-time <= 0] [
+  ifelse chasing-time > 0 [
+    set chasing-time chasing-time - 1
+  ][
+      ; TODO strange random walk ?
+    if random 4 = 0 [set heading random 360]
+  ]
+
+  if (who - ticks) mod 5 = 0 [
+    let beings-seen turtles in-cone (vision-distance * zombie-acuteness) vision-angle with [self != myself]
+    if any? beings-seen [
+      let target one-of beings-seen
+      face target
+      set chasing-time 20
+    ]
+  ]
+
+    
+  step zombie-speed-factor
+
+  if zombies-age? [
+    set lifespan lifespan - 1
+    if lifespan <= 0 [ die ]
+  ]
+
+  if any? turtles-here with [breed != zombies]
+  [
+    set kills kills + count turtles-here with [breed != zombies]
+      
+      ; TODO would be better with a probability of infection and not a systematic one ?
+    ask turtles-here with [breed != zombies] [
+      set paralysis-time nom-time
+      set breed zombies
+      set color green
+      set shape "face neutral"
+      set lifespan zombie-lifespan
+    ]
+    set lifespan lifespan + zombie-lifespan * nom-boost
+    set paralysis-time nom-time
+  ]
+]
+
+end
+
+
+;;
+; zombie constructor
+to new-zombie
+  set color green
+  set lifespan zombie-lifespan
+  set shape "face neutral"
+  set size 0.5
+  set pen-size 0.5
+end

@@ -1,0 +1,43 @@
+
+;;
+; generic turtle procedures
+
+;; Step without running into things.  dist, the distance to step, should not
+;; exceed 1, else the turtle might jump through a wall.
+to step [dist] ;; kludge for default parameter
+  ;corrode-step dist false
+  if [pcolor] of patch-ahead dist != black [
+     let x dx + xcor
+     let y dy + ycor
+     if not any? neighbors with [pcolor = black] [die] ; FIXME this can not happen
+     face min-one-of neighbors with [pcolor = black] [distancexy x y] 
+  ]
+  fd dist
+end
+
+to step-turnily [dist]
+  ;corrode-step dist false
+  step dist
+  if random-float 1 < turn-probability [ lt random-normal 0 60 ]
+end
+
+
+
+;
+;to corrode-step [dist corrode]
+;  if [pcolor] of patch-ahead dist != black [
+;    ;; Turn so that we're facing parallel to the wall, ie. find the black neighbouring
+;    ;; patch closest to where we would have gone (at distance 1), and turn to face it.
+;    if-else corrode [
+;      ask patch-ahead dist [ set pcolor black ]
+;    ][
+;      let x dx + xcor
+;      let y dy + ycor
+;      if not any? neighbors with [pcolor = black] [die]
+;      face min-one-of neighbors with [pcolor = black] [distancexy x y]
+;    ]
+;  ]
+;  fd dist
+;end
+;
+

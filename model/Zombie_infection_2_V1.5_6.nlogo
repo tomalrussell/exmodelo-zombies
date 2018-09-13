@@ -1,4 +1,3 @@
-
 __includes [
 
   "setup.nls"
@@ -6,10 +5,13 @@ __includes [
   "main.nls"
 
   ; agents
+  "turtle.nls"
   "patch.nls"
   "military.nls"
   "human.nls"
   "zombie.nls"
+
+  "indicators.nls"
 
   "display.nls"
 
@@ -41,6 +43,7 @@ turtles-own [
   paralysis-time
   kills
 ]
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 561
@@ -139,7 +142,7 @@ BUTTON
 200
 43
 NIL
-setup-beings
+setup-agents
 NIL
 1
 T
@@ -212,7 +215,7 @@ num-military
 num-military
 0
 64
-10.0
+0.0
 1
 1
 NIL
@@ -333,21 +336,6 @@ NIL
 HORIZONTAL
 
 SLIDER
-193
-127
-326
-160
-wall-break-%age
-wall-break-%age
-0
-100
-0.0
-0.2
-1
-NIL
-HORIZONTAL
-
-SLIDER
 329
 127
 474
@@ -371,7 +359,7 @@ num-squares
 num-squares
 0
 112
-1.0
+0.0
 1
 1
 NIL
@@ -397,7 +385,7 @@ zombie-lifespan
 zombie-lifespan
 50
 5000
-1501.0
+746.0
 1
 1
 NIL
@@ -412,7 +400,7 @@ nom-time
 nom-time
 0
 200
-10.0
+18.0
 1
 1
 NIL
@@ -493,7 +481,7 @@ nom-boost
 nom-boost
 0
 1
-0.0
+0.2
 0.01
 1
 NIL
@@ -665,6 +653,21 @@ TEXTBOX
 65.0
 1
 
+SLIDER
+330
+91
+533
+124
+zombie-speed-factor
+zombie-speed-factor
+0
+2
+0.27
+0.01
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -680,60 +683,60 @@ Humans are lightish gray and walk five times as fast as zombies, changing direct
 
 Panicked humans are pink and run twice as fast as other humans. If a human sees another panicked human, it starts panicking as well. A panicked human who has seen nothing to panic about for a while will calm down again.
 
-The military are red and move as regular humans do, unless they see a zombie or panicked human, which they will run towards.  A member of the military will kill any zombies on a patch they walk into.  Further options are open to the military if authorised:  
-* they may detonate a pocket nuke if they see sufficiently many zombies, immolating all life (undead included) in the blast radius and damaging buildings.    
+The military are red and move as regular humans do, unless they see a zombie or panicked human, which they will run towards.  A member of the military will kill any zombies on a patch they walk into.  Further options are open to the military if authorised:
+* they may detonate a pocket nuke if they see sufficiently many zombies, immolating all life (undead included) in the blast radius and damaging buildings.
 * they may recruit ordinary humans, up to the originally specified size of the force.
 
 ## HOW TO USE IT
 
-Press SETUP to create and populate a new city.  
-Press SETUP-BEINGS to place the beings while retaining the current city.    
-GO, as usual, runs the model.  STEP runs it for one step.  
+Press SETUP to create and populate a new city.
+Press SETUP-BEINGS to place the beings while retaining the current city.
+GO, as usual, runs the model.  STEP runs it for one step.
 
 Parameters:
 
-*Town parameters* (only takes effect on SETUP)  
+*Town parameters* (only takes effect on SETUP)
 NUM-SQUARES: number of open areas in the city
 
-*Initial populations* (only takes effect on SETUP or SETUP-BEINGS)  
-NUM-HUMANS: number of humans   
-NUM-ZOMBIES: number of zombies  
+*Initial populations* (only takes effect on SETUP or SETUP-BEINGS)
+NUM-HUMANS: number of humans
+NUM-ZOMBIES: number of zombies
 NUM-MILITARY: number of military (changing RECRUIT-%AGE looks at this in real time, though)
 
-*Perception*  
-VISION-DISTANCE: baseline distance which creatures can sense (see/hear/smell/...) other creatures in  
-ZOMBIE-ACUTENESS: multiplier to this distance for zombies  
+*Perception*
+VISION-DISTANCE: baseline distance which creatures can sense (see/hear/smell/...) other creatures in
+ZOMBIE-ACUTENESS: multiplier to this distance for zombies
 VISION-ANGLE: angle of the sensory cone
 
-*Human-specific behaviour*  
-PANIC-DURATION: how long humans panic upon seeing something frightening  
+*Human-specific behaviour*
+PANIC-DURATION: how long humans panic upon seeing something frightening
 BREEDING-%AGE: how likely two humans meeting are to procreate (immediately!)
 
-*Zombie-specific behaviour*  
-WALL-BREAK-%AGE: how likely a zombie sensing something across a wall is to smash through  
-NOM-TIME: how long a zombie takes to consume its prey's brains  
-ZOMBIES-AGE?: if on, zombies become decrepit and eventually cease to exist with the passage of time  
-ZOMBIE-LIFESPAN: if aging is on, how long a new zombie can expect to live, unfed  
+*Zombie-specific behaviour*
+WALL-BREAK-%AGE: how likely a zombie sensing something across a wall is to smash through
+NOM-TIME: how long a zombie takes to consume its prey's brains
+ZOMBIES-AGE?: if on, zombies become decrepit and eventually cease to exist with the passage of time
+ZOMBIE-LIFESPAN: if aging is on, how long a new zombie can expect to live, unfed
 NOM-BOOST: if aging is on, the extension catching a victim provides to a zombie's lifespan, as a fraction of ZOMBIE-LIFESPAN
 
-*Military-specific behaviour*  
-RECRUIT-%AGE: how likely the military are to recruit humans into the military.  The military will never expand past NUM-MILITARY members (one imagines they have a finite supply of guns, or badges, or whatnot.)  
-NUKES-AUTHORIZED?: can the military use their pocket nukes?  
-NUKE-RADIUS: the blast radius of pocket nukes  
-NUKE-DAMAGE: how damaging the nukes are to buildings (they always annihilate all creatures in their radius)  
-NUKE-DISTANCE:   
+*Military-specific behaviour*
+RECRUIT-%AGE: how likely the military are to recruit humans into the military.  The military will never expand past NUM-MILITARY members (one imagines they have a finite supply of guns, or badges, or whatnot.)
+NUKES-AUTHORIZED?: can the military use their pocket nukes?
+NUKE-RADIUS: the blast radius of pocket nukes
+NUKE-DAMAGE: how damaging the nukes are to buildings (they always annihilate all creatures in their radius)
+NUKE-DISTANCE:
 NUKE-MINIMUM-KILL: military will only use pocket nukes if they think there are NUKE-MINIMUM-KILL zombies within NUKE-DISTANCE.
 
 ## SIGNIFICANT DIFFERENCES FROM KEVAN'S
 
-The model of space is the standard NetLogo model, in which space and direction are both continuous.  Thus, for instance, it's more reasonable for humans to keep  
+The model of space is the standard NetLogo model, in which space and direction are both continuous.  Thus, for instance, it's more reasonable for humans to keep
 running in straight lines when nothing is in their way; they don't miss entrances to small passages or cluster as much as they would in the discrete grid-based model.
 
 Beings' fields of vision are cones with 90 degree width instead of just the lines directly ahead.  These fields of vision go through walls (I guess the beings can hear, or smell, or something).
 
 The city wraps around unless you change the model topology; again, this is more natural in NetLogo than it might be in proce55ing.
 
-Arbitrarily many beings may occupy one patch.  
+Arbitrarily many beings may occupy one patch.
 
 The city is carved out differently: although it has the same general feel, more types of passages can occur, for instance zig-zags:
 
@@ -743,13 +746,13 @@ The city is carved out differently: although it has the same general feel, more 
                      *
                      *****************
 
-Beings only look ahead of themselves every fifth time step.  This was done to speed the model up, and appears to have no significant effects on the simulation.  
+Beings only look ahead of themselves every fifth time step.  This was done to speed the model up, and appears to have no significant effects on the simulation.
 
 ## THINGS TO NOTICE
 
-Infection takes place much more slowly, in terms of simulation timesteps, than in the original model.  
+Infection takes place much more slowly, in terms of simulation timesteps, than in the original model.
 
-In zombie-dominated areas of the city, the zombies tend to form into lines (in the original model, we instead observe blobs).  
+In zombie-dominated areas of the city, the zombies tend to form into lines (in the original model, we instead observe blobs).
 
 ## THINGS TO TRY
 
@@ -767,36 +770,36 @@ Resize the city, using the Edit button on the city display.  This will probably 
 
 You've seen at least as many zombie movies as I have...
 
-These extensions are more like bug-fixes:  
-- Ensure that there are no completely isolated spaces without entrances or exits when the city is created.    
+These extensions are more like bug-fixes:
+- Ensure that there are no completely isolated spaces without entrances or exits when the city is created.
 - Make the walls actually opaque?  (This will probably be a mess, since there is no support for this among the NetLogo agentset reporters like in-cone.)
 
-And, of course, it would be nice to make it run faster.  
+And, of course, it would be nice to make it run faster.
 
 ## NETLOGO FEATURES
 
 The tunnels in the city are carved by a dedicated breed of turtle (an initial attempt to generate them with patch agentsets proved horribly slow).
 
-I like the way beings reorient themselves after hitting a wall -- they can even follow tunnels with no special case movement rules.  
+I like the way beings reorient themselves after hitting a wall -- they can even follow tunnels with no special case movement rules.
 
-Building damage after a nuke is implemented by having each patch in the blast radius  
+Building damage after a nuke is implemented by having each patch in the blast radius
 change to open space with a constant probability, otherwise change its state to that of a random neighbour in a small radius.  This nicely and quickly simulates rubble getting blown about.
 
-Beings never move by more than distance 1 at a time, to prevent them from jumping through walls.  
+Beings never move by more than distance 1 at a time, to prevent them from jumping through walls.
 
 
 ## CREDITS AND REFERENCES
 
-Alex Fink and Sai Emrys, this version  
+Alex Fink and Sai Emrys, this version
 AF, the first version, Jan 2006
 
-Kevan Davis' original Zombie Infection Simulation, version 2.3:  
+Kevan Davis' original Zombie Infection Simulation, version 2.3:
 http://kevan.org/proce55ing/zombies/
 
-NetLogo zombie simulators seem to've become popular in these last few years;  
-one might also check out Asymptote's one,   
-http://ccl.northwestern.edu/netlogo/models/community/Zombie_Infection_2  
-and Marcel Jira's ones,  
+NetLogo zombie simulators seem to've become popular in these last few years;
+one might also check out Asymptote's one,
+http://ccl.northwestern.edu/netlogo/models/community/Zombie_Infection_2
+and Marcel Jira's ones,
 http://web.student.tuwien.ac.at/~e0250890/netlogo/ .
 
 ## WHAT NEW
