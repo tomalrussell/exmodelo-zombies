@@ -57,9 +57,22 @@ to go
 
     step-turnily 1
 
-    set kills kills + count zombies-here
+    ;; set kills kills + count zombies-here
 
-    ask zombies-here [ die ]
+    ;;ask zombies-here [ die ]
+
+    ;; new mechanism for killing zombies
+    let alive? true
+    ask zombies-here [
+      ifelse alive? and random-float 100.0 < military-kill-probability [
+        set kills kills + 1
+        die
+      ] [
+        set alive? false
+      ]
+    ]
+
+    if not alive? [ die ]
 
     ;; Military will recruit civilians back up to their starting population
     ;; aka "Hey you, here's a gun and a pocket nuke. Have fun."
@@ -471,7 +484,7 @@ num-military
 num-military
 0
 64
-10.0
+32.0
 1
 1
 NIL
@@ -555,7 +568,7 @@ nuke-radius
 nuke-radius
 0
 60
-25.0
+35.0
 1
 1
 NIL
@@ -570,7 +583,7 @@ panic-duration
 panic-duration
 0
 50
-20.0
+0.0
 1
 1
 NIL
@@ -585,7 +598,7 @@ recruit-%age
 recruit-%age
 0
 100
-0.0
+28.0
 0.2
 1
 NIL
@@ -615,7 +628,7 @@ zombie-acuteness
 zombie-acuteness
 0
 4
-1.5
+2.18
 0.01
 1
 NIL
@@ -752,7 +765,7 @@ nom-boost
 nom-boost
 0
 1
-0.0
+0.11
 0.01
 1
 NIL
@@ -923,6 +936,21 @@ TEXTBOX
 11
 65.0
 1
+
+SLIDER
+332
+92
+542
+125
+military-kill-probability
+military-kill-probability
+0
+100
+90.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1368,7 +1396,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.3
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
