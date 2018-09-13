@@ -87,8 +87,7 @@ to go
       ]
     ]
 
-    ;; Zombies can break down walls if they're following something
-    corrode-step 0.2 (random-float 100 < wall-break-%age and chasing-time > 0)
+    corrode-step zombie-speed-factor false
 
     if zombies-age? [
       set lifespan lifespan - 1
@@ -206,6 +205,12 @@ to setup
 
   ;; globals
   set turn-probability 1 / 60.0
+end
+
+to run-model
+  clear-all
+  setup
+  while [ ticks <= 2160 and (count humans > 0) and (count zombies > 0) ] [go]
 end
 
 to setup-beings
@@ -479,7 +484,7 @@ num-military
 num-military
 0
 64
-10.0
+0.0
 1
 1
 NIL
@@ -600,21 +605,6 @@ NIL
 HORIZONTAL
 
 SLIDER
-193
-127
-326
-160
-wall-break-%age
-wall-break-%age
-0
-100
-0.0
-0.2
-1
-NIL
-HORIZONTAL
-
-SLIDER
 329
 127
 474
@@ -664,7 +654,7 @@ zombie-lifespan
 zombie-lifespan
 50
 5000
-1501.0
+746.0
 1
 1
 NIL
@@ -679,7 +669,7 @@ nom-time
 nom-time
 0
 200
-10.0
+18.0
 1
 1
 NIL
@@ -760,7 +750,7 @@ nom-boost
 nom-boost
 0
 1
-0.0
+0.2
 0.01
 1
 NIL
@@ -931,6 +921,21 @@ TEXTBOX
 11
 65.0
 1
+
+SLIDER
+330
+91
+533
+124
+zombie-speed-factor
+zombie-speed-factor
+0
+2
+0.27
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
