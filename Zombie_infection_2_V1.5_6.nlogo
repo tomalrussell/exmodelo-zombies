@@ -9,7 +9,7 @@ breed [ military militian ]
 humans-own [panic-time]
 zombies-own [chasing-time lifespan ]
 patches-own [fade-time]
-turtles-own [generation paralysis-time kills]
+turtles-own [paralysis-time kills]
 
 to go
   set-current-plot "Population vs. time"
@@ -67,7 +67,6 @@ to go
       ask one-of humans-here [
         set breed military
         set color red
-        set generation [generation] of myself + 1
       ]
     ]
   ]
@@ -105,7 +104,6 @@ to go
         set color green
         set shape "face neutral"
         set lifespan zombie-lifespan
-        set generation [generation] of myself + 1
       ]
       set lifespan lifespan + zombie-lifespan * nom-boost
       set paralysis-time nom-time
@@ -138,11 +136,6 @@ to go
 
     ]
 
-    if panic-time <= 0 and random-float 100 < breeding-%age and any? humans-here [
-      hatch 1 [
-        set generation [generation] of myself + 1
-      ]
-    ]
   ]
 
   ask turtles with [paralysis-time > 0] [
@@ -243,7 +236,6 @@ to setup-beings
     setxy random-float world-width random-float world-height
     set heading random-float 360
     set paralysis-time 0
-    set generation 0
     set kills 0
     while [pcolor != black] [fd 1]
   ]
@@ -360,7 +352,7 @@ num-zombies
 num-zombies
 0
 64
-1.0
+10.0
 1
 1
 NIL
@@ -479,7 +471,7 @@ num-military
 num-military
 0
 64
-4.0
+10.0
 1
 1
 NIL
@@ -593,7 +585,7 @@ recruit-%age
 recruit-%age
 0
 100
-3.8
+0.0
 0.2
 1
 NIL
@@ -638,7 +630,7 @@ num-squares
 num-squares
 0
 112
-0.0
+1.0
 1
 1
 NIL
@@ -651,7 +643,7 @@ SWITCH
 194
 zombies-age?
 zombies-age?
-0
+1
 1
 -1000
 
@@ -664,7 +656,7 @@ zombie-lifespan
 zombie-lifespan
 50
 5000
-1500.0
+1501.0
 1
 1
 NIL
@@ -795,54 +787,6 @@ vision-angle
 1
 NIL
 HORIZONTAL
-
-SLIDER
-328
-90
-474
-123
-breeding-%age
-breeding-%age
-0
-1
-0.05
-0.001
-1
-NIL
-HORIZONTAL
-
-MONITOR
-269
-295
-360
-340
-avg generation
-mean [generation] of humans
-2
-1
-11
-
-MONITOR
-269
-342
-360
-387
-avg generation
-mean [generation] of zombies
-2
-1
-11
-
-MONITOR
-269
-388
-360
-433
-avg generation
-mean [generation] of military
-2
-1
-11
 
 BUTTON
 560
@@ -1424,7 +1368,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.4
+NetLogo 6.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
