@@ -1,0 +1,21 @@
+Démographie supprimée car échelle de temps de qq années
+Définir le pas de temps du modèle
+
+Vaccination :
+- des humains pour qu'ils ne deviennent pas des zombies
+- des zombies pour qu'ils arrêtent de contaminer les humains
+- des zombies pour qu'ils redeviennent humains ?
+
+Comment c'est géré :
+- une latence avant que le vaccin soit disponible
+- un seul type de vaccin disponible ou plusieurs en même temps ?
+- administration du vaccin : par les militaires, par des médecins, par des médecins accompagnés de militaires
+
+Militaires :
+- limiter leur efficacité contre les zombies
+- ajouter un entraînement qui augmente leur efficacité contre les zombies
+- plusieurs militaires pour gérer un nuke
+- besoin de l'entraînement pour pouvoir utiliser un nuke
+
+Budget :
+- modéliser le coût d'un militaire, d'un médecin (en entrée ou en sortie ?)
