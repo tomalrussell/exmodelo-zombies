@@ -6,13 +6,15 @@
 to run-model
   clear-all
   setup
-  while [ ticks <= 2160 and (count humans > 0) and (count zombies > 0) ] [go]
+  while [ ticks <= final-time and (count humans > 0) and (count zombies > 0) ] [go]
 end
 
 
-
+;;
+; one time step
 to go
 
+  ;;
   update-display
 
   update-patches
@@ -29,6 +31,8 @@ to go
 end
 
 
+;;
+; update variables common to all agents
 to update-agents
 
   ask turtles with [paralysis-time > 0] [

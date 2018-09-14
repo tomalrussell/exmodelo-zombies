@@ -15,14 +15,16 @@ to setup
   
 end
 
-
+;;
+; setup globals
 to setup-globals
   
   set humans-history []
   set zombies-history []
 
-  ;; globals
   set turn-probability 1 / 60.0
+  
+  set final-time 2160
   
 end
 
@@ -39,12 +41,7 @@ to setup-agents
   ;; Make sure the beings are on non-built squares.
   create-zombies num-zombies [new-zombie]
 
-  create-humans num-humans [
-    set color white - 4
-    set shape "face happy"
-    set size 0.5
-    set pen-size 0.5
-  ]
+  create-humans num-humans [new-human]
 
   create-military num-military [
     set color red

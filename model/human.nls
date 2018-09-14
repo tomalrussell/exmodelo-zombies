@@ -20,13 +20,14 @@ ask humans with [paralysis-time <= 0] [
     if any? beings-seen [
       lt 157.5 + random-float 45 ; FIXME why the fuck these values ?
       set shape "face sad" ; FIXME this should be in display
-      set color magenta + 3
+      set color magenta + 3 ; idem
 
       ;; panicked humans are infectious
       if any? beings-seen with [breed = humans and panic-time > 0] [
         set panic-time (max [panic-time] of beings-seen with [breed = humans])
       ]
-      ;; oh noes teh zombie
+      
+      ;; humans with zombies in sight switch to a state of panic
       if any? beings-seen with [breed = zombies] [ set panic-time panic-duration ]
     ]
 
@@ -34,4 +35,13 @@ ask humans with [paralysis-time <= 0] [
 
 ]
 
+end
+
+
+
+to new-human
+  set color white - 4
+  set shape "face happy"
+  set size 0.5
+  set pen-size 0.5
 end

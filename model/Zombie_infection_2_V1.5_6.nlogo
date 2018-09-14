@@ -18,22 +18,36 @@ __includes [
 ]
 
 
-globals [turn-probability humans-history zombies-history]
+globals [
 
-;; diggers are used only for setup
-breed [ diggers digger ]
-breed [ humans human ]
-breed [ zombies zombie ]
-breed [ military militian ]
+  ;;;;;;;
+  ;; Runtime
+  ;;;;;;;
 
-humans-own [
-  panic-time
+  ;;
+  ; Turning probabilty in random walks
+  turn-probability
+
+  ;;
+  ; final time at which the simulation is stopped
+  final-time
+
+
+
+  ;;;;;
+  ;; Indicators
+  ;;;;;
+
+
+  ;;
+  ; history of human population
+  humans-history
+
+  ;;
+  ; history of zombies population
+  zombies-history
 ]
 
-zombies-own [
-  chasing-time
-  lifespan
-]
 
 patches-own [
   fade-time
@@ -44,6 +58,25 @@ turtles-own [
   kills
 ]
 
+
+breed [ humans human ]
+
+humans-own [
+  panic-time
+]
+
+
+breed [ zombies zombie ]
+
+zombies-own [
+  chasing-time
+  lifespan
+]
+
+breed [ military militian ]
+
+;; diggers are used only for setup
+breed [diggers digger]
 @#$#@#$#@
 GRAPHICS-WINDOW
 561
@@ -73,10 +106,10 @@ ticks
 30.0
 
 SLIDER
-17
-90
-189
-123
+126
+40
+265
+73
 num-humans
 num-humans
 0
@@ -88,10 +121,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-17
-127
-189
-160
+266
+40
+385
+73
 num-zombies
 num-zombies
 0
@@ -103,10 +136,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-17
-10
-83
-43
+93
+531
+207
+564
 NIL
 setup
 NIL
@@ -120,10 +153,10 @@ NIL
 1
 
 BUTTON
-130
-436
-193
-469
+209
+566
+272
+599
 NIL
 go
 T
@@ -137,10 +170,10 @@ NIL
 1
 
 BUTTON
-86
-10
-200
-43
+93
+566
+207
+599
 NIL
 setup-agents
 NIL
@@ -154,10 +187,10 @@ NIL
 1
 
 MONITOR
-204
-342
-267
-387
+1244
+506
+1307
+551
 zombies
 count zombies
 3
@@ -165,10 +198,10 @@ count zombies
 11
 
 MONITOR
-204
-295
-267
-340
+1244
+459
+1307
+504
 humans
 count humans
 3
@@ -176,10 +209,10 @@ count humans
 11
 
 PLOT
-623
-487
-1144
-702
+1134
+17
+1655
+232
 Population vs. time
 Time
 Population
@@ -196,10 +229,10 @@ PENS
 "Humans_1" 1.0 0 -7500403 true "" ""
 
 MONITOR
-361
-295
-429
-340
+1165
+460
+1233
+505
 panicked %
 100 * count humans with [panic-time > 0] / count humans
 0
@@ -207,10 +240,10 @@ panicked %
 11
 
 SLIDER
-17
-198
-189
-231
+384
+40
+499
+73
 num-military
 num-military
 0
@@ -222,10 +255,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-204
-388
-267
-433
+1244
+552
+1307
+597
 military
 count military
 0
@@ -233,10 +266,10 @@ count military
 11
 
 SWITCH
-329
-198
-478
-231
+18
+423
+182
+456
 nukes-authorized?
 nukes-authorized?
 1
@@ -244,11 +277,11 @@ nukes-authorized?
 -1000
 
 BUTTON
-278
-10
-341
-43
-step
+209
+532
+328
+565
+go one step
 go
 NIL
 1
@@ -261,10 +294,10 @@ NIL
 1
 
 SLIDER
-147
-232
-257
-265
+183
+421
+323
+454
 nuke-distance
 nuke-distance
 1
@@ -276,10 +309,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-260
-232
-391
-265
+183
+456
+324
+489
 nuke-minimum-kill
 nuke-minimum-kill
 1
@@ -291,10 +324,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-395
-232
-498
-265
+324
+421
+427
+454
 nuke-radius
 nuke-radius
 0
@@ -306,10 +339,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-193
-90
-326
-123
+20
+243
+153
+276
 panic-duration
 panic-duration
 0
@@ -321,10 +354,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-193
-198
-326
-231
+152
+242
+285
+275
 recruit-%age
 recruit-%age
 0
@@ -336,10 +369,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-329
-127
-474
-160
+158
+348
+335
+381
 zombie-acuteness
 zombie-acuteness
 0
@@ -351,10 +384,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-55
-164
-88
+9
+40
+123
+73
 num-squares
 num-squares
 0
@@ -366,10 +399,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-22
-161
-148
-194
+17
+315
+158
+348
 zombies-age?
 zombies-age?
 0
@@ -377,10 +410,10 @@ zombies-age?
 -1000
 
 SLIDER
-150
-161
-293
-194
+17
+348
+158
+381
 zombie-lifespan
 zombie-lifespan
 50
@@ -392,10 +425,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-329
-161
-421
-194
+166
+136
+285
+169
 nom-time
 nom-time
 0
@@ -407,10 +440,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-23
-232
-145
-265
+18
+456
+182
+489
 nuke-damage
 nuke-damage
 0
@@ -422,10 +455,10 @@ NIL
 HORIZONTAL
 
 PLOT
-17
-313
-199
-433
+1314
+460
+1654
+711
 Zombie lifespan
 Time
 Avg left
@@ -440,10 +473,10 @@ PENS
 "default" 1.0 0 -16777216 false "" ""
 
 MONITOR
-362
-388
-412
-433
+1166
+553
+1216
+598
 avg kills
 mean [kills] of military
 2
@@ -451,10 +484,10 @@ mean [kills] of military
 11
 
 MONITOR
-362
-342
-412
-387
+1166
+507
+1216
+552
 avg kills
 mean [kills] of zombies
 2
@@ -462,10 +495,10 @@ mean [kills] of zombies
 11
 
 MONITOR
-413
-342
-487
-387
+1229
+597
+1303
+642
 avg lifespan
 mean [lifespan] of zombies
 0
@@ -473,10 +506,10 @@ mean [lifespan] of zombies
 11
 
 SLIDER
-423
-161
-529
-194
+286
+135
+404
+168
 nom-boost
 nom-boost
 0
@@ -488,10 +521,10 @@ NIL
 HORIZONTAL
 
 SLIDER
+25
+136
+165
 169
-55
-290
-88
 vision-distance
 vision-distance
 1
@@ -503,10 +536,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-292
-55
-395
-88
+25
+168
+165
+201
 vision-angle
 vision-angle
 1
@@ -518,10 +551,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-560
-448
-699
-481
+982
+47
+1121
+80
 ride one of humans
 ride one-of humans
 NIL
@@ -535,10 +568,10 @@ NIL
 1
 
 BUTTON
-400
-55
-529
-88
+981
+146
+1121
+179
 NIL
 reset-perspective
 NIL
@@ -552,10 +585,10 @@ NIL
 1
 
 BUTTON
-703
-448
-842
-481
+982
+81
+1121
+114
 ride one of zombies
 ride one-of zombies
 NIL
@@ -568,21 +601,11 @@ NIL
 NIL
 1
 
-TEXTBOX
-987
-421
-1137
-487
-zombie infection 2 v1.5
-16
-63.0
-1
-
 MONITOR
-414
-390
-496
-455
+1230
+645
+1312
+710
 NIL
 subject
 100
@@ -590,10 +613,10 @@ subject
 16
 
 BUTTON
-847
-448
-979
-481
+982
+113
+1121
+146
 NIL
 ride one-of turtles
 NIL
@@ -606,28 +629,11 @@ NIL
 NIL
 1
 
-BUTTON
-344
-10
-408
-43
-Reset
-clear-all
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 PLOT
-196
-438
-396
-588
+1135
+236
+1654
+454
 Bar
 Number
 Line
@@ -645,19 +651,19 @@ PENS
 
 TEXTBOX
 980
-16
+10
 1130
-44
+38
 <-- click here\nUse 3D only
 11
 65.0
 1
 
 SLIDER
-330
-91
-533
-124
+157
+315
+335
+348
 zombie-speed-factor
 zombie-speed-factor
 0
@@ -667,6 +673,56 @@ zombie-speed-factor
 1
 NIL
 HORIZONTAL
+
+TEXTBOX
+25
+18
+175
+37
+Setup parameters
+16
+0.0
+1
+
+TEXTBOX
+21
+107
+233
+145
+Runtime parameters
+16
+0.0
+1
+
+TEXTBOX
+46
+400
+196
+418
+Nukes
+12
+0.0
+1
+
+TEXTBOX
+26
+221
+176
+239
+Humans
+12
+0.0
+1
+
+TEXTBOX
+29
+293
+179
+311
+Zombies
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
