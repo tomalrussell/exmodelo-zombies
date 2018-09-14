@@ -114,7 +114,7 @@ num-humans
 num-humans
 0
 6144
-313.0
+500.0
 1
 1
 NIL
@@ -136,10 +136,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-93
-531
-207
-564
+31
+713
+145
+746
 NIL
 setup
 NIL
@@ -153,10 +153,10 @@ NIL
 1
 
 BUTTON
-209
-566
-272
-599
+404
+715
+467
+748
 NIL
 go
 T
@@ -170,10 +170,10 @@ NIL
 1
 
 BUTTON
-93
-566
-207
-599
+282
+714
+396
+747
 NIL
 setup-agents
 NIL
@@ -277,10 +277,10 @@ nukes-authorized?
 -1000
 
 BUTTON
-209
-532
-328
-565
+156
+714
+275
+747
 go one step
 go
 NIL
@@ -392,7 +392,7 @@ num-squares
 num-squares
 0
 112
-0.0
+9.0
 1
 1
 NIL
@@ -425,10 +425,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-166
-136
-285
-169
+336
+314
+455
+347
 nom-time
 nom-time
 0
@@ -506,10 +506,10 @@ mean [lifespan] of zombies
 11
 
 SLIDER
-286
-135
-404
-168
+333
+347
+451
+380
 nom-boost
 nom-boost
 0
@@ -723,6 +723,38 @@ Zombies
 12
 0.0
 1
+
+TEXTBOX
+44
+522
+194
+540
+Seeds
+12
+0.0
+1
+
+INPUTBOX
+22
+546
+183
+606
+space-seed
+43.0
+1
+0
+Number
+
+INPUTBOX
+193
+546
+354
+606
+simulation-seed
+42.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1168,7 +1200,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.2
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
