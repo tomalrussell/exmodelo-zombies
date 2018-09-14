@@ -36,6 +36,8 @@ to setup-agents
   clear-all-plots
 
   reset-ticks
+  
+  random-seed simulation-seed
 
   ;; Zombies get the earliest who numbers; we use this elsewhere.
   ;; Make sure the beings are on non-built squares.
@@ -66,12 +68,16 @@ end
 
 to setup-world
   clear-patches
+  
+  random-seed space-seed
+  
   ask patches [
     ;; FIXME patch color should not be used as a state variable
     set pcolor gray - 3
     set fade-time 0
   ]
 
+  
   ;; Make the alleyways.  Instead of the rectangle-placing approach, which proves slow,
   ;; let a special kind of turtle dig them.
   ;; The number of diggers here and later will need changing if the screen size is changed.

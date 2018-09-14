@@ -536,15 +536,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-25
-168
-165
-201
+166
+136
+306
+169
 vision-angle
 vision-angle
 1
 360
-90.0
+45.0
 1
 1
 NIL
