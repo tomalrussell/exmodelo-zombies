@@ -114,7 +114,7 @@ num-humans
 num-humans
 0
 6144
-500.0
+100.0
 1
 1
 NIL
@@ -129,7 +129,7 @@ num-zombies
 num-zombies
 0
 64
-10.0
+3.0
 1
 1
 NIL
@@ -418,7 +418,7 @@ zombie-lifespan
 zombie-lifespan
 50
 5000
-746.0
+720.0
 1
 1
 NIL
