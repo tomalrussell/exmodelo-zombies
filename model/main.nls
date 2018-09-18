@@ -6,7 +6,7 @@
 to run-model
   clear-all
   setup
-  while [ ticks <= final-time and (count humans > 0) and (count zombies > 0) ] [go]
+  while [ ticks <= final-time ] [go]
 end
 
 
