@@ -61,7 +61,7 @@ object agent {
 
     def index(agents: Vector[Agent], side: Int) = Index[Agent](agents, location(_, side), side)
 
-    def move(agent: Agent, world: World) = {
+    def move(agent: Agent, world: World, minSpeed: Double) = {
       val v = {
         val (px, py) = sum(position(agent), velocity(agent))
         val (cx, cy) = positionToLocation((px, py), world.side, world.side)
@@ -70,10 +70,10 @@ object agent {
           World.cell(world, cx, cy) match {
             case None => None
             case Some(Wall) => Some(opposite(velocity(agent)))
-            case Some(f: Flor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (1 + f.slope.intensity) * maxSpeed(agent))))
+            case Some(f: Flor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (f.slope.intensity) * maxSpeed(agent))))
           }
 
-        v.map(normalize(_, maxSpeed(agent)))
+        v.map(v => bound(v, minSpeed, maxSpeed(agent)))
       }
 
       v.flatMap { v =>
@@ -127,7 +127,7 @@ object agent {
         //visibleNeighbors(index, agent, vision(h), world).filter(Agent.isZombie) match {
         neighbors(index, agent, vision(h)).filter(Agent.isZombie) match {
           case ns if !ns.isEmpty =>
-            val projectedVelocities = (-granularity to granularity).map(_ * h.maxRotation).map(r => rotate(h.velocity, r))
+            val projectedVelocities = (-granularity to granularity).map(_ * h.maxRotation).map(r => normalize(rotate(h.velocity, r), maxSpeed(h)))
             val nv = projectedVelocities.maxBy { v => ns.map(n => distance(position(n), sum(h.position, v))).min }
             setVelocity(h, nv)
           case _ => h
@@ -136,7 +136,7 @@ object agent {
         //visibleNeighbors(index, agent, vision(z), world).filter(Agent.isHuman) match {
         neighbors(index, agent, vision(z)).filter(Agent.isHuman) match {
           case ns if !ns.isEmpty =>
-            val projectedVelocities =  (-granularity to granularity).map(_ * z.maxRotation).map(r => rotate(z.velocity, r))
+            val projectedVelocities =  (-granularity to granularity).map(_ * z.maxRotation).map(r => normalize(rotate(z.velocity, r), maxSpeed(z)))
             val nv = projectedVelocities.minBy { v => ns.map(n => distance(position(n), sum(z.position, v))).min }
             setVelocity(z, nv)
           case _ => z

@@ -21,6 +21,13 @@ object move {
     if(l == 0) v else (x * norm / l, y * norm / l)
   }
 
+  def bound(v: (Double, Double), min: Double, max: Double): (Double, Double) = {
+    val l = length(v)
+    if (l < min) normalize(v, min)
+    else if (l > max) normalize(v, max)
+    else v
+  }
+
   def sum(v1: (Double, Double), v2: (Double, Double)): (Double, Double) = {
     val (x, y) = v1
     val (dx, dy) = v2
