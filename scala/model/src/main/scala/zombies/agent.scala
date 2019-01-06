@@ -69,7 +69,7 @@ object agent {
         val v =
           World.cell(world, cx, cy) match {
             case None => None
-            case Some(Wall) => Some(opposite(velocity(agent)))
+            case Some(Wall) => Some(normalize(opposite(velocity(agent)), minSpeed))
             case Some(f: Flor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (f.slope.intensity) * maxSpeed(agent))))
           }
 
