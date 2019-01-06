@@ -9,7 +9,9 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Flor(altitude: Double, slope: (Double, Double)) extends Cell
+  case class Flor(altitude: Double = 0.0, slope: Slope = Slope()) extends Cell
+  case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
+
 
   object World {
     def cell(world: World, x: Int, y: Int) =
@@ -19,7 +21,7 @@ object world {
 
     def parse(s: String) = {
       def toWall(c: Char): Option[Cell] = c match {
-        case '0' => Some(Flor(0.0, (0.0, 0.0)))
+        case '0' => Some(Flor())
         case '+' => Some(Wall)
         case _ => None
       }
@@ -70,7 +72,7 @@ object world {
       world.copy(cells = cells)
     }
 
-    def computeSlope(world: World, norm: Double) = {
+    def computeSlope(world: World, intensity: Double) = {
       val cells = copyCells(world.cells)
 
       def slope(x: Int, y: Int, level: Double) = {
@@ -83,8 +85,7 @@ object world {
           } yield (ox * (level - cellLevel), oy * (level - cellLevel))
 
         val (slopesX, slopesY) = slopes.unzip
-
-        normalize((slopesX.sum / slopesX.size, slopesY.sum / slopesY.size), norm)
+        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, intensity)
       }
 
       for {

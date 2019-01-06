@@ -12,13 +12,18 @@ object Test extends App {
 
   val side = 40
 
-  val infectionRange = 0.5 * cellSide(side)
-  val humanVision = 0.7 * cellSide(side)
-  val zombieVision = 1.0 * cellSide(side)
+  val infectionRange = 0.1 * cellSide(side)
+  val humanPerception = 0.7 * cellSide(side)
+  val zombiePerception = 1.2 * cellSide(side)
+
   val humanSpeed = 0.5 * cellSide(side)
   val zombieSpeed = 0.3 * cellSide(side)
-  val zombieMaxRotation = 15
-  val humanMaxRotation = 45
+
+  val zombieMaxRotation = 45
+  val humanMaxRotation = 90
+
+  val humans = 250
+  val zombies = 4
 
   val rng = new Random(42)
   val doorSize = 16
@@ -80,10 +85,11 @@ object Test extends App {
 //      |""".stripMargin
 
 
-  val world = World.computeSlope(World.computeAltitude(World.parse(worldDescription), 0.5), cellSide(side) * 0.2)
+  val world = World.computeSlope(World.computeAltitude(World.parse(worldDescription), 0.5), 0.5)
   val agents =
-    Vector.fill(20)(Human.generate(world, humanSpeed, humanVision, humanMaxRotation,  rng)) ++
-      Vector.fill(5)(Zombie.generate(world, zombieSpeed, zombieVision, zombieMaxRotation, rng))
+    Vector.fill(humans)(Human.generate(world, humanSpeed, humanPerception, humanMaxRotation,  rng)) ++
+      Vector.fill(zombies)(Zombie.generate(world, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
+
 
   def clear(world: World) = {
     print(Ansi.cursorUp(world.side - 1))
@@ -92,29 +98,29 @@ object Test extends App {
 
   def simulate(hs: Vector[Agent], world: World) = {
     val index = Agent.index(hs, world.side)
-    val ai = Agent.infect(index, hs, infectionRange, Agent.zombify(_, zombieSpeed, zombieVision, zombieMaxRotation, rng))
-    ai.map(Agent.adaptDirectionRotate(index, _, 5)).flatMap(Agent.move(_, world))
+    val ai = Agent.infect(index, hs, infectionRange, Agent.zombify(_, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
+    ai.map(Agent.adaptDirectionRotate(index, _, 5, world)).flatMap(Agent.move(_, world))
   }
 
   def step(hs: Vector[Agent], world: World): Unit = {
     if (!hs.isEmpty) {
       print(console.display(world, hs))
       val aim = simulate(hs, world)
-      Thread.sleep(100)
+      Thread.sleep(2)
       clear(world)
       step(aim, world)
     }
   }
 
-  step(agents, world)
+// step(agents, world)
 
-//  def bench(hs: Vector[Agent], world: World, steps: Int): Vector[Agent] = {
-//   //println(steps)
-//    if (steps == 0) hs else bench(simulate(hs, world), world, steps - 1)
-//  }
-//
-//  val begin = System.currentTimeMillis()
-//  bench(agents, world, 2000)
-//  println(System.currentTimeMillis() - begin)
+  def bench(hs: Vector[Agent], world: World, steps: Int): Vector[Agent] = {
+   //println(steps)
+    if (steps == 0) hs else bench(simulate(hs, world), world, steps - 1)
+  }
+
+  val begin = System.currentTimeMillis()
+  bench(agents, world, 2000)
+  println(System.currentTimeMillis() - begin)
 
 }

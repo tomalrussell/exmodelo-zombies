@@ -15,7 +15,12 @@ lazy val model = Project("model", file("model")) settings (
 //  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
 //  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
 //
-//  addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
+
+  libraryDependencies ++= Seq(
+    "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
+    "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
+  ),
+  addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
 )
 
 
