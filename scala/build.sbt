@@ -1,17 +1,14 @@
 
 
-enablePlugins(SbtOsgi)
-
 name := "zombies"
 
-lazy val model = Project("model", file("model")) settings (
+lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi) settings (
   scalaVersion := "2.12.8",
-
-//  OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
-//  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
-//  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
-//  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
-
+  OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
+  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
+  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
+  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
+  osgiSettings
 )
 
 
