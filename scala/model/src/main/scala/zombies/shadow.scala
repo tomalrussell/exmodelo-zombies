@@ -1,59 +1,55 @@
 package zombies
 
-import monocle._
-import monocle.macros._
-import monocle.std.all._
-import monocle.function.all._
 
 /**
   * Created by reyman on 14/06/16.
   */
 object shadow {
 
-
-  @Lenses case class ShadowLine (shadows:Vector[Shadow] = Vector.empty)
-  @Lenses case class Shadow (start:Double, end:Double)
-
-  def projectTile(row:Double, col:Double) = Shadow(col / (row + 2), (col + 1) / (row + 1))
-  def isInShadow(line: ShadowLine, projection: Shadow): Boolean = line.shadows.exists { s => contains(s, projection) }
-  def contains(s:Shadow, projection:Shadow):Boolean = (s.start <= projection.start) && (s.end >= projection.end)
-
-  def addShadow(shadowToTest: Shadow, shadowLine: ShadowLine): ShadowLine = {
-    val i =
-      shadowLine.shadows.indexWhere { s =>
-        s.start >= shadowToTest.start} match {
-        case -1 => if (shadowLine.shadows.nonEmpty) shadowLine.shadows.size else 0
-        case x => x
-      }
-
-    def overlappingPrevious =
-      if (i > 0 && shadowLine.shadows(i - 1).end > shadowToTest.start) Some(ShadowLine.shadows composeOptional index(i - 1)) else None
-
-    def overlappingNext =
-      if (i < shadowLine.shadows.length && shadowLine.shadows(i).start < shadowToTest.end)
-        Some(ShadowLine.shadows composeOptional index(i))
-      else None
-
-    (overlappingPrevious, overlappingNext) match {
-      case (Some(sp), Some(sn)) =>
-        val snValue = sn.getOption(shadowLine).get
-        ((sp composeLens Shadow.end set snValue.end) andThen (ShadowLine.shadows.modify(_.patch(i, Seq(), 1)))) (shadowLine)
-      case(None, Some(sn)) =>
-        val snValue = sn.getOption(shadowLine).get
-        (sn composeLens Shadow.start set(math.min(snValue.start, shadowToTest.start)))(shadowLine)
-      case(Some(sp),None ) =>
-        val spValue = sp.getOption(shadowLine).get
-        (sp composeLens Shadow.end set(math.max(spValue.end, shadowToTest.end)))(shadowLine)
-      case(None, None) =>
-        (ShadowLine.shadows modify(_.patch(i, Seq(shadowToTest),0)))(shadowLine)
-    }
-
-  }
-
-  def visible(position: (Int, Int), isOpaque: (Int, Int) => Boolean, side: (Int, Int), maxRows:Int) =
+  def visible(position: (Int, Int), isOpaque: (Int, Int) => Boolean, side: (Int, Int), maxRows: Int) =
     (0 until 8).map(o => visibleOctant(position, o, isOpaque, side, maxRows)).foldLeft(Set.empty[(Int, Int)]) { case (a, b) => a ++ b }
 
   def visibleOctant(position: (Int, Int), octant:Int, isOpaque: (Int, Int) => Boolean, side: (Int, Int), maxRows:Int) = {
+    case class ShadowLine (shadows: Vector[Shadow] = Vector.empty)
+    case class Shadow (start: Double, end: Double)
+
+    def projectTile(row: Double, col: Double) = Shadow(col / (row + 2), (col + 1) / (row + 1))
+    def isInShadow(line: ShadowLine, projection: Shadow): Boolean = {
+      def shadowContains(s: Shadow, projection: Shadow):Boolean = (s.start <= projection.start) && (s.end >= projection.end)
+      line.shadows.exists { s => shadowContains(s, projection) }
+    }
+
+    def addShadow(shadowToTest: Shadow, shadowLine: ShadowLine): ShadowLine = {
+      val i =
+        shadowLine.shadows.indexWhere { s =>
+          s.start >= shadowToTest.start} match {
+          case -1 => if (shadowLine.shadows.nonEmpty) shadowLine.shadows.size else 0
+          case x => x
+        }
+
+      def overlappingPrevious = i > 0 && shadowLine.shadows(i - 1).end > shadowToTest.start
+      def overlappingNext = i < shadowLine.shadows.length && shadowLine.shadows(i).start < shadowToTest.end
+
+      (overlappingPrevious, overlappingNext) match {
+        case (true, true) =>
+          val mergedLine = shadowLine.shadows(i - 1).copy(end = shadowLine.shadows(i).end)
+          shadowLine.copy(shadows = shadowLine.shadows.patch(i - 1, Seq(mergedLine), 2))
+        case(false, true) =>
+          val next = shadowLine.shadows(i)
+          val newNext = next.copy(start = math.min(next.start, shadowToTest.start))
+          shadowLine.copy(shadows = shadowLine.shadows.patch(i, Seq(newNext), 1))
+        case(true, false) =>
+          val previous = shadowLine.shadows(i - 1)
+          val newPrevious = previous.copy(end = math.max(previous.end, shadowToTest.end))
+          shadowLine.copy(shadows = shadowLine.shadows.patch(i - 1, Seq(newPrevious), 1))
+        case(false, false) =>
+          shadowLine.copy(shadows = shadowLine.shadows.patch(i, Seq(shadowToTest), 0))
+      }
+
+    }
+
+
+
     def contains(point: (Int, Int), pos: (Int, Int), size: (Int, Int)) =
       if (point._1 < pos._1) false
       else if (point._1 >= pos._1 + size._1)  false
@@ -62,7 +58,7 @@ object shadow {
       else true
 
 
-    def transformOctant(row:Int, col:Int, octant:Int) = {
+    def transformOctant(row: Int, col: Int, octant: Int) = {
       octant % 8 match {
         case 0 => (col,-row)
         case 1 => (row, -col)

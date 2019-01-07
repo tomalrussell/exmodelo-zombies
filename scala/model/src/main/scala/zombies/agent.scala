@@ -84,7 +84,7 @@ object agent {
     }
 
     def visibleNeighbors(index: Index[Agent], agent: Agent, range: Double, world: World) = {
-      val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt + 1
+      val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt
       val location = Agent.location(agent, index.side)
       shadow.visible(location, World.isWall(world, _, _), (index.side, index.side), neighborhoodSize).
         flatMap { case(x, y) => Index.get(index, y, y) }.
@@ -95,6 +95,14 @@ object agent {
       val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt
       val (x, y) = Agent.location(agent, index.side)
       space.neighbors(Index.get(index, _, _), x, y, neighborhoodSize).filter(n => distance(Agent.position(n), Agent.position(agent)) < range)
+    }
+
+    def neighbors(index: Index[Agent], agent: Agent, range: Double, neighborhood: NeighborhoodCache) = {
+      val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt
+      val (x, y) = Agent.location(agent, index.side)
+      neighborhood(x)(y).
+        flatMap { case(x, y) => Index.get(index, y, y) }.
+        filter(n => distance(Agent.position(n), Agent.position(agent)) < range)
     }
 
 //    def adaptDirectionAbsolute(index: Index[Agent], agent: Agent) = agent match {
@@ -122,10 +130,9 @@ object agent {
 //
 //    }
 
-    def adaptDirectionRotate(index: Index[Agent], agent: Agent, granularity: Int, world: World) = agent match {
+    def adaptDirectionRotate(index: Index[Agent], agent: Agent, granularity: Int, neighborhoodCache: NeighborhoodCache) = agent match {
       case h: Human =>
-        //visibleNeighbors(index, agent, vision(h), world).filter(Agent.isZombie) match {
-        neighbors(index, agent, vision(h)).filter(Agent.isZombie) match {
+        neighbors(index, agent, vision(h), neighborhoodCache).filter(Agent.isZombie) match {
           case ns if !ns.isEmpty =>
             val projectedVelocities = (-granularity to granularity).map(_ * h.maxRotation).map(r => normalize(rotate(h.velocity, r), maxSpeed(h)))
             val nv = projectedVelocities.maxBy { v => ns.map(n => distance(position(n), sum(h.position, v))).min }
@@ -133,8 +140,7 @@ object agent {
           case _ => h
         }
       case z: Zombie =>
-        //visibleNeighbors(index, agent, vision(z), world).filter(Agent.isHuman) match {
-        neighbors(index, agent, vision(z)).filter(Agent.isHuman) match {
+        neighbors(index, agent, vision(z), neighborhoodCache).filter(Agent.isHuman) match {
           case ns if !ns.isEmpty =>
             val projectedVelocities =  (-granularity to granularity).map(_ * z.maxRotation).map(r => normalize(rotate(z.velocity, r), maxSpeed(z)))
             val nv = projectedVelocities.minBy { v => ns.map(n => distance(position(n), sum(z.position, v))).min }

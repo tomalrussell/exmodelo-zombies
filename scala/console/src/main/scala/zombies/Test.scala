@@ -14,8 +14,9 @@ object Test extends App {
 
   val minSpeed = 0.1 * cellSide(side)
   val infectionRange = 0.2 * cellSide(side)
-  val humanPerception = 0.7 * cellSide(side)
-  val zombiePerception = 1.2 * cellSide(side)
+
+  val humanPerception = 1.5 * cellSide(side)
+  val zombiePerception = 3.0 * cellSide(side)
 
   val humanSpeed = 0.5 * cellSide(side)
   val zombieSpeed = 0.3 * cellSide(side)
@@ -91,6 +92,8 @@ object Test extends App {
     Vector.fill(humans)(Human.generate(world, humanSpeed, humanPerception, humanMaxRotation,  rng)) ++
       Vector.fill(zombies)(Zombie.generate(world, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
 
+  val neighborhoodCache = World.visibleNeighborhoodCache(world, math.max(humanPerception, zombiePerception))
+
 
   def clear(world: World) = {
     print(Ansi.cursorUp(world.side - 1))
@@ -100,7 +103,7 @@ object Test extends App {
   def simulate(hs: Vector[Agent], world: World) = {
     val index = Agent.index(hs, world.side)
     val ai = Agent.infect(index, hs, infectionRange, Agent.zombify(_, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
-    ai.map(Agent.adaptDirectionRotate(index, _, 5, world)).flatMap(Agent.move(_, world, minSpeed))
+    ai.map(Agent.adaptDirectionRotate(index, _, 5, neighborhoodCache)).flatMap(Agent.move(_, world, minSpeed))
   }
 
   def step(hs: Vector[Agent], world: World): Unit = {
@@ -121,7 +124,7 @@ object Test extends App {
 //  }
 //
 //  val begin = System.currentTimeMillis()
-//  bench(agents, world, 2000)
+//  val end = bench(agents, world, 2000)
 //  println(System.currentTimeMillis() - begin)
 
 }

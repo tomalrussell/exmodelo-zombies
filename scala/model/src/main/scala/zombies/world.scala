@@ -106,6 +106,13 @@ object world {
 
     def minCellSide(world: World) = 1.0 / world.side
     def cellDiagonal(world: World) = space.cellDiagonal(world.side)
+
+    def visibleNeighborhoodCache(world: World, range: Double): NeighborhoodCache = {
+      val neighborhoodSize = math.ceil(range / space.cellSide(world.side)).toInt
+      def visible(location: Location) = shadow.visible(location, World.isWall(world, _, _), (world.side, world.side), neighborhoodSize)
+      Array.tabulate(world.side, world.side) { (x, y) => if(isWall(world, x, y)) Array.empty else visible(x, y).toArray }
+    }
+
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
@@ -116,5 +123,7 @@ object world {
     if(World.isWall(world, p._1, p._2)) generatePosition(world, rng) else v
   }
 
+
+  type NeighborhoodCache = Array[Array[Array[(Int, Int)]]]
 
 }

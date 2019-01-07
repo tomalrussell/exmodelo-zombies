@@ -54,6 +54,7 @@ object space {
       Index[T](cellBuffer.map(_.map(_.toArray)), side)
     }
 
+
     def get[T](index: Index[T], x: Int, y: Int) =
       if(x > 0 && x < index.side && y > 0 && y < index.side) index.cells(x)(y).toTraversable
       else Traversable.empty
