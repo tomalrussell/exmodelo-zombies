@@ -24,22 +24,24 @@ object simulation {
       rotationGranularity: Int = 5,
       random: Random) = {
 
+      val cellSide = space.cellSide(world.side)
 
       val agents =
-        Vector.fill(humans)(Human.generate(world, humanSpeed, humanPerception, humanMaxRotation,  random)) ++
-          Vector.fill(zombies)(Zombie.generate(world, zombieSpeed, zombiePerception, zombieMaxRotation, random))
+        Vector.fill(humans)(Human.generate(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
+          Vector.fill(zombies)(Zombie.generate(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
+
 
       Simulation(
         world = world,
         agents = agents,
-        infectionRange = infectionRange,
-        humanSpeed = humanSpeed,
-        humanPerception = humanPerception,
+        infectionRange = infectionRange * cellSide,
+        humanSpeed = humanSpeed * cellSide,
+        humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
-        zombieSpeed = zombieSpeed,
-        zombiePerception = zombiePerception,
+        zombieSpeed = zombieSpeed * cellSide,
+        zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
-        minSpeed = minSpeed,
+        minSpeed = minSpeed * cellSide,
         rotationGranularity = rotationGranularity
       )
 
