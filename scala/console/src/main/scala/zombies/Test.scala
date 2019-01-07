@@ -4,6 +4,7 @@ import com.github.tomaslanger.chalk._
 import zombies.world._
 import zombies.agent._
 import zombies.space._
+import zombies.simulation._
 
 
 import scala.util.Random
@@ -87,36 +88,33 @@ object Test extends App {
       |""".stripMargin
 
 
-  val world = World.computeSlope(World.computeAltitude(World.parse(worldDescription), 0.25), 0.01)
-  val agents =
-    Vector.fill(humans)(Human.generate(world, humanSpeed, humanPerception, humanMaxRotation,  rng)) ++
-      Vector.fill(zombies)(Zombie.generate(world, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
+  val world = Simulation.parseWorld(worldDescription)
+  val simulation = Simulation.initialize(
+    world,
+    infectionRange = infectionRange,
+    humanSpeed = humanSpeed,
+    humanPerception = humanPerception,
+    humanMaxRotation = humanMaxRotation,
+    humans = humans,
+    zombieSpeed = zombieSpeed,
+    zombiePerception = zombiePerception,
+    zombieMaxRotation = zombieMaxRotation,
+    zombies = zombies,
+    minSpeed = minSpeed,
+    random = rng
+  )
 
-  val neighborhoodCache = World.visibleNeighborhoodCache(world, math.max(humanPerception, zombiePerception))
-
-
-  def clear(world: World) = {
-    print(Ansi.cursorUp(world.side - 1))
-    print(Ansi.cursorLeft(world.side))
-  }
-
-  def simulate(hs: Vector[Agent], world: World) = {
-    val index = Agent.index(hs, world.side)
-    val ai = Agent.infect(index, hs, infectionRange, Agent.zombify(_, zombieSpeed, zombiePerception, zombieMaxRotation, rng))
-    ai.map(Agent.adaptDirectionRotate(index, _, 5, neighborhoodCache)).flatMap(Agent.move(_, world, minSpeed))
-  }
-
-  def step(hs: Vector[Agent], world: World): Unit = {
-    if (!hs.isEmpty) {
-      print(console.display(world, hs))
-      val aim = simulate(hs, world)
+  def step(simulation: Simulation): Unit = {
+    if (!simulation.agents.isEmpty) {
+      print(console.display(world, simulation.agents))
+      val newState = simulate(simulation, rng)
       Thread.sleep(100)
-      clear(world)
-      step(aim, world)
+      console.clear(newState.world)
+      step(newState)
     }
   }
 
- step(agents, world)
+ step(simulation)
 
 //  def bench(hs: Vector[Agent], world: World, steps: Int): Vector[Agent] = {
 //   //println(steps)
