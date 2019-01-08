@@ -5,6 +5,9 @@ import space._
 
 import scala.util.Random
 
+import scala.scalajs.js.annotation._
+
+@JSExportTopLevel("world")
 object world {
 
   sealed trait Cell

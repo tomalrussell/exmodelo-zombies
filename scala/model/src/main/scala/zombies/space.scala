@@ -4,7 +4,9 @@ import zombies.move.{Location, Position}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.ClassTag
+import scala.scalajs.js.annotation._
 
+@JSExportTopLevel("space")
 object space {
 
   def neighbors[T](get: (Int, Int) => Traversable[T], x: Int, y: Int, neighborhoodSize: Int) = {

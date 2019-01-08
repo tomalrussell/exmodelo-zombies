@@ -1,8 +1,11 @@
 
 
+val rxVersion = "0.4.0"
+val scalatagsVersion = "0.6.5"
+val scalaJSdomVersion = "0.9.2"
 name := "zombies"
 
-lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi) settings (
+lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings (
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
   OsgiKeys.importPackage := Seq("*;resolution:=optional"),
@@ -13,6 +16,25 @@ lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi) settings
 
 
 
-lazy val console = Project("console", file("console")) dependsOn  (model) settings (
+lazy val console = Project("console", file("console")) dependsOn (model) settings (
   libraryDependencies += "com.github.tomas-langer" % "chalk" % "1.0.2",
+  )
+
+lazy val buildGUI = taskKey[Unit]("buildGUI")
+
+lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
+  libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion,
+  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalaJSdomVersion,
+  libraryDependencies += "com.lihaoyi" %%% "scalarx" % rxVersion,
+  buildGUI := {
+
+    val demoTarget = target.value
+    val demoResource = (resourceDirectory in Compile).value
+
+    IO.copyFile((fullOptJS in Compile).value.data, demoTarget / "js/demo.js")
+    IO.copyFile(dependencyFile.value, demoTarget / "js/deps.js")
+    IO.copyDirectory(cssFile.value, demoTarget / "css")
+    IO.copyDirectory(demoResource, demoTarget)
+  }
 )
+
