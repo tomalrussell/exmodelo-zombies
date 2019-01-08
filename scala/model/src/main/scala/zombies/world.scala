@@ -12,7 +12,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Flor(altitude: Double = 0.0, slope: Slope = Slope()) extends Cell
+  case class Floor(altitude: Double = 0.0, slope: Slope = Slope()) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -23,7 +23,7 @@ object world {
 
     def parse(s: String) = {
       def toWall(c: Char): Option[Cell] = c match {
-        case '0' => Some(Flor())
+        case '0' => Some(Floor())
         case '+' => Some(Wall)
         case _ => None
       }
@@ -54,10 +54,10 @@ object world {
         for {
           x <- 0 until world.side
           y <- 0 until world.side
-          f@Flor(cellLevel, _) <- Seq(cells(x)(y))
+          f@Floor(cellLevel, _) <- Seq(cells(x)(y))
           newLevel =
             neighbors(world.copy(cells = cells), x, y, 1).map {
-              case Flor(l, _) => l
+              case Floor(l, _) => l
               case Wall => 1.0
             }.max - decay
           if newLevel >= decay
@@ -83,7 +83,7 @@ object world {
             ox <- -1 to 1
             oy <- -1 to 1
             if locationIsInTheWorld(world, x + ox, y + oy)
-            f@Flor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
+            f@Floor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
           } yield (ox * (level - cellLevel), oy * (level - cellLevel))
 
         val (slopesX, slopesY) = slopes.unzip
@@ -93,7 +93,7 @@ object world {
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        f@Flor(cellLevel, _) <- Seq(cells(x)(y))
+        f@Floor(cellLevel, _) <- Seq(cells(x)(y))
       } cells(x)(y) = f.copy(slope = slope(x, y, cellLevel))
 
       world.copy(cells = cells)

@@ -10,7 +10,7 @@ object console {
     val index = Agent.index(agents, world.side)
     def toChar(c: Cell, x: Int, y: Int) = c match {
       case Wall => '+'
-      case Flor(l, _) =>
+      case Floor(l, _) =>
         val agents = Index.get(index, x, y)
         if(!agents.isEmpty && agents.forall(Agent.isHuman)) 'H'
         else if(!agents.isEmpty && agents.forall(Agent.isZombie)) 'Z'

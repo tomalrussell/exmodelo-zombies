@@ -70,7 +70,7 @@ object agent {
           World.cell(world, cx, cy) match {
             case None => None
             case Some(Wall) => Some(normalize(opposite(velocity(agent)), minSpeed))
-            case Some(f: Flor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (f.slope.intensity) * maxSpeed(agent))))
+            case Some(f: Floor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (f.slope.intensity) * maxSpeed(agent))))
           }
 
         v.map(v => bound(v, minSpeed, maxSpeed(agent)))

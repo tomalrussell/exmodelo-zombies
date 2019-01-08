@@ -5,10 +5,12 @@ import org.scalajs.dom
 import org.scalajs.dom.raw.Event
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
+import zombies.simulation.Simulation
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
 import zombies.space._
+import zombies.world.{Wall, World}
 
 /*
  * Copyright (C) 24/03/16 // mathieu.leclaire@openmole.org
@@ -46,34 +48,43 @@ object Display {
 
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
-
     val side = 40
 
-  val minSpeed = 0.1 * space.cellSide(side)
-  val infectionRange = 0.2 * space.cellSide(side)
-  val humanPerception = 0.7 * space.cellSide(side)
-  val zombiePerception = 1.2 * space.cellSide(side)
+    val minSpeed = 0.1 * space.cellSide(side)
+    val infectionRange = 0.2 * space.cellSide(side)
+    val humanPerception = 0.7 * space.cellSide(side)
+    val zombiePerception = 1.2 * space.cellSide(side)
 
-  val humanSpeed = 0.5 * space.cellSide(side)
-  val zombieSpeed = 0.3 * space.cellSide(side)
+    val humanSpeed = 0.5 * space.cellSide(side)
+    val zombieSpeed = 0.3 * space.cellSide(side)
 
-  val zombieMaxRotation = 45
-  val humanMaxRotation = 60
+    val zombieMaxRotation = 45
+    val humanMaxRotation = 60
 
-  val humans = 250
-  val zombies = 4
+    val humans = 250
+    val zombies = 4
 
-  val rng = new Random(42)
-  val doorSize = 16
-  val wallSize = (side - doorSize) / 2
+    val rng = new Random(42)
+    val doorSize = 16
+    val wallSize = (side - doorSize) / 2
 
+    val world = Simulation.parseWorld(World.jaude)
 
-    def buildWorld(nbCellsByDimension: Int, worldDescription: String) = {
+    def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
+      world.cells(lineIndex).map { cell =>
+        cell match {
+          case Wall => 1
+          case _ => 0
+        }
+      }
+    }
 
-      val gridSize = 1000
+    def buildWorld(nbCellsByDimension: Int, world: World) = {
+
+      val gridSize = 800
 
       val cellDimension = gridSize.toDouble / nbCellsByDimension
-      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Double]]())((elems, _) => elems) //:+ randomDoubles(nbCellsByDimension))
+      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1))
 
       val scene = svgTags.svg(
         width := gridSize,
@@ -93,5 +104,7 @@ object Display {
 
       org.scalajs.dom.document.body.appendChild(scene)
     }
+
+    buildWorld(side, world)
   }
 }
