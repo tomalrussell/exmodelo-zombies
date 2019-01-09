@@ -115,6 +115,12 @@ object world {
       Array.tabulate(world.side, world.side) { (x, y) => if(isWall(world, x, y)) Array.empty else visible(x, y).toArray }
     }
 
+    def randomPosition(world: World, rng: Random): Position = {
+      val v = randomUnitVector(rng)
+      val p = positionToLocation(v, world.side, world.side)
+      if(World.isWall(world, p._1, p._2)) randomPosition(world, rng) else v
+    }
+
     def jaude =
       """+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
@@ -179,12 +185,6 @@ object world {
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
-
-  def generatePosition(world: World, rng: Random): Position = {
-    val v = randomUnitVector(rng)
-    val p = positionToLocation(v, world.side, world.side)
-    if(World.isWall(world, p._1, p._2)) generatePosition(world, rng) else v
-  }
 
 
   type NeighborhoodCache = Array[Array[Array[(Int, Int)]]]

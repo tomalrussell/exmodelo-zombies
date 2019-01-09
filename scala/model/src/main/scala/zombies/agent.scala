@@ -61,6 +61,13 @@ object agent {
 
     def index(agents: Vector[Agent], side: Int) = Index[Agent](agents, location(_, side), side)
 
+
+    def randomPosition(world: World, rng: Random) = World.randomPosition(world, rng)
+    def randomVelocity(maxSpeed: Double, rng: Random) = {
+      val (x, y) = randomUnitVector(rng)
+      normalize((x * 2 - 1, y * 2 - 1), maxSpeed)
+    }
+
     def move(agent: Agent, world: World, minSpeed: Double) = {
       val v = {
         val (px, py) = sum(position(agent), velocity(agent))
@@ -163,16 +170,16 @@ object agent {
 
   object Human {
     def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
-      val p = generatePosition(world, rng)
-      val v = normalize(randomUnitVector(rng), maxSpeed)
+      val p = Agent.randomPosition(world, rng)
+      val v = Agent.randomVelocity(maxSpeed, rng)
       Human(p, v, maxSpeed, vision, maxRotation)
     }
   }
 
   object Zombie {
     def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
-      val p = generatePosition(world, rng)
-      val v = normalize(randomUnitVector(rng), maxSpeed)
+      val p = Agent.randomPosition(world, rng)
+      val v = Agent.randomVelocity(maxSpeed, rng)
       Zombie(p, v, maxSpeed, vision, maxRotation)
     }
   }
