@@ -9,6 +9,8 @@ object simulation {
 
   object Simulation {
 
+
+
     def initialize(
       world: World,
       infectionRange: Double,
@@ -27,9 +29,8 @@ object simulation {
       val cellSide = space.cellSide(world.side)
 
       val agents =
-        Vector.fill(humans)(Human.generate(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
-          Vector.fill(zombies)(Zombie.generate(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
-
+        Vector.fill(humans)(Human.random(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
+          Vector.fill(zombies)(Zombie.random(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
 
       Simulation(
         world = world,
@@ -76,14 +77,14 @@ object simulation {
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
-    def run0(steps: Int, acc: List[T]): List[T] =
+    def run0(steps: Int, simulation: Simulation, acc: List[T]): List[T] =
       if(steps == 0) acc.reverse else {
         val s = step(simulation, neighborhoodCache, rng)
-        run0(steps - 1, result(s) :: acc)
+        run0(steps - 1, s, result(s) :: acc)
       }
 
 
-    run0(steps, List())
+    run0(steps, simulation, List())
   }
 
 }

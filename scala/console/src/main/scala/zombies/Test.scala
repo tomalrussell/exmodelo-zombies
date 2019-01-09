@@ -21,17 +21,15 @@ object Test extends App {
   val zombieSpeed = 0.3
 
   val zombieMaxRotation = 45
-  val humanMaxRotation = 60
+  val humanMaxRotation = 90
 
   val humans = 250
-  val zombies = 4
-
-  val worldDescription = World.jaude
+  val zombies = 1
 
   val rng = new Random(42)
 
-  val world = Simulation.parseWorld(worldDescription)
-  val simulation = Simulation.initialize(
+  val world = World.jaude
+  val noZombie = Simulation.initialize(
     world,
     infectionRange = infectionRange,
     humanSpeed = humanSpeed,
@@ -41,12 +39,21 @@ object Test extends App {
     zombieSpeed = zombieSpeed,
     zombiePerception = zombiePerception,
     zombieMaxRotation = zombieMaxRotation,
-    zombies = zombies,
+    zombies = 0,
     minSpeed = minSpeed,
     random = rng
   )
 
 
+  def zombie(y: Double) = {
+    val cellSide = space.cellSide(world.side)
+    val speed = zombieSpeed * cellSide
+    val position = (y * cellSide, 0.0)
+    val velocity = move.normalize((0.0, 1.0), speed)
+    Zombie(position, velocity, speed, zombiePerception * cellSide, zombieMaxRotation)
+  }
+
+  val simulation = noZombie.copy(agents = noZombie.agents ++ Seq(zombie(25)))
   val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
   def step(simulation: Simulation): Unit = {
