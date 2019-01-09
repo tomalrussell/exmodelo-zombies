@@ -121,7 +121,7 @@ object world {
       if(World.isWall(world, p._1, p._2)) randomPosition(world, rng) else v
     }
 
-    def jaude =
+    def jaude = parse {
       """+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
@@ -163,15 +163,17 @@ object world {
         |+++++0000000000000++++00000+++++++++++++
         |++++++++++++++++++++++00000+++++++++++++
         |""".stripMargin
+    }
 
 
-    def square(side: Int) =
+    def square(side: Int) = parse {
       s"""${"+" * side}\n""" +
         s"""+${"0" * (side - 2)}+\n""" * (side - 2) +
         s"""${"+" * side}\n"""
+    }
 
 
-    def place(side: Int, halfDoorSize: Int) = {
+    def place(side: Int, halfDoorSize: Int) = parse {
       val doorSize = halfDoorSize * 2
       assert(side > doorSize)
 
