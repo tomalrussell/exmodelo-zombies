@@ -46,10 +46,13 @@ object Test extends App {
     random = rng
   )
 
+
+  val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
+
   def step(simulation: Simulation): Unit = {
     if (!simulation.agents.isEmpty) {
       print(console.display(world, simulation.agents))
-      val newState = simulate(simulation, rng)
+      val newState = _root_.zombies.simulation.step(simulation, neighborhoodCache, rng)
       Thread.sleep(100)
       console.clear(newState.world)
       step(newState)
