@@ -66,25 +66,24 @@ object simulation {
     minSpeed: Double,
     rotationGranularity: Int)
 
-  def simulate(simulation: Simulation, rng: Random) = {
+  def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
-    val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
-
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, simulation.zombieSpeed, simulation.zombiePerception, simulation.zombieMaxRotation, rng))
     val newAgents = ai.map(Agent.adaptDirectionRotate(index, _, 5, neighborhoodCache)).flatMap(Agent.move(_, simulation.world, simulation.minSpeed))
     simulation.copy(agents = newAgents)
   }
 
 
-  def run[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
+  def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
+    val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
     def run0(steps: Int, acc: List[T]): List[T] =
       if(steps == 0) acc.reverse else {
-        val s = simulate(simulation, rng)
+        val s = step(simulation, neighborhoodCache, rng)
         run0(steps - 1, result(s) :: acc)
       }
 
-    
+
     run0(steps, List())
   }
 
