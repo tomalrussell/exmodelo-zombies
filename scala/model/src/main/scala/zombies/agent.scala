@@ -8,6 +8,7 @@ import scala.util.Random
 
 object agent {
 
+
   sealed trait Agent
   case class Human(position: Position, velocity: Velocity, maxSpeed: Double, vision: Double, maxRotation: Double) extends Agent
   case class Zombie(position: Position, velocity: Velocity, maxSpeed: Double, vision: Double, maxRotation: Double) extends Agent
@@ -105,10 +106,9 @@ object agent {
     }
 
     def neighbors(index: Index[Agent], agent: Agent, range: Double, neighborhood: NeighborhoodCache) = {
-      val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt
       val (x, y) = Agent.location(agent, index.side)
       neighborhood(x)(y).
-        flatMap { case(x, y) => Index.get(index, y, y) }.
+        flatMap { case(x, y) => Index.get(index, x, y) }.
         filter(n => distance(Agent.position(n), Agent.position(agent)) < range)
     }
 
@@ -169,7 +169,7 @@ object agent {
   }
 
   object Human {
-    def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(maxSpeed, rng)
       Human(p, v, maxSpeed, vision, maxRotation)
@@ -177,7 +177,7 @@ object agent {
   }
 
   object Zombie {
-    def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(maxSpeed, rng)
       Zombie(p, v, maxSpeed, vision, maxRotation)

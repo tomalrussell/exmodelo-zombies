@@ -9,6 +9,8 @@ object simulation {
 
   object Simulation {
 
+
+
     def initialize(
       world: World,
       infectionRange: Double,
@@ -27,9 +29,8 @@ object simulation {
       val cellSide = space.cellSide(world.side)
 
       val agents =
-        Vector.fill(humans)(Human.generate(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
-          Vector.fill(zombies)(Zombie.generate(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
-
+        Vector.fill(humans)(Human.random(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
+          Vector.fill(zombies)(Zombie.random(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
 
       Simulation(
         world = world,

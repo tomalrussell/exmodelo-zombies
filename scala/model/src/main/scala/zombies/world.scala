@@ -171,8 +171,10 @@ object world {
         s"""${"+" * side}\n"""
 
 
-    def place(side: Int, doorSize: Int) = {
+    def place(side: Int, halfDoorSize: Int) = {
+      val doorSize = halfDoorSize * 2
       assert(side > doorSize)
+
       val wallSize = (side - doorSize) / 2
 
       s"""${"+" * wallSize}${"0" * doorSize}${"+" * wallSize}\n""" +
