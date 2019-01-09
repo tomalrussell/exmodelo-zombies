@@ -76,14 +76,14 @@ object simulation {
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
-    def run0(steps: Int, acc: List[T]): List[T] =
+    def run0(steps: Int, simulation: Simulation, acc: List[T]): List[T] =
       if(steps == 0) acc.reverse else {
         val s = step(simulation, neighborhoodCache, rng)
-        run0(steps - 1, result(s) :: acc)
+        run0(steps - 1, s, result(s) :: acc)
       }
 
 
-    run0(steps, List())
+    run0(steps, simulation, List())
   }
 
 }
