@@ -181,7 +181,7 @@ object world {
   case class World(cells: Array[Array[Cell]], side: Int)
 
   def generatePosition(world: World, rng: Random): Position = {
-    val v = randomVector(rng)
+    val v = randomUnitVector(rng)
     val p = positionToLocation(v, world.side, world.side)
     if(World.isWall(world, p._1, p._2)) generatePosition(world, rng) else v
   }

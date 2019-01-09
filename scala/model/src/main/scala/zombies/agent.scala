@@ -25,7 +25,7 @@ object agent {
     }
 
     def zombify(human: Human, zombieMaxSpeed: Double, zombieVision: Double, zombieMaxRotation: Double, rng: Random) =
-      Zombie(human.position, normalize(randomVector(rng), zombieMaxSpeed), zombieMaxSpeed, zombieVision, zombieMaxRotation)
+      Zombie(human.position, normalize(randomUnitVector(rng), zombieMaxSpeed), zombieMaxSpeed, zombieVision, zombieMaxRotation)
 
     def position(agent: Agent) = agent match {
       case h: Human => h.position
@@ -164,7 +164,7 @@ object agent {
   object Human {
     def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = generatePosition(world, rng)
-      val v = normalize(randomVector(rng), maxSpeed)
+      val v = normalize(randomUnitVector(rng), maxSpeed)
       Human(p, v, maxSpeed, vision, maxRotation)
     }
   }
@@ -172,7 +172,7 @@ object agent {
   object Zombie {
     def generate(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = generatePosition(world, rng)
-      val v = normalize(randomVector(rng), maxSpeed)
+      val v = normalize(randomUnitVector(rng), maxSpeed)
       Zombie(p, v, maxSpeed, vision, maxRotation)
     }
   }

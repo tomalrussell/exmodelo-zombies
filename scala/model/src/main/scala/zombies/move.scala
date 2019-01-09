@@ -38,7 +38,7 @@ object move {
 
   def diff(v1: (Double, Double), v2: (Double, Double)) = (v2._1 - v1._1, v2._2 - v1._2)
 
-  def randomVector(rng: Random) = (rng.nextDouble(), rng.nextDouble())
+  def randomUnitVector(rng: Random) = (2 * rng.nextDouble() - 1, 2 * rng.nextDouble() - 1)
 
   def positionToLocation(v: Position, xSize: Int, ySize: Int): Location = {
     val (x, y) = v

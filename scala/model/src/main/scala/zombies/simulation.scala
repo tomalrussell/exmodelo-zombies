@@ -73,7 +73,6 @@ object simulation {
     simulation.copy(agents = newAgents)
   }
 
-
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
