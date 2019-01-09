@@ -11,7 +11,7 @@ import scala.util.Random
 import scaladget.svg._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
-import rx ._
+import rx._
 
 /*
  * Copyright (C) 24/03/16 // mathieu.leclaire@openmole.org
@@ -84,6 +84,22 @@ object Display {
       random = rng
     )
 
+    val gridSize = 800
+
+    val scene = svgTags.svg(
+      width := gridSize,
+      height := gridSize
+    ).render
+
+    val cellDimension = gridSize.toDouble / side
+
+    val agentSize = cellDimension / 3
+    val thirdAgentSize = (agentSize / 3)
+    val offsetY = agentSize / 2
+    val offsetX = agentSize / 3
+
+    val agentPath = path().m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
+
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
       world.cells(lineIndex).map { cell =>
         cell match {
@@ -94,24 +110,7 @@ object Display {
     }
 
     def buildWorld(nbCellsByDimension: Int, world: World) = {
-
-      val gridSize = 800
-
-      val cellDimension = gridSize.toDouble / nbCellsByDimension
       val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
-
-
-      val agentSize = cellDimension / 3
-      val thirdAgentSize = (agentSize / 3)
-      val offsetY = agentSize / 2
-      val offsetX = agentSize / 3
-
-      val agentPath = path().m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
-
-      val scene = svgTags.svg(
-        width := gridSize,
-        height := gridSize
-      ).render
 
       for {
         col <- (0 to nbCellsByDimension - 1).toArray
@@ -124,25 +123,29 @@ object Display {
         )
       }
 
-      simulation.agents.foreach { agent =>
-        val (ax, ay) = ((Agent.position(agent)._2 * gridSize) + 1, (Agent.position(agent)._1) * gridSize + 1)
-        val rotation = math.atan2(Agent.velocity(agent)._1,  Agent.velocity(agent)._2).toDegrees
-        val color = agent match {
-          case h: Human => "green"
-          case _ => "red"
-        }
+    }
 
-
-    //    scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
-        scene.appendChild(agentPath.render(fill := color, transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
-     //   scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
+    def buildAgent(agent: Agent) = {
+      val (ax, ay) = ((Agent.position(agent)._2 * gridSize) + 1, (Agent.position(agent)._1) * gridSize + 1)
+      val rotation = math.atan2(Agent.velocity(agent)._1, Agent.velocity(agent)._2).toDegrees
+      val color = agent match {
+        case h: Human => "green"
+        case _ => "red"
       }
+      agentPath.render(fill := color, transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render
+    }
 
-
-      org.scalajs.dom.document.body.appendChild(scene)
+    def buildAgents(agents: Vector[Agent]) = {
+      agents.foreach { agent =>
+        //    scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
+        scene.appendChild(buildAgent(agent))
+        //   scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
+      }
     }
 
     buildWorld(side, simulation.world)
+    buildAgents(simulation.agents)
+    org.scalajs.dom.document.body.appendChild(scene)
   }
 
 }
