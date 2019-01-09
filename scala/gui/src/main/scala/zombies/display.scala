@@ -16,6 +16,8 @@ import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 import rx._
 
+import scala.scalajs.js.timers
+
 /*
  * Copyright (C) 24/03/16 // mathieu.leclaire@openmole.org
  *
@@ -105,7 +107,7 @@ object display {
     val wallSize = (side - doorSize) / 2
 
     val simulation = Var(Simulation.initialize(
-      Simulation.parseWorld(World.jaude),
+      World.jaude,
       infectionRange = infectionRange,
       humanSpeed = humanSpeed,
       humanPerception = humanPerception,
@@ -183,13 +185,16 @@ object display {
       scene.appendChild(element)
     }
 
-    def step = {
+    def step: Unit = {
       val tmp = _root_.zombies.simulation.step(simulation.now, neighborhoodCache, rng)
       simulation.update(tmp)
       agents.update(simulation.now.agents)
+      timers.setTimeout(100) {
+        step
+      }
     }
 
-    val stepButton = button("Next", btn_danger, onclick := { () => step })
+    val stepButton = button("Start", btn_danger, onclick := { () => step })
 
     buildWorld(side, simulation.now.world)
     buildAgents

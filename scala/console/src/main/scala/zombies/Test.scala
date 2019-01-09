@@ -1,9 +1,7 @@
 package zombies
 
-import com.github.tomaslanger.chalk._
 import zombies.world._
 import zombies.agent._
-import zombies.space._
 import zombies.simulation._
 
 
