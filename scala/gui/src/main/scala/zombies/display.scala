@@ -15,6 +15,7 @@ import scaladget.bootstrapnative.bsn._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 import rx._
+import scaladget.tools._
 
 import scala.scalajs.js.timers
 
@@ -92,6 +93,8 @@ object display {
       random = rng
     ))
 
+    val timeOut: Var[Option[Int]] = Var(None)
+
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.now.world, math.max(simulation.now.humanPerception, simulation.now.zombiePerception))
 
     val gridSize = 800
@@ -142,7 +145,7 @@ object display {
         } yield {
           val ax = (Agent.position(a)._2 * gridSize) + 1
           val ay = (Agent.position(a)._1) * gridSize + 1
-          val rotation = math.atan2(Agent.velocity(a)._2, - Agent.velocity(a)._1).toDegrees
+          val rotation = math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees
           val color = a match {
             case h: Human => "green"
             case _ => "red"
@@ -153,15 +156,35 @@ object display {
       scene.appendChild(element)
     }
 
+    timeOut.trigger{
+      step
+    }
+
     def step: Unit = {
       val tmp = _root_.zombies.simulation.step(simulation.now, neighborhoodCache, rng)
       simulation.update(tmp)
-      timers.setTimeout(100) {
-        step
+      timeOut.foreach {
+        _ match {
+          case Some(to: Int) =>
+            timers.setTimeout(to) {
+            step
+          }
+          case _ =>
+        }
       }
     }
 
-    val stepButton = button("Start", btn_danger, onclick := { () => step })
+    val stepButton = button(span(Rx {
+      timeOut() match {
+        case Some(_) => "Stop"
+        case _ => "Start"
+      }
+    }), btn_default, onclick := { () =>
+      timeOut() = timeOut.now match {
+        case None => Some(100)
+        case _ => None
+      }
+    })
 
     buildWorld(side, simulation.now.world)
     buildAgents
