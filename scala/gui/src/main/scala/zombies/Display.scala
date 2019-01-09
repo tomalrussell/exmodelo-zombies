@@ -1,7 +1,6 @@
 package zombies
 
 import scalatags.JsDom.all._
-import org.scalajs.dom.raw.{Event, SVGPathElement}
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
 import scalatags.JsDom.svgAttrs._
@@ -12,6 +11,7 @@ import scala.util.Random
 import scaladget.svg._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
+import rx ._
 
 /*
  * Copyright (C) 24/03/16 // mathieu.leclaire@openmole.org
@@ -59,8 +59,8 @@ object Display {
     val humanSpeed = 0.5 * space.cellSide(side)
     val zombieSpeed = 0.3 * space.cellSide(side)
 
-    val zombieMaxRotation = 180
-    val humanMaxRotation = 360
+    val zombieMaxRotation = 45
+    val humanMaxRotation = 60
 
     val humans = 250
     val zombies = 4
@@ -125,17 +125,17 @@ object Display {
       }
 
       simulation.agents.foreach { agent =>
-        val (ax, ay) = ((Agent.position(agent)._2 * gridSize), (Agent.position(agent)._1) * gridSize)
-        val rotation = math.toDegrees(math.atan(Agent.velocity(agent)._2 / Agent.velocity(agent)._1))
-        println("ROTATION " + rotation)
+        val (ax, ay) = ((Agent.position(agent)._2 * gridSize) + 1, (Agent.position(agent)._1) * gridSize + 1)
+        val rotation = math.atan2(Agent.velocity(agent)._1,  Agent.velocity(agent)._2).toDegrees
         val color = agent match {
           case h: Human => "green"
           case _ => "red"
         }
 
-        //scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
+
+    //    scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
         scene.appendChild(agentPath.render(fill := color, transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
-       // scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
+     //   scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
       }
 
 
