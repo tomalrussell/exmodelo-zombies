@@ -1,15 +1,16 @@
 package zombies
 
 import scalatags.JsDom.all._
-import org.scalajs.dom
-import org.scalajs.dom.raw.Event
+import org.scalajs.dom.raw.{Event, SVGPathElement}
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
-import zombies.simulation.Simulation
+import scalatags.JsDom.svgAttrs._
+import zombies.agent.{Agent, Human}
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
-import zombies.space._
+import scaladget.svg._
+import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 
 /*
@@ -58,17 +59,30 @@ object Display {
     val humanSpeed = 0.5 * space.cellSide(side)
     val zombieSpeed = 0.3 * space.cellSide(side)
 
-    val zombieMaxRotation = 45
-    val humanMaxRotation = 60
+    val zombieMaxRotation = 180
+    val humanMaxRotation = 360
 
     val humans = 250
     val zombies = 4
 
     val rng = new Random(42)
-    val doorSize = 16
+    val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
-    val world = Simulation.parseWorld(World.jaude)
+    val simulation = Simulation.initialize(
+      Simulation.parseWorld(World.jaude),
+      infectionRange = infectionRange,
+      humanSpeed = humanSpeed,
+      humanPerception = humanPerception,
+      humanMaxRotation = humanMaxRotation,
+      humans = humans,
+      zombieSpeed = zombieSpeed,
+      zombiePerception = zombiePerception,
+      zombieMaxRotation = zombieMaxRotation,
+      zombies = zombies,
+      minSpeed = minSpeed,
+      random = rng
+    )
 
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
       world.cells(lineIndex).map { cell =>
@@ -84,7 +98,15 @@ object Display {
       val gridSize = 800
 
       val cellDimension = gridSize.toDouble / nbCellsByDimension
-      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1))
+      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
+
+
+      val agentSize = cellDimension / 3
+      val thirdAgentSize = (agentSize / 3)
+      val offsetY = agentSize / 2
+      val offsetX = agentSize / 3
+
+      val agentPath = path().m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
       val scene = svgTags.svg(
         width := gridSize,
@@ -102,9 +124,25 @@ object Display {
         )
       }
 
+      simulation.agents.foreach { agent =>
+        val (ax, ay) = ((Agent.position(agent)._2 * gridSize), (Agent.position(agent)._1) * gridSize)
+        val rotation = math.toDegrees(math.atan(Agent.velocity(agent)._2 / Agent.velocity(agent)._1))
+        println("ROTATION " + rotation)
+        val color = agent match {
+          case h: Human => "green"
+          case _ => "red"
+        }
+
+        //scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
+        scene.appendChild(agentPath.render(fill := color, transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
+       // scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
+      }
+
+
       org.scalajs.dom.document.body.appendChild(scene)
     }
 
-    buildWorld(side, world)
+    buildWorld(side, simulation.world)
   }
+
 }
