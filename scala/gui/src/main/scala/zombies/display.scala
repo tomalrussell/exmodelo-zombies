@@ -1,14 +1,17 @@
 package zombies
 
+import org.scalajs.dom.raw.SVGElement
 import scalatags.JsDom.all._
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
-import scalatags.JsDom.svgAttrs._
-import zombies.agent.{Agent, Human}
+import scalatags.JsDom.svgAttrs
+import zombies.agent.{Agent, Human, Zombie}
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
 import scaladget.svg._
+import scaladget.tools
+import scaladget.bootstrapnative.bsn._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 import rx._
@@ -29,7 +32,7 @@ import rx._
  * You should have received a copy of the GNU General Public License
  */
 
-object Display {
+object display {
 
   object Color {
 
@@ -47,17 +50,49 @@ object Display {
     )
   }
 
+  implicit def seqAgentToSeqReactiveAgent(s: Seq[Agent]): Seq[ReactiveAgent] = s.map {
+    agentToReactiveAgent
+  }
+
+  implicit def agentToReactiveAgent(agent: Agent): ReactiveAgent = {
+    agent match {
+      case zombie: Zombie => ReactiveZombie(Var(zombie.position), Var(zombie.velocity))
+      case human: Human => ReactiveHuman(Var(human.position), Var(human.velocity))
+    }
+  }
+
+  trait ReactiveAgent
+
+  case class ReactiveHuman(position: Var[move.Position], velocity: Var[move.Velocity]) extends ReactiveAgent
+
+  case class ReactiveZombie(position: Var[move.Position], velocity: Var[move.Velocity]) extends ReactiveAgent
+
+  object ReactiveAgent {
+    def position(reactiveAgent: ReactiveAgent) = reactiveAgent match {
+      case h: ReactiveHuman => h.position
+      case z: ReactiveZombie => z.position
+    }
+
+    def velocity(reactiveAgent: ReactiveAgent) = reactiveAgent match {
+      case h: ReactiveHuman => h.velocity
+      case z: ReactiveZombie => z.velocity
+    }
+  }
+
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
+
+    implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+
     val side = 40
 
-    val minSpeed = 0.1 * space.cellSide(side)
-    val infectionRange = 0.2 * space.cellSide(side)
-    val humanPerception = 0.7 * space.cellSide(side)
-    val zombiePerception = 1.2 * space.cellSide(side)
+    val minSpeed = 0.1
+    val infectionRange = 0.2
+    val humanPerception = 0.7
+    val zombiePerception = 1.2
 
-    val humanSpeed = 0.5 * space.cellSide(side)
-    val zombieSpeed = 0.3 * space.cellSide(side)
+    val humanSpeed = 0.5
+    val zombieSpeed = 0.3
 
     val zombieMaxRotation = 45
     val humanMaxRotation = 60
@@ -69,7 +104,7 @@ object Display {
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
-    val simulation = Simulation.initialize(
+    val simulation = Var(Simulation.initialize(
       Simulation.parseWorld(World.jaude),
       infectionRange = infectionRange,
       humanSpeed = humanSpeed,
@@ -82,7 +117,11 @@ object Display {
       zombies = zombies,
       minSpeed = minSpeed,
       random = rng
-    )
+    ))
+
+    val neighborhoodCache = World.visibleNeighborhoodCache(simulation.now.world, math.max(simulation.now.humanPerception, simulation.now.zombiePerception))
+
+    val agents: Var[Seq[ReactiveAgent]] = Var(simulation.now.agents)
 
     val gridSize = 800
 
@@ -125,27 +164,39 @@ object Display {
 
     }
 
-    def buildAgent(agent: Agent) = {
-      val (ax, ay) = ((Agent.position(agent)._2 * gridSize) + 1, (Agent.position(agent)._1) * gridSize + 1)
-      val rotation = math.atan2(Agent.velocity(agent)._1, Agent.velocity(agent)._2).toDegrees
-      val color = agent match {
-        case h: Human => "green"
-        case _ => "red"
-      }
-      agentPath.render(fill := color, transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render
+    def buildAgents = {
+      val element: SVGElement = tools.rxSVGMod(Rx {
+        //svgTags.g(
+        svgTags.g((for {
+          a <- agents()
+        } yield {
+          val ax = (ReactiveAgent.position(a)()._2 * gridSize) + 1
+          val ay = (ReactiveAgent.position(a)()._1) * gridSize + 1
+          val rotation = math.atan2(ReactiveAgent.velocity(a)()._2, -ReactiveAgent.velocity(a)()._1).toDegrees
+          val color = a match {
+            case h: ReactiveHuman => "green"
+            case _ => "red"
+          }
+          agentPath.render(svgAttrs.fill := color, svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})")
+        }): _*)
+      })
+      scene.appendChild(element)
     }
 
-    def buildAgents(agents: Vector[Agent]) = {
-      agents.foreach { agent =>
-        //    scene.appendChild(svgTags.rect(x := 0, y := 0, height := agentSize, width := 2*thirdAgentSize, fill := "grey", transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})").render)
-        scene.appendChild(buildAgent(agent))
-        //   scene.appendChild(svgTags.circle(cx := ax, cy := ay, r := cellDimension / 50,  fill := "orange").render)
-      }
+    def step = {
+      val tmp = _root_.zombies.simulation.step(simulation.now, neighborhoodCache, rng)
+      simulation.update(tmp)
+      agents.update(simulation.now.agents)
     }
 
-    buildWorld(side, simulation.world)
-    buildAgents(simulation.agents)
+    val stepButton = button("Next", btn_danger, onclick := { () => step })
+
+    buildWorld(side, simulation.now.world)
+    buildAgents
+
+
+    org.scalajs.dom.document.body.appendChild(stepButton)
     org.scalajs.dom.document.body.appendChild(scene)
-  }
 
+  }
 }

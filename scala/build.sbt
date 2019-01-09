@@ -28,6 +28,7 @@ lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (Exec
   libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalaJSdomVersion,
   libraryDependencies += "com.lihaoyi" %%% "scalarx" % rxVersion,
   libraryDependencies += "fr.iscpif.scaladget" %%% "svg" % scaladgetVersion,
+  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapnative" % scaladgetVersion,
   buildGUI := {
 
     val demoTarget = target.value
