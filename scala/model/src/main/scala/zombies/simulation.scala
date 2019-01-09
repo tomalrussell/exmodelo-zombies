@@ -75,4 +75,17 @@ object simulation {
     simulation.copy(agents = newAgents)
   }
 
+
+  def run[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
+
+    def run0(steps: Int, acc: List[T]): List[T] =
+      if(steps == 0) acc.reverse else {
+        val s = simulate(simulation, rng)
+        run0(steps - 1, result(s) :: acc)
+      }
+
+    
+    run0(steps, List())
+  }
+
 }
