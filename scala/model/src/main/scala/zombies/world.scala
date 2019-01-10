@@ -16,28 +16,30 @@ object world {
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
-    def cell(world: World, x: Int, y: Int) =
-      if(x < 0 || x >= world.side || y < 0 || y >= world.side) None
-      else Some(world.cells(x)(y))
+    def cell(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
 
+    def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.05)(worldDescription: String) = {
+      def parse(s: String) = {
+        def toWall(c: Char): Option[Cell] = c match {
+          case '0' => Some(Floor())
+          case '+' => Some(Wall)
+          case _ => None
+        }
 
-    def parse(s: String) = {
-      def toWall(c: Char): Option[Cell] = c match {
-        case '0' => Some(Floor())
-        case '+' => Some(Wall)
-        case _ => None
+        val cells = s.split("\n").map(l => l.flatMap(toWall).toArray).filter(!_.isEmpty)
+
+        val xMax = cells.size
+        val yMax = cells.map(_.size).max
+
+        assert(cells.forall(_.size == yMax), s"All lines should have the same length: ${cells.map(_.size).mkString(" ")}")
+        assert(xMax == yMax, s"World should be a square, wrong dimensions: $xMax x $yMax")
+
+        World(cells, xMax)
       }
-
-      val cells = s.split("\n").map(l => l.flatMap(toWall).toArray).filter(!_.isEmpty)
-
-      val xMax = cells.size
-      val yMax = cells.map(_.size).max
-
-      assert(cells.forall(_.size == yMax), s"All lines should have the same length: ${cells.map(_.size).mkString(" ")}")
-      assert(xMax == yMax, s"World should be a square, wrong dimensions: $xMax x $yMax")
-
-      World(cells, xMax)
+      val world = parse(worldDescription)
+      World.computeSlope(World.computeAltitude(world, altitudeLambdaDecay), slopeIntensity)
     }
+
 
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
       x >= 0 && y >= 0 && x < world.side && y < world.side
@@ -45,8 +47,13 @@ object world {
     def neighbors(w: World, x: Int, y: Int, neighborhoodSize: Int) =
       space.neighbors(cell(w, _, _), x, y, neighborhoodSize)
 
-    def computeAltitude(world: World, decay: Double) = {
-      val cells = copyCells(world.cells)
+    def computeAltitude(world: World, lambda: Double) = {
+      val distances = Array.tabulate(world.side, world.side) { (x, y) =>
+        world.cells(x)(y) match {
+          case Wall => 0.0
+          case _ => Double.PositiveInfinity
+        }
+      }
 
       def pass(): Unit = {
         var finished = true
@@ -54,16 +61,12 @@ object world {
         for {
           x <- 0 until world.side
           y <- 0 until world.side
-          f@Floor(cellLevel, _) <- Seq(cells(x)(y))
-          newLevel =
-            neighbors(world.copy(cells = cells), x, y, 1).map {
-              case Floor(l, _) => l
-              case Wall => 1.0
-            }.max - decay
-          if newLevel >= decay
-          if cellLevel != newLevel
+          previousDistance = distances(x)(y)
+          if previousDistance != 0.0
+          newDistance = space.neighbors(space.get(distances, _, _), x, y, 1).min + 1.0
+          if previousDistance != newDistance
         } {
-          cells(x)(y) = f.copy(altitude =  newLevel)
+          distances(x)(y) = newDistance
           finished = false
         }
 
@@ -71,30 +74,42 @@ object world {
       }
 
       pass()
-      world.copy(cells = cells)
+
+
+      def toExponential(cells: Array[Array[Cell]]) =
+        cells.zipWithIndex.map { case (l, x) =>
+          l.zipWithIndex.map { case(c, y) =>
+            c match {
+              case f: Floor => f.copy(altitude = math.exp(-lambda * distances(x)(y)))
+              case x => x
+            }
+          }
+        }
+      
+      world.copy(cells = toExponential(world.cells))
     }
 
     def computeSlope(world: World, intensity: Double) = {
       val cells = copyCells(world.cells)
 
-      def slope(x: Int, y: Int, level: Double) = {
+      def slope(x: Int, y: Int, altitude: Double) = {
         val slopes =
           for {
             ox <- -1 to 1
             oy <- -1 to 1
             if locationIsInTheWorld(world, x + ox, y + oy)
             f@Floor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
-          } yield (ox * (level - cellLevel), oy * (level - cellLevel))
+          } yield (ox * (altitude - cellLevel), oy * (altitude - cellLevel))
 
         val (slopesX, slopesY) = slopes.unzip
-        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, intensity)
+        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, altitude * intensity)
       }
 
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        f@Floor(cellLevel, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = f.copy(slope = slope(x, y, cellLevel))
+        c@Floor(_, _) <- Seq(cells(x)(y))
+      } cells(x)(y) = c.copy(slope = slope(x, y, c.altitude))
 
       world.copy(cells = cells)
     }
@@ -121,7 +136,7 @@ object world {
       if(World.isWall(world, p._1, p._2)) randomPosition(world, rng) else v
     }
 
-    def jaude = parse {
+    def jaude = parse() {
       """+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
@@ -166,14 +181,14 @@ object world {
     }
 
 
-    def square(side: Int) = parse {
+    def square(side: Int) = parse() {
       s"""${"+" * side}\n""" +
         s"""+${"0" * (side - 2)}+\n""" * (side - 2) +
         s"""${"+" * side}\n"""
     }
 
 
-    def place(side: Int, halfDoorSize: Int) = parse {
+    def place(side: Int, halfDoorSize: Int) = parse() {
       val doorSize = halfDoorSize * 2
       assert(side > doorSize)
 
