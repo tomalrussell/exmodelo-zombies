@@ -60,42 +60,35 @@ object display {
 
     val side = 40
 
-    val minSpeed = 0.1
-    val infectionRange = 0.2
-    val humanPerception = 0.7
-    val zombiePerception = 1.2
-
-    val humanSpeed = 0.5
-    val zombieSpeed = 0.3
-
-    val zombieMaxRotation = 45
-    val humanMaxRotation = 60
-
-    val humans = 250
-    val zombies = 4
-
     val rng = new Random(42)
+
+    def initialize = Simulation.initialize(
+      World.jaude,
+      controls.values(0).asInstanceOf[Double],
+      controls.values(1).asInstanceOf[Double],
+      controls.values(2).asInstanceOf[Double],
+      controls.values(3).asInstanceOf[Double],
+      controls.values(4).asInstanceOf[Int],
+      controls.values(5).asInstanceOf[Double],
+      controls.values(6).asInstanceOf[Double],
+      controls.values(7).asInstanceOf[Double],
+      controls.values(8).asInstanceOf[Int],
+      controls.values(9).asInstanceOf[Double],
+      controls.values(10).asInstanceOf[Int],
+      random = rng
+    )
+
+
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
-    val simulation = Var(Simulation.initialize(
-      World.jaude,
-      infectionRange = infectionRange,
-      humanSpeed = humanSpeed,
-      humanPerception = humanPerception,
-      humanMaxRotation = humanMaxRotation,
-      humans = humans,
-      zombieSpeed = zombieSpeed,
-      zombiePerception = zombiePerception,
-      zombieMaxRotation = zombieMaxRotation,
-      zombies = zombies,
-      minSpeed = minSpeed,
-      random = rng
-    ))
+    val simulation: Var[Option[Simulation]] = Var(None)
 
     val timeOut: Var[Option[Int]] = Var(None)
 
-    val neighborhoodCache = World.visibleNeighborhoodCache(simulation.now.world, math.max(simulation.now.humanPerception, simulation.now.zombiePerception))
+    def neighborhoodCache = simulation.now map { s =>
+      World.visibleNeighborhoodCache(s.world, math.max(s.humanPerception, s.zombiePerception))
+    }
 
     val gridSize = 800
 
@@ -141,7 +134,9 @@ object display {
     def buildAgents = {
       val element: SVGElement = tools.rxSVGMod(Rx {
         svgTags.g((for {
-          a <- simulation().agents
+          a <- simulation().map {
+            _.agents
+          }.getOrElse(Vector())
         } yield {
           val ax = (Agent.position(a)._2 * gridSize) + 1
           val ay = (Agent.position(a)._1) * gridSize + 1
@@ -156,41 +151,55 @@ object display {
       scene.appendChild(element)
     }
 
-    timeOut.trigger{
-      step
-    }
-
     def step: Unit = {
-      val tmp = _root_.zombies.simulation.step(simulation.now, neighborhoodCache, rng)
-      simulation.update(tmp)
-      timeOut.foreach {
-        _ match {
-          case Some(to: Int) =>
-            timers.setTimeout(to) {
+      timeOut.now match {
+        case Some(to: Int) =>
+          neighborhoodCache.foreach { nc =>
+            simulation.now.foreach { s =>
+              simulation.update(Some(_root_.zombies.simulation.step(s, nc, rng)))
+            }
+          }
+          timers.setTimeout(to) {
             step
           }
-          case _ =>
-        }
+        case _ =>
       }
     }
+    //}
+
+    val setupButton = button("Setup", btn_default, onclick := { () =>
+      simulation.update(Some(initialize))
+      simulation.now.foreach { s =>
+        timeOut.update(None)
+        buildWorld(side, s.world)
+        buildAgents
+      }
+    })
 
     val stepButton = button(span(Rx {
       timeOut() match {
         case Some(_) => "Stop"
         case _ => "Start"
       }
-    }), btn_default, onclick := { () =>
+    }), btn_danger, onclick := { () =>
       timeOut() = timeOut.now match {
         case None => Some(100)
         case _ => None
       }
+      timeOut.now.foreach { _ =>
+        step
+      }
     })
 
-    buildWorld(side, simulation.now.world)
-    buildAgents
 
+    val controllers = div(marginTop := 50, marginLeft := 50, maxWidth := 500)(
+      controls.list.map { p =>
+        p.element
+      }
+    )
 
-    org.scalajs.dom.document.body.appendChild(stepButton)
+    org.scalajs.dom.document.body.appendChild(controllers)
+    org.scalajs.dom.document.body.appendChild(buttonGroup()(setupButton, stepButton))
     org.scalajs.dom.document.body.appendChild(scene)
 
   }
