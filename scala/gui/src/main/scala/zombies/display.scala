@@ -2,6 +2,7 @@ package zombies
 
 import org.scalajs.dom.raw.SVGElement
 import scalatags.JsDom.all._
+import scalatags.JsDom.styles
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
 import scalatags.JsDom.svgAttrs
@@ -62,21 +63,23 @@ object display {
 
     val rng = new Random(42)
 
-    def initialize = Simulation.initialize(
-      World.jaude,
-      controls.values(0).asInstanceOf[Double],
-      controls.values(1).asInstanceOf[Double],
-      controls.values(2).asInstanceOf[Double],
-      controls.values(3).asInstanceOf[Double],
-      controls.values(4).asInstanceOf[Int],
-      controls.values(5).asInstanceOf[Double],
-      controls.values(6).asInstanceOf[Double],
-      controls.values(7).asInstanceOf[Double],
-      controls.values(8).asInstanceOf[Int],
-      controls.values(9).asInstanceOf[Double],
-      controls.values(10).asInstanceOf[Int],
-      random = rng
-    )
+    def initialize = {
+      Simulation.initialize(
+        World.jaude,
+        controls.values(0).asInstanceOf[Double],
+        controls.values(1).asInstanceOf[Double],
+        controls.values(2).asInstanceOf[Double],
+        controls.values(3).asInstanceOf[Double],
+        controls.values(4).asInstanceOf[Int],
+        controls.values(5).asInstanceOf[Double],
+        controls.values(6).asInstanceOf[Double],
+        controls.values(7).asInstanceOf[Double],
+        controls.values(8).asInstanceOf[Int],
+        controls.values(9).asInstanceOf[Double],
+        controls.values(10).asInstanceOf[Int],
+        random = rng
+      )
+    }
 
 
     val doorSize = 2
@@ -165,7 +168,6 @@ object display {
         case _ =>
       }
     }
-    //}
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
       simulation.update(Some(initialize))
@@ -192,15 +194,14 @@ object display {
     })
 
 
-    val controllers = div(marginTop := 50, marginLeft := 50, maxWidth := 500)(
+    val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
       controls.list.map { p =>
-        p.element
-      }
+        span(styles.display.flex, flexDirection.row, paddingTop := 10)(span(minWidth := 130)(p.name), span(p.element, paddingLeft := 10))
+      },
+      span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    org.scalajs.dom.document.body.appendChild(controllers)
-    org.scalajs.dom.document.body.appendChild(buttonGroup()(setupButton, stepButton))
-    org.scalajs.dom.document.body.appendChild(scene)
+    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene))
 
   }
 }
