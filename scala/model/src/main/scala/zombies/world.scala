@@ -18,7 +18,7 @@ object world {
   object World {
     def cell(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
 
-    def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.05)(worldDescription: String) = {
+    def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
       def parse(s: String) = {
         def toWall(c: Char): Option[Cell] = c match {
           case '0' => Some(Floor())
