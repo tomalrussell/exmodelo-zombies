@@ -9,8 +9,6 @@ object simulation {
 
   object Simulation {
 
-
-
     def initialize(
       world: World,
       infectionRange: Double,
@@ -48,8 +46,6 @@ object simulation {
 
     }
 
-    def parseWorld(worldDescription: String, altitudeDecay: Double = 0.25, slopeIntensity: Double = 0.01) =
-      World.computeSlope(World.computeAltitude(World.parse(worldDescription), altitudeDecay), slopeIntensity)
 
 
   }

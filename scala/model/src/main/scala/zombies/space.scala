@@ -41,6 +41,10 @@ object space {
     (x * cos(teta) - y * sin(teta), x * sin(teta) + y * cos(teta))
   }
 
+  def get[T](a: Array[Array[T]], x: Int, y: Int) =
+    if(x < 0 || x >= a.size || y < 0 || y >= a(x).size) None
+    else Some(a(x)(y))
+
   object Index {
 
     def apply[T: ClassTag](content: Iterable[T], location: T => Location, side: Int): Index[T] = {
