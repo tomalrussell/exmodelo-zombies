@@ -12,35 +12,39 @@ object simulation {
     def initialize(
       world: World,
       infectionRange: Double,
-      humanSpeed: Double,
+      humanRunSpeed: Double,
       humanPerception: Double,
       humanMaxRotation: Double,
+      humanStamina: Int,
       humans: Int,
-      zombieSpeed: Double,
+      zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
+      zombieStamina: Int,
       zombies: Int,
-      minSpeed: Double,
+      walkSpeed: Double,
       rotationGranularity: Int = 5,
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
 
       val agents =
-        Vector.fill(humans)(Human.random(world, humanSpeed * cellSide, humanPerception * cellSide, humanMaxRotation,  random)) ++
-          Vector.fill(zombies)(Zombie.random(world, zombieSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random))
+        Vector.fill(humans)(Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation,  random)) ++
+          Vector.fill(zombies)(Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieStamina, zombiePerception * cellSide, zombieMaxRotation, random))
 
       Simulation(
         world = world,
         agents = agents,
         infectionRange = infectionRange * cellSide,
-        humanSpeed = humanSpeed * cellSide,
+        humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
-        zombieSpeed = zombieSpeed * cellSide,
+        humanStamina = humanStamina,
+        zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
-        minSpeed = minSpeed * cellSide,
+        zombieStamina = zombieStamina,
+        walkSpeed = walkSpeed * cellSide,
         rotationGranularity = rotationGranularity
       )
 
@@ -54,19 +58,21 @@ object simulation {
     world: World,
     agents: Vector[Agent],
     infectionRange: Double,
-    humanSpeed: Double,
+    humanRunSpeed: Double,
     humanPerception: Double,
     humanMaxRotation: Double,
-    zombieSpeed: Double,
+    humanStamina: Int,
+    zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
-    minSpeed: Double,
+    zombieStamina: Int,
+    walkSpeed: Double,
     rotationGranularity: Int)
 
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
-    val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, simulation.zombieSpeed, simulation.zombiePerception, simulation.zombieMaxRotation, rng))
-    val newAgents = ai.map(Agent.adaptDirectionRotate(index, _, 5, neighborhoodCache)).flatMap(Agent.move(_, simulation.world, simulation.minSpeed))
+    val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
+    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(index, _, 5, neighborhoodCache)).flatMap(Agent.move(_, simulation.world))
     simulation.copy(agents = newAgents)
   }
 

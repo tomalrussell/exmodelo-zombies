@@ -1,10 +1,9 @@
 package zombies
 
-import zombies.move.{Location, Position}
-
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.ClassTag
 import scala.scalajs.js.annotation._
+import scala.util.Random
 
 @JSExportTopLevel("space")
 object space {
@@ -44,6 +43,46 @@ object space {
   def get[T](a: Array[Array[T]], x: Int, y: Int) =
     if(x < 0 || x >= a.size || y < 0 || y >= a(x).size) None
     else Some(a(x)(y))
+
+  type Location = (Int, Int)
+  type Position = (Double, Double)
+  type Velocity = (Double, Double)
+
+  def length(v: (Double, Double)) = {
+    val (x, y) = v
+    math.sqrt(x * x + y * y)
+  }
+
+  def normalize(v: (Double, Double), norm: Double = 1.0) = {
+    val (x, y) = v
+    val l =  length(v)
+    if(l == 0) v else (x * norm / l, y * norm / l)
+  }
+
+  def bound(v: (Double, Double), min: Double, max: Double): (Double, Double) = {
+    val l = length(v)
+    if (l < min) normalize(v, min)
+    else if (l > max) normalize(v, max)
+    else v
+  }
+
+  def sum(v1: (Double, Double), v2: (Double, Double)): (Double, Double) = {
+    val (x, y) = v1
+    val (dx, dy) = v2
+    (x + dx, y + dy)
+  }
+
+  def sum(v: Seq[(Double, Double)]): (Double, Double) = v.foldLeft((0.0, 0.0))(sum(_, _))
+
+  def diff(v1: (Double, Double), v2: (Double, Double)) = (v2._1 - v1._1, v2._2 - v1._2)
+
+  def randomUnitVector(rng: Random) = (rng.nextDouble(), rng.nextDouble())
+
+  def positionToLocation(v: Position, xSize: Int, ySize: Int): Location = {
+    val (x, y) = v
+    ((xSize * x).toInt, (ySize * y).toInt)
+  }
+
 
   object Index {
 

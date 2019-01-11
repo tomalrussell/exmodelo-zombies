@@ -1,6 +1,5 @@
 package zombies
 
-import move._
 import world._
 import space._
 
@@ -10,8 +9,9 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, maxSpeed: Double, vision: Double, maxRotation: Double) extends Agent
-  case class Zombie(position: Position, velocity: Velocity, maxSpeed: Double, vision: Double, maxRotation: Double) extends Agent
+  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
+  case class Zombie(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
+  case class Speed(walkSpeed: Double, runSpeed: Double, maxStamina: Int, stamina: Int, run: Boolean)
 
   object Agent {
 
@@ -25,8 +25,13 @@ object agent {
       case _ => false
     }
 
-    def zombify(human: Human, zombieMaxSpeed: Double, zombieVision: Double, zombieMaxRotation: Double, rng: Random) =
-      Zombie(human.position, normalize(randomUnitVector(rng), zombieMaxSpeed), zombieMaxSpeed, zombieVision, zombieMaxRotation)
+    def zombify(zombie: Zombie, human: Human) = {
+      zombie.copy(
+        position = human.position,
+        velocity = human.velocity,
+        speed = zombie.speed.copy(stamina = 0))
+    }
+
 
     def position(agent: Agent) = agent match {
       case h: Human => h.position
@@ -38,21 +43,6 @@ object agent {
       case z: Zombie => z.velocity
     }
 
-    def setPosition(agent: Agent, position: Position) = agent match {
-      case h: Human => h.copy(position = position)
-      case z: Zombie => z.copy(position = position)
-    }
-
-    def setVelocity(agent: Agent, velocity: Velocity) = agent match {
-      case h: Human => h.copy(velocity = velocity)
-      case z: Zombie => z.copy(velocity = velocity)
-    }
-
-    def maxSpeed(agent: Agent) = agent match {
-      case h: Human => h.maxSpeed
-      case z: Zombie => z.maxSpeed
-    }
-
     def vision(agent: Agent) = agent match {
       case h: Human => h.vision
       case z: Zombie => z.vision
@@ -62,34 +52,12 @@ object agent {
 
     def index(agents: Vector[Agent], side: Int) = Index[Agent](agents, location(_, side), side)
 
-
     def randomPosition(world: World, rng: Random) = World.randomPosition(world, rng)
     def randomVelocity(maxSpeed: Double, rng: Random) = {
       val (x, y) = randomUnitVector(rng)
       normalize((x * 2 - 1, y * 2 - 1), maxSpeed)
     }
 
-    def move(agent: Agent, world: World, minSpeed: Double) = {
-      val v = {
-        val (px, py) = sum(position(agent), velocity(agent))
-        val (cx, cy) = positionToLocation((px, py), world.side, world.side)
-
-        val v =
-          World.cell(world, cx, cy) match {
-            case None => None
-            case Some(Wall) => Some(normalize(opposite(velocity(agent)), minSpeed))
-            case Some(f: Floor) => Some(sum(velocity(agent), normalize((f.slope.x, f.slope.y), (f.slope.intensity) * maxSpeed(agent))))
-          }
-
-        v.map(v => bound(v, minSpeed, maxSpeed(agent)))
-      }
-
-      v.flatMap { v =>
-        val na = setVelocity(setPosition(agent, sum(position(agent), v)), v)
-        val (px, py) = position(na)
-        if (px < 0 || px > 1 || py < 0 || py > 1) None else Some(na)
-      }
-    }
 
     def visibleNeighbors(index: Index[Agent], agent: Agent, range: Double, world: World) = {
       val neighborhoodSize = math.ceil(range / space.cellSide(index.side)).toInt
@@ -112,75 +80,135 @@ object agent {
         filter(n => distance(Agent.position(n), Agent.position(agent)) < range)
     }
 
-//    def adaptDirectionAbsolute(index: Index[Agent], agent: Agent) = agent match {
-//      case h: Human =>
-//        neighbors(index, agent, vision(h)).filter(Agent.isZombie) match {
-//          case ns if !ns.isEmpty =>
-//            val closestZombie = closest(agent, ns, position)
-//            if(position(closestZombie) != position(h)) {
-//              val fleeDirection = normalize(opposite(direction(position(agent), position(closestZombie))), maxSpeed(agent))
-//              h.copy(velocity = fleeDirection)
-//            } else h
-//          case _ => h
-//        }
-//      case z: Zombie =>
-//        neighbors(index, agent, vision(z)).filter(Agent.isHuman) match {
-//          case ns if !ns.isEmpty =>
-//            val closestHuman = closest(agent, ns, position)
-//
-//            if(position(closestHuman) != position(agent)) {
-//              val rushDirection = normalize(direction(position(agent), position(closestHuman)), maxSpeed(agent))
-//              z.copy(velocity = rushDirection)
-//            } else z
-//          case _ => z
-//        }
-//
-//    }
+    def move(agent: Agent, world: World) = {
+
+      def computeVelocity(position: Position, velocity: Velocity, speed: Double) = {
+        val (px, py) = sum(position, velocity)
+        val (cx, cy) = positionToLocation((px, py), world.side, world.side)
+
+        val newDirection =
+          World.cell(world, cx, cy) match {
+            case None => None
+            case Some(Wall) => Some(opposite(velocity))
+            case Some(f: Floor) => Some(sum(velocity, normalize((f.slope.x, f.slope.y), f.slope.intensity * speed)))
+          }
+
+        newDirection.map(d => normalize(d, speed))
+      }
+
+      def computePosition(position: Position, velocity: Velocity) = {
+        val newPosition = sum(position, velocity)
+        val (px, py) = newPosition
+        if (px < 0 || px > 1 || py < 0 || py > 1) None else Some(newPosition)
+      }
+
+      agent match {
+        case h: Human =>
+          for {
+            v <- computeVelocity(h.position, h.velocity, Speed.effectiveSpeed(h.speed))
+            p <- computePosition(h.position, v)
+          } yield h.copy(position = p, velocity = v)
+        case z: Zombie =>
+          for {
+            v <- computeVelocity(z.position, z.velocity, Speed.effectiveSpeed(z.speed))
+            p <- computePosition(z.position, v)
+          } yield z.copy(position = p, velocity = v)
+        case a => Some(a)
+      }
+
+    }
+
+    def metabolism(a: Agent) =
+      a match  {
+        case human: Human => Human.metabolism(human)
+        case zombie: Zombie => Zombie.metabolism(zombie)
+        case a => a
+      }
 
     def adaptDirectionRotate(index: Index[Agent], agent: Agent, granularity: Int, neighborhoodCache: NeighborhoodCache) = agent match {
       case h: Human =>
         neighbors(index, agent, vision(h), neighborhoodCache).filter(Agent.isZombie) match {
           case ns if !ns.isEmpty =>
-            val projectedVelocities = (-granularity to granularity).map(_ * h.maxRotation).map(r => normalize(rotate(h.velocity, r), maxSpeed(h)))
-            val nv = projectedVelocities.maxBy { v => ns.map(n => distance(position(n), sum(h.position, v))).min }
-            setVelocity(h, nv)
+            val running = Human.run(h)
+            val projectedVelocities = (-granularity to granularity).map(_ * running.maxRotation).map(r => normalize(rotate(running.velocity, r), Speed.effectiveSpeed(running.speed)))
+            val nv = projectedVelocities.maxBy { v => ns.map(n => distance(position(n), sum(running.position, v))).min }
+            running.copy(velocity = nv)
           case _ => h
         }
       case z: Zombie =>
         neighbors(index, agent, vision(z), neighborhoodCache).filter(Agent.isHuman) match {
           case ns if !ns.isEmpty =>
-            val projectedVelocities =  (-granularity to granularity).map(_ * z.maxRotation).map(r => normalize(rotate(z.velocity, r), maxSpeed(z)))
-            val nv = projectedVelocities.minBy { v => ns.map(n => distance(position(n), sum(z.position, v))).min }
-            setVelocity(z, nv)
+            val running = Zombie.run(z)
+            val projectedVelocities =  (-granularity to granularity).map(_ * running.maxRotation).map(r => normalize(rotate(running.velocity, r), Speed.effectiveSpeed(running.speed)))
+            val nv = projectedVelocities.minBy { v => ns.map(n => distance(position(n), sum(running.position, v))).min }
+            running.copy(velocity = nv)
           case _ => z
         }
 
     }
 
-    def infect(index: Index[Agent], agents: Vector[Agent], range: Double, zombify: Human => Zombie) = {
+    def infect(index: Index[Agent], agents: Vector[Agent], range: Double, zombify: (Zombie, Human) => Zombie) = {
       val (humansAgents, others) = agents.partition(Agent.isHuman)
       val humans = humansAgents.collect { case h: Human => h }
-      humans.map { h => if(infectable(index, h, range)) zombify(h) else h } ++ others
+      humans.map {
+        h =>
+          attacker(index, h, range) match {
+            case Some(z: Zombie) => zombify(z, h)
+            case Some(a) => sys.error(s"Attacker is $a, this should never happen")
+            case None => h
+          }
+      } ++ others
     }
 
-    def infectable(index: Index[Agent], agent: Human, range: Double) =
-      neighbors(index, agent, range).exists(Agent.isZombie)
+    def attacker(index: Index[Agent], agent: Human, range: Double) =
+      neighbors(index, agent, range).find(Agent.isZombie)
 
   }
 
+
+  object Speed {
+    def effectiveSpeed(speed: Speed) =  if(speed.run) speed.runSpeed else speed.walkSpeed
+    def metabolism(speed: Speed) =
+      (speed.run, speed.stamina > 0) match {
+        case (false, _) if speed.stamina < speed.maxStamina => speed.copy(stamina = speed.stamina + 1)
+        case (false, _) => speed
+        case (true, true) => speed.copy(stamina = speed.stamina - 1)
+        case (true, false) => speed.copy(stamina = 0, run = false)
+      }
+  }
+
+
   object Human {
-    def random(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
-      val v = Agent.randomVelocity(maxSpeed, rng)
-      Human(p, v, maxSpeed, vision, maxRotation)
+      val v = Agent.randomVelocity(walkSpeed, rng)
+      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation)
+    }
+
+    def run(h: Human) = h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(stamina = h.speed.maxStamina))
+
+    def metabolism(h: Human) = {
+      val newSpeed = Speed.metabolism(h.speed)
+      val newVelocity = normalize(h.velocity, Speed.effectiveSpeed(newSpeed))
+      h.copy(velocity = newVelocity, speed = newSpeed)
     }
   }
 
   object Zombie {
-    def random(world: World, maxSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
-      val v = Agent.randomVelocity(maxSpeed, rng)
-      Zombie(p, v, maxSpeed, vision, maxRotation)
+      val v = Agent.randomVelocity(walkSpeed, rng)
+      Zombie(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation)
     }
+
+    def run(z: Zombie) =
+      z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(stamina = z.speed.maxStamina))
+
+    def metabolism(z: Zombie) = {
+      val newSpeed = Speed.metabolism(z.speed)
+      val newVelocity = normalize(z.velocity, Speed.effectiveSpeed(newSpeed))
+      z.copy(velocity = newVelocity, speed = newSpeed)
+    }
+
   }
 }

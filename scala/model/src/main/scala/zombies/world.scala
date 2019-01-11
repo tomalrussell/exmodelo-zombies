@@ -1,6 +1,5 @@
 package zombies
 
-import move._
 import space._
 
 import scala.util.Random

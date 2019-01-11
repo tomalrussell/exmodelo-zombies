@@ -4,19 +4,21 @@ import zombies.world._
 import zombies.agent._
 import zombies.simulation._
 
-
 import scala.util.Random
 
 object Test extends App {
 
-  val minSpeed = 0.1
+  val walkSpeed = 0.1
   val infectionRange = 0.2
 
   val humanPerception = 1.5
   val zombiePerception = 3.0
 
-  val humanSpeed = 0.5
-  val zombieSpeed = 0.3
+  val humanRunSpeed = 0.5
+  val zombieRunSpeed = 0.3
+
+  val humanStamina = 10
+  val zombieStamina = 10
 
   val zombieMaxRotation = 45
   val humanMaxRotation = 90
@@ -30,28 +32,30 @@ object Test extends App {
   val noZombie = Simulation.initialize(
     world,
     infectionRange = infectionRange,
-    humanSpeed = humanSpeed,
+    humanRunSpeed = humanRunSpeed,
+    humanStamina = humanStamina,
     humanPerception = humanPerception,
     humanMaxRotation = humanMaxRotation,
     humans = humans,
-    zombieSpeed = zombieSpeed,
+    zombieRunSpeed = zombieRunSpeed,
+    zombieStamina = zombieStamina,
     zombiePerception = zombiePerception,
     zombieMaxRotation = zombieMaxRotation,
-    zombies = 0,
-    minSpeed = minSpeed,
+    zombies = zombies,
+    walkSpeed = walkSpeed,
     random = rng
   )
 
 
-  def zombie(y: Double) = {
-    val cellSide = space.cellSide(world.side)
-    val speed = zombieSpeed * cellSide
-    val position = (y * cellSide, 0.0)
-    val velocity = move.normalize((0.0, 1.0), speed)
-    Zombie(position, velocity, speed, zombiePerception * cellSide, zombieMaxRotation)
-  }
+//  def zombie(y: Double) = {
+//    val cellSide = space.cellSide(world.side)
+//    val speed = walkSpeed * cellSide
+//    val position = (y * cellSide, 0.0)
+//    val velocity = space.normalize((0.0, 1.0), speed)
+//    Zombie(position, velocity, Speed(walkSpeed, zombieRunSpeed, zombieStamina, zombieStamina, false), zombiePerception * cellSide, zombieMaxRotation)
+//  }
 
-  val simulation = noZombie.copy(agents = noZombie.agents ++ Seq(zombie(25)))
+  val simulation = noZombie.copy(agents = noZombie.agents /*++ Seq(zombie(25))*/)
   val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
   def step(simulation: Simulation): Unit = {
