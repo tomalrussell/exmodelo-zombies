@@ -3,7 +3,7 @@
 val rxVersion = "0.4.0"
 val scalatagsVersion = "0.6.5"
 val scalaJSdomVersion = "0.9.2"
-val scaladgetVersion = "1.2.2-SNAPSHOT"
+val scaladgetVersion = "1.2.3"
 name := "zombies"
 
 lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings (
@@ -29,6 +29,7 @@ lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (Exec
   libraryDependencies += "com.lihaoyi" %%% "scalarx" % rxVersion,
   libraryDependencies += "fr.iscpif.scaladget" %%% "svg" % scaladgetVersion,
   libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapnative" % scaladgetVersion,
+  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapslider" % scaladgetVersion,
   buildGUI := {
 
     val demoTarget = target.value

@@ -2,6 +2,7 @@ package zombies
 
 import org.scalajs.dom.raw.SVGElement
 import scalatags.JsDom.all._
+import scalatags.JsDom.styles
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
 import scalatags.JsDom.svgAttrs
@@ -9,12 +10,12 @@ import zombies.agent.{Agent, Human}
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
-import scaladget.svg._
 import scaladget.tools
 import scaladget.bootstrapnative.bsn._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 import rx._
+import scaladget.svg.path._
 import scaladget.tools._
 
 import scala.scalajs.js.timers
@@ -60,42 +61,36 @@ object display {
 
     val side = 40
 
-    val minSpeed = 0.1
-    val infectionRange = 0.2
-    val humanPerception = 0.7
-    val zombiePerception = 1.2
-
-    val humanSpeed = 0.5
-    val zombieSpeed = 0.3
-
-    val zombieMaxRotation = 45
-    val humanMaxRotation = 60
-
-    val humans = 250
-    val zombies = 4
-
     val rng = new Random(42)
+
+    def initialize = {
+      Simulation.initialize(
+        World.jaude,
+        controls.values(0).asInstanceOf[Double],
+        controls.values(1).asInstanceOf[Double],
+        controls.values(2).asInstanceOf[Double],
+        controls.values(3).asInstanceOf[Double],
+        controls.values(4).asInstanceOf[Int],
+        controls.values(5).asInstanceOf[Double],
+        controls.values(6).asInstanceOf[Double],
+        controls.values(7).asInstanceOf[Double],
+        controls.values(8).asInstanceOf[Int],
+        controls.values(9).asInstanceOf[Double],
+        controls.values(10).asInstanceOf[Int],
+        random = rng
+      )
+    }
+
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
-    val simulation = Var(Simulation.initialize(
-      World.jaude,
-      infectionRange = infectionRange,
-      humanSpeed = humanSpeed,
-      humanPerception = humanPerception,
-      humanMaxRotation = humanMaxRotation,
-      humans = humans,
-      zombieSpeed = zombieSpeed,
-      zombiePerception = zombiePerception,
-      zombieMaxRotation = zombieMaxRotation,
-      zombies = zombies,
-      minSpeed = minSpeed,
-      random = rng
-    ))
+    val simulation: Var[Option[Simulation]] = Var(None)
 
     val timeOut: Var[Option[Int]] = Var(None)
 
-    val neighborhoodCache = World.visibleNeighborhoodCache(simulation.now.world, math.max(simulation.now.humanPerception, simulation.now.zombiePerception))
+    def neighborhoodCache = simulation.now map { s =>
+      World.visibleNeighborhoodCache(s.world, math.max(s.humanPerception, s.zombiePerception))
+    }
 
     val gridSize = 800
 
@@ -111,7 +106,7 @@ object display {
     val offsetY = agentSize / 2
     val offsetX = agentSize / 3
 
-    val agentPath = path().m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
+    val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
       world.cells(lineIndex).map { cell =>
@@ -135,63 +130,77 @@ object display {
             style := s"fill:rgb${Color.color(values(row)(col))};").render
         )
       }
-
     }
 
     def buildAgents = {
       val element: SVGElement = tools.rxSVGMod(Rx {
         svgTags.g((for {
-          a <- simulation().agents
+          a <- simulation().map {
+            _.agents
+          }.getOrElse(Vector())
         } yield {
-          val ax = (Agent.position(a)._2 * gridSize) + 1
-          val ay = (Agent.position(a)._1) * gridSize + 1
-          val rotation = math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees
+          val ax = "%1.2f".format((Agent.position(a)._2 * gridSize) + 1 - offsetX)
+          val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
+          val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
             case h: Human => "green"
             case _ => "red"
           }
-          agentPath.render(svgAttrs.fill := color, svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})")
+          svgTags.g(agentPath.render(svgAttrs.fill := color), svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax},${ay})")
+          //agentPath.render(svgAttrs.fill := color, svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})")
         }): _*)
       })
       scene.appendChild(element)
     }
 
-    timeOut.trigger{
-      step
-    }
-
     def step: Unit = {
-      val tmp = _root_.zombies.simulation.step(simulation.now, neighborhoodCache, rng)
-      simulation.update(tmp)
-      timeOut.foreach {
-        _ match {
-          case Some(to: Int) =>
-            timers.setTimeout(to) {
+      timeOut.now match {
+        case Some(to: Int) =>
+          neighborhoodCache.foreach { nc =>
+            simulation.now.foreach { s =>
+              simulation.update(Some(_root_.zombies.simulation.step(s, nc, rng)))
+            }
+          }
+          timers.setTimeout(to) {
             step
           }
-          case _ =>
-        }
+        case _ =>
       }
     }
+
+    val setupButton = button("Setup", btn_default, onclick := { () =>
+      simulation.update(Some(initialize))
+      simulation.now.foreach { s =>
+        timeOut.update(None)
+        buildWorld(side, s.world)
+        buildAgents
+      }
+    })
 
     val stepButton = button(span(Rx {
       timeOut() match {
         case Some(_) => "Stop"
         case _ => "Start"
       }
-    }), btn_default, onclick := { () =>
+    }), btn_danger, onclick := { () =>
       timeOut() = timeOut.now match {
         case None => Some(100)
         case _ => None
       }
+      timeOut.now.foreach { _ =>
+        step
+      }
     })
 
-    buildWorld(side, simulation.now.world)
-    buildAgents
 
+    val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      controls.list.map { p =>
+        span(styles.display.flex, flexDirection.row, paddingTop := 10)(span(minWidth := 130)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 10, fontWeight := "bold")).render
+      },
+      span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
+    )
 
-    org.scalajs.dom.document.body.appendChild(stepButton)
-    org.scalajs.dom.document.body.appendChild(scene)
+    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene))
 
   }
 }
