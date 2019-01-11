@@ -185,7 +185,8 @@ object agent {
       Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation)
     }
 
-    def run(h: Human) = h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(stamina = h.speed.maxStamina))
+    def run(h: Human) =
+      h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(run = true))
 
     def metabolism(h: Human) = {
       val newSpeed = Speed.metabolism(h.speed)
@@ -202,7 +203,7 @@ object agent {
     }
 
     def run(z: Zombie) =
-      z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(stamina = z.speed.maxStamina))
+      z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(run = true))
 
     def metabolism(z: Zombie) = {
       val newSpeed = Speed.metabolism(z.speed)
