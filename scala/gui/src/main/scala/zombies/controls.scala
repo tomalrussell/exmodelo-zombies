@@ -1,10 +1,12 @@
 package zombies
 
 import scaladget.bootstrapslider
+import scaladget.tools._
 import org.scalajs.dom.raw.HTMLElement
-import scalatags.JsDom.tags._
+import scalatags.JsDom.all._
 import zombies.parameters._
 import scalajs.js.|
+import rx._
 
 object controls {
 
@@ -14,13 +16,15 @@ object controls {
 
     def element: HTMLElement
 
+    def valueElement: HTMLElement
+
     def value: Double | Int
 
     def reset: Unit
   }
 
   object Slider {
-    def build(aDiv: HTMLElement, min: Double, max: Double, step: Double, default: Double) = {
+    def build(aDiv: HTMLElement, min: Double, max: Double, step: Double, default: Double, onChange: (Double) => Unit) = {
       val options = bootstrapslider.SliderOptions
         .max(max)
         .min(min)
@@ -28,15 +32,24 @@ object controls {
         .value(default)
         .tooltip(bootstrapslider.SliderOptions.HIDE)
 
-      bootstrapslider.Slider(aDiv, options)
+      val slider = bootstrapslider.Slider(aDiv, options)
+      slider.on(bootstrapslider.Slider.CHANGE, () => {
+        onChange(slider.getValue.asInstanceOf[Double])
+      })
     }
   }
 
   case class DoubleSlider(name: String, doubles: Doubles) extends Controller {
 
+    implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+
     val element = div.render
 
-    val slider = Slider.build(element, doubles.min, doubles.max, doubles.step, doubles.default)
+    val slider = Slider.build(element, doubles.min, doubles.max, doubles.step, doubles.default, (v: Double) => valueTag.update(v))
+
+    private lazy val valueTag: Var[Double] = Var(doubles.default)
+
+    lazy val valueElement = span(Rx{valueTag()}).render
 
     def value = slider.getValue.asInstanceOf[Double]
 
@@ -44,10 +57,14 @@ object controls {
   }
 
   case class IntSlider(name: String, ints: Ints) extends Controller {
-    
+
     val element = div.render
 
-    val slider = Slider.build(element, ints.min, ints.max, ints.step, ints.default)
+    val slider = Slider.build(element, ints.min, ints.max, ints.step, ints.default, (v: Double) => valueTag.update(v.toInt))
+
+    lazy val valueTag: Var[Int] = Var(ints.default)
+
+    lazy val valueElement = span(Rx{valueTag()}).render
 
     def value = slider.getValue.asInstanceOf[Int]
 
@@ -61,9 +78,13 @@ object controls {
     }
   }
 
-  val list = parameters.list.map{ p=> build(p)}
+  val list = parameters.list.map { p => build(p) }
 
-  def values = list.map{_.value}
+  def values = list.map {
+    _.value
+  }
 
-  def reset = list.foreach{_.reset}
+  def reset = list.foreach {
+    _.reset
+  }
 }

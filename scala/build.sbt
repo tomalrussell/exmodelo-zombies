@@ -35,7 +35,7 @@ lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (Exec
     val demoTarget = target.value
     val demoResource = (resourceDirectory in Compile).value
 
-    IO.copyFile((fullOptJS in Compile).value.data, demoTarget / "js/demo.js")
+    IO.copyFile((fastOptJS in Compile).value.data, demoTarget / "js/demo.js")
     IO.copyFile(dependencyFile.value, demoTarget / "js/deps.js")
     IO.copyDirectory(cssFile.value, demoTarget / "css")
     IO.copyDirectory(demoResource, demoTarget)

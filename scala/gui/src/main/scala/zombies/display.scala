@@ -81,7 +81,6 @@ object display {
       )
     }
 
-
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
@@ -131,7 +130,6 @@ object display {
             style := s"fill:rgb${Color.color(values(row)(col))};").render
         )
       }
-
     }
 
     def buildAgents = {
@@ -196,7 +194,7 @@ object display {
 
     val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
       controls.list.map { p =>
-        span(styles.display.flex, flexDirection.row, paddingTop := 10)(span(minWidth := 130)(p.name), span(p.element, paddingLeft := 10))
+        span(styles.display.flex, flexDirection.row, paddingTop := 10)(span(minWidth := 130)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 10, fontWeight := "bold")).render
       },
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
