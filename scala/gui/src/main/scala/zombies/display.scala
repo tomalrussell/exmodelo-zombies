@@ -10,12 +10,12 @@ import zombies.agent.{Agent, Human}
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
-import scaladget.svg._
 import scaladget.tools
 import scaladget.bootstrapnative.bsn._
 import zombies.simulation.Simulation
 import zombies.world.{Wall, World}
 import rx._
+import scaladget.svg.path._
 import scaladget.tools._
 
 import scala.scalajs.js.timers
@@ -106,7 +106,7 @@ object display {
     val offsetY = agentSize / 2
     val offsetX = agentSize / 3
 
-    val agentPath = path().m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
+    val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
       world.cells(lineIndex).map { cell =>
@@ -139,14 +139,15 @@ object display {
             _.agents
           }.getOrElse(Vector())
         } yield {
-          val ax = (Agent.position(a)._2 * gridSize) + 1
-          val ay = (Agent.position(a)._1) * gridSize + 1
-          val rotation = math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees
+          val ax = "%1.2f".format((Agent.position(a)._2 * gridSize) + 1 - offsetX)
+          val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
+          val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
             case h: Human => "green"
             case _ => "red"
           }
-          agentPath.render(svgAttrs.fill := color, svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})")
+          svgTags.g(agentPath.render(svgAttrs.fill := color), svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax},${ay})")
+          //agentPath.render(svgAttrs.fill := color, svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax - offsetX},${ay - offsetY})")
         }): _*)
       })
       scene.appendChild(element)

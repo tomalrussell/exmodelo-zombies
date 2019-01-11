@@ -3,7 +3,7 @@
 val rxVersion = "0.4.0"
 val scalatagsVersion = "0.6.5"
 val scalaJSdomVersion = "0.9.2"
-val scaladgetVersion = "1.2.2-SNAPSHOT"
+val scaladgetVersion = "1.2.3"
 name := "zombies"
 
 lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings (
@@ -35,7 +35,7 @@ lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (Exec
     val demoTarget = target.value
     val demoResource = (resourceDirectory in Compile).value
 
-    IO.copyFile((fastOptJS in Compile).value.data, demoTarget / "js/demo.js")
+    IO.copyFile((fullOptJS in Compile).value.data, demoTarget / "js/demo.js")
     IO.copyFile(dependencyFile.value, demoTarget / "js/deps.js")
     IO.copyDirectory(cssFile.value, demoTarget / "css")
     IO.copyDirectory(demoResource, demoTarget)
