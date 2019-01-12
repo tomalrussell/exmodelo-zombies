@@ -11,11 +11,11 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(altitude: Double = 0.0, slope: Slope = Slope()) extends Cell
+  case class Floor(level: Double = 0.0, slope: Slope = Slope()) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
-    def cell(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
+    def get(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
 
     def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
       def parse(s: String) = {
@@ -36,7 +36,7 @@ object world {
         World(cells, xMax)
       }
       val world = parse(worldDescription)
-      World.computeSlope(World.computeAltitude(world, altitudeLambdaDecay), slopeIntensity)
+      World.computeSlope(World.computeLevel(world, altitudeLambdaDecay), slopeIntensity)
     }
 
 
@@ -44,12 +44,12 @@ object world {
       x >= 0 && y >= 0 && x < world.side && y < world.side
 
     def neighbors(w: World, x: Int, y: Int, neighborhoodSize: Int) =
-      space.neighbors(cell(w, _, _), x, y, neighborhoodSize)
+      space.neighbors(get(w, _, _), x, y, neighborhoodSize)
 
-    def computeAltitude(world: World, lambda: Double) = {
+    def computeLevel(world: World, lambda: Double) = {
       val distances = Array.tabulate(world.side, world.side) { (x, y) =>
         world.cells(x)(y) match {
-          case Wall => 0.0
+          case Wall => -1.0
           case _ => Double.PositiveInfinity
         }
       }
@@ -61,7 +61,7 @@ object world {
           x <- 0 until world.side
           y <- 0 until world.side
           previousDistance = distances(x)(y)
-          if previousDistance != 0.0
+          if previousDistance != -1.0
           newDistance = space.neighbors(space.get(distances, _, _), x, y, 1).min + 1.0
           if previousDistance != newDistance
         } {
@@ -79,43 +79,43 @@ object world {
         cells.zipWithIndex.map { case (l, x) =>
           l.zipWithIndex.map { case(c, y) =>
             c match {
-              case f: Floor => f.copy(altitude = math.exp(-lambda * distances(x)(y)))
+              case f: Floor => f.copy(level = math.exp(-lambda * distances(x)(y)))
               case x => x
             }
           }
         }
-      
+
       world.copy(cells = toExponential(world.cells))
     }
 
     def computeSlope(world: World, intensity: Double) = {
       val cells = copyCells(world.cells)
 
-      def slope(x: Int, y: Int, altitude: Double) = {
+      def slope(x: Int, y: Int, level: Double) = {
         val slopes =
           for {
             ox <- -1 to 1
             oy <- -1 to 1
             if locationIsInTheWorld(world, x + ox, y + oy)
             f@Floor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
-          } yield (ox * (altitude - cellLevel), oy * (altitude - cellLevel))
+          } yield (ox * (level - cellLevel), oy * (level - cellLevel))
 
         val (slopesX, slopesY) = slopes.unzip
-        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, altitude * intensity)
+        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, intensity * level)
       }
 
       for {
         x <- 0 until world.side
         y <- 0 until world.side
         c@Floor(_, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(slope = slope(x, y, c.altitude))
+      } cells(x)(y) = c.copy(slope = slope(x, y, c.level))
 
       world.copy(cells = cells)
     }
 
     def copyCells(cells: Array[Array[Cell]]) = cells.map(_.map(identity))
 
-    def isWall(world: World, x: Int, y: Int) = cell(world, x, y) match {
+    def isWall(world: World, x: Int, y: Int) = get(world, x, y) match {
       case Some(Wall) => true
       case _ => false
     }

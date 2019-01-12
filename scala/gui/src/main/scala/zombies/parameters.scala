@@ -10,17 +10,20 @@ object parameters {
 
   case class Parameter(name: String, parameterType: ParameterType)
 
+
   val list = Seq(
     Parameter("infectionRange", Doubles(0.0, 1.0, 0.1, 0.2)),
-    Parameter("humanSpeed", Doubles(0.0, 5.0, 0.1, 0.5)),
+    Parameter("walkSpeed", Doubles(0.0, 1.0, 0.1, 0.1)),
+    Parameter("humanRunSpeed", Doubles(0.0, 1.0, 0.1, 0.5)),
+    Parameter("humanStamina", Ints(0, 50, 1, 10)),
     Parameter("humanPerception", Doubles(0.0, 5.0, 0.1, 0.7)),
     Parameter("humanMaxRotation", Doubles(0.0, 180.0, 1.0, 60.0)),
     Parameter("# humans", Ints(0, 1500, 1, 250)),
-    Parameter("zombieSpeed", Doubles(0.0, 5.0, 0.1, 0.3)),
+    Parameter("zombieRunSpeed", Doubles(0.0, 1.0, 0.1, 0.3)),
+    Parameter("zombiesStamina", Ints(0, 50, 1, 10)),
     Parameter("zombiePerception", Doubles(0.0, 5.0, 0.1, 1.2)),
     Parameter("zombieMaxRotation", Doubles(0.0, 180.0, 1.0, 45.0)),
     Parameter("# zombies", Ints(0, 1500, 1, 4)),
-    Parameter("minSpeed", Doubles(0.0, 5.0, 0.1, 0.1)),
     Parameter("rotationGranularity", Ints(0, 10, 1, 5)),
   )
 }

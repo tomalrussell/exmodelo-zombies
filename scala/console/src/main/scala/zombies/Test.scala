@@ -24,7 +24,7 @@ object Test extends App {
   val humanMaxRotation = 90
 
   val humans = 250
-  val zombies = 1
+  val zombies = 4
 
   val rng = new Random(42)
 
@@ -68,15 +68,12 @@ object Test extends App {
     }
   }
 
- step(simulation)
+ //step(simulation)
 
-//  def bench(hs: Vector[Agent], world: World, steps: Int): Vector[Agent] = {
-//   //println(steps)
-//    if (steps == 0) hs else bench(simulate(hs, world), world, steps - 1)
-//  }
-//
-//  val begin = System.currentTimeMillis()
-//  val end = bench(agents, world, 2000)
-//  println(System.currentTimeMillis() - begin)
+  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
+
+  val begin = System.currentTimeMillis()
+  val end = bench(1000)
+  println(System.currentTimeMillis() - begin)
 
 }

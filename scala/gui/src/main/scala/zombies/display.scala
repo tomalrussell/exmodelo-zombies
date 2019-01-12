@@ -64,19 +64,20 @@ object display {
     val rng = new Random(42)
 
     def initialize = {
-      Simulation.initialize(
+      Simulation.initialize (
         World.jaude,
-        controls.values(0).asInstanceOf[Double],
-        controls.values(1).asInstanceOf[Double],
-        controls.values(2).asInstanceOf[Double],
-        controls.values(3).asInstanceOf[Double],
-        controls.values(4).asInstanceOf[Int],
-        controls.values(5).asInstanceOf[Double],
-        controls.values(6).asInstanceOf[Double],
-        controls.values(7).asInstanceOf[Double],
-        controls.values(8).asInstanceOf[Int],
-        controls.values(9).asInstanceOf[Double],
-        controls.values(10).asInstanceOf[Int],
+        infectionRange = controls.values(0).asInstanceOf[Double],
+        walkSpeed = controls.values(1).asInstanceOf[Double],
+        humanRunSpeed = controls.values(2).asInstanceOf[Double],
+        humanStamina = controls.values(3).asInstanceOf[Int],
+        humanPerception = controls.values(4).asInstanceOf[Double],
+        humanMaxRotation = controls.values(5).asInstanceOf[Int],
+        humans = controls.values(6).asInstanceOf[Int],
+        zombieRunSpeed = controls.values(7).asInstanceOf[Double],
+        zombieStamina = controls.values(8).asInstanceOf[Int],
+        zombiePerception = controls.values(9).asInstanceOf[Int],
+        zombieMaxRotation = controls.values(10).asInstanceOf[Double],
+        zombies = controls.values(11).asInstanceOf[Int],
         random = rng
       )
     }

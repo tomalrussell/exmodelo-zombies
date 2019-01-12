@@ -83,7 +83,6 @@ object space {
     ((xSize * x).toInt, (ySize * y).toInt)
   }
 
-
   object Index {
 
     def apply[T: ClassTag](content: Iterable[T], location: T => Location, side: Int): Index[T] = {
