@@ -1,0 +1,43 @@
+
+import _file_.model._
+
+val deltaAvg = Val[Double]
+val deltaMSE = Val[Double]
+
+val dataFile = workDirectory / "results/generated.csv"
+val zombieVarianceData = dataFile.lines.drop(1).map { _.split(",").drop(51).take(50).map(_.toDouble)  }.transpose.map(_.medianAbsoluteDeviation).toVector
+val zombieMedianData = dataFile.lines.drop(1).map { _.split(",").drop(51).take(50).map(_.toDouble)  }.transpose.map(_.median).toVector
+
+def zombieAggVariance(data: Vector[Double])(vs: Vector[Array[Int]]) = {
+  val zombieVariance = vs.transpose.map(_.map(_.toDouble).medianAbsoluteDeviation)
+  sumOfAbsoluteErrors(data, zombieVariance)
+}
+
+def zombiesAggMedian(data: Vector[Double])(vs: Vector[Array[Int]]) = {
+  val zombiesMedians = vs.transpose.map(_.map(_.toDouble).median)
+  sumOfAbsoluteErrors(data, zombiesMedians)
+}
+ 
+
+val evolution = 
+  NSGA2Evolution(
+    evaluation = model,
+    genome = Seq(
+      infectionRange in (0.0, 1.0),
+      zombieRunSpeed in (0.0, 1.0),
+      zombiePerception in (0.1, 5.0),
+      zombieMaxRotation in (0.0, 180.0)),
+    objectives = Seq(zombiesDynamic aggregate zombiesAggMedian(zombieMedianData), zombiesDynamic aggregate zombieAggVariance(zombieVarianceData)),
+    termination = 100000,
+    parallelism = 200,
+    distribution = Island(5 minutes),
+    stochastic = Stochastic(seed = seed)
+  )
+  
+val save = SavePopulationHook(evolution, workDirectory / "results/calibration/", frequency = 100)
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+//val env = SSHEnvironment("reuillon", "zebulon.iscpif.fr", 1)
+//val env = LocalEnvironment(4)
+
+evolution hook save on env

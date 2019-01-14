@@ -1,0 +1,80 @@
+
+val seed = Val[Long]
+val infectionRange = Val[Double]
+
+val humanRunSpeed = Val[Double]
+val humanStamina = Val[Int]
+val humanPerception = Val[Double]
+val humanMaxRotation = Val[Double]
+val humans = Val[Int]
+
+val zombieRunSpeed = Val[Double]
+val zombieStamina = Val[Int]
+val zombiePerception = Val[Double]
+val zombieMaxRotation = Val[Double]
+val zombies = Val[Int]
+
+val walkSpeed = Val[Double]
+
+val humansDynamic = Val[Array[Int]]
+val zombiesDynamic = Val[Array[Int]]
+
+
+val model =
+  ScalaTask("""
+    import _root_.zombies._
+    import _root_.zombies.world._
+    import _root_.zombies.simulation._
+    import _root_.zombies.agent._
+    
+    val rng = new util.Random(seed)
+    
+  
+    val simulation = Simulation.initialize(
+      world = World.place(40, 3),
+      infectionRange = infectionRange,
+      humanRunSpeed = humanRunSpeed,
+      humanStamina = humanStamina,
+      humanPerception = humanPerception,
+      humanMaxRotation = humanMaxRotation,
+      humans = humans,
+      zombieRunSpeed = zombieRunSpeed,
+      zombieStamina = zombieStamina,
+      zombiePerception = zombiePerception,
+      zombieMaxRotation = zombieMaxRotation,
+      zombies = zombies,
+      walkSpeed = walkSpeed,
+      random = rng)
+    
+    val steps = 500
+    
+    def result(s: Simulation) = (s.agents.count(Agent.isHuman), s.agents.count(Agent.isZombie))
+    val (hs, zs) = simulate(simulation, rng, steps, result).toArray.unzip
+    
+    val humansDynamic = (0 until steps by 10).map(i => hs(i)).toArray
+    val zombiesDynamic = (0 until steps by 10).map(i => zs(i)).toArray
+  """) set (
+    inputs += (infectionRange, humanRunSpeed, humanStamina, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombieStamina, zombiePerception, zombieMaxRotation, zombies, walkSpeed, seed),
+    outputs += (humansDynamic, zombiesDynamic),
+    
+    plugins += pluginsOf[_root_.zombies.simulation.Simulation],
+    
+    seed := 42L,
+    infectionRange := 0.2,
+    humanRunSpeed := 0.5,
+    humanStamina := 10,
+    humanPerception := 0.7,
+    humanMaxRotation := 90.0,
+    humans := 250,
+    
+    zombieRunSpeed := 0.3,
+    zombieStamina := 30,
+    zombiePerception := 1.2, 
+    zombieMaxRotation := 45.0,
+    zombies := 4,
+    
+    walkSpeed := 0.1
+  )
+  
+  
+model hook ToStringHook()

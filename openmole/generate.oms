@@ -1,0 +1,11 @@
+
+import _file_.model._
+
+val env = LocalEnvironment(4)
+
+Replication(
+  evaluation = model on env,
+  seed = seed,
+  replications = 1000
+) hook CSVHook(workDirectory / "results/generated.csv", arrayOnRow = true)
+
