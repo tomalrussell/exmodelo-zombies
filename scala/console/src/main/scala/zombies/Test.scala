@@ -68,12 +68,12 @@ object Test extends App {
     }
   }
 
- //step(simulation)
+ step(simulation)
 
-  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
-
-  val begin = System.currentTimeMillis()
-  val end = bench(1000)
-  println(System.currentTimeMillis() - begin)
+//  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
+//
+//  val begin = System.currentTimeMillis()
+//  val end = bench(1000)
+//  println(System.currentTimeMillis() - begin)
 
 }
