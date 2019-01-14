@@ -195,6 +195,7 @@ object agent {
         case (true, true) => speed.copy(stamina = speed.stamina - 1)
         case (true, false) => speed.copy(stamina = 0, run = false)
       }
+    def canRun(speed: Speed) = speed.stamina >= speed.maxStamina / 2
   }
 
 
@@ -206,7 +207,8 @@ object agent {
     }
 
     def run(h: Human) =
-      h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(run = true))
+      if(Speed.canRun(h.speed)) h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(run = true))
+      else h
 
     def metabolism(h: Human) = {
       val newSpeed = Speed.metabolism(h.speed)
@@ -223,7 +225,8 @@ object agent {
     }
 
     def run(z: Zombie) =
-      z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(run = true))
+      if(Speed.canRun(z.speed)) z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(run = true))
+      else z
 
     def metabolism(z: Zombie) = {
       val newSpeed = Speed.metabolism(z.speed)

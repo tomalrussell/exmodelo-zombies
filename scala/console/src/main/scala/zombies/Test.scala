@@ -30,7 +30,7 @@ object Test extends App {
 
   val world = World.jaude
   val noZombie = Simulation.initialize(
-    world,
+    World.place(40, 3),
     infectionRange = infectionRange,
     humanRunSpeed = humanRunSpeed,
     humanStamina = humanStamina,
