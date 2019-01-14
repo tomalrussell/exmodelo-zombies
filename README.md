@@ -14,4 +14,7 @@ sbt> run
 sbt> buildGUI
 ```
 
-Then run ```sh scala/gui/target/zombies.html ```
+Then run:
+```
+sh scala/gui/target/zombies.html
+```
