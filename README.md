@@ -3,6 +3,7 @@
 ```sh
 > cd scala
 > sbt
+> project console
 sbt> run
 ```
 
@@ -11,6 +12,7 @@ sbt> run
 ```sh
 > cd scala
 > sbt
+sbt> project gui
 sbt> buildGUI
 ```
 
