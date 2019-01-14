@@ -3,6 +3,7 @@
 ```sh
 > cd scala
 > sbt
+> project console
 sbt> run
 ```
 
@@ -11,10 +12,11 @@ sbt> run
 ```sh
 > cd scala
 > sbt
+sbt> project gui
 sbt> buildGUI
 ```
 
-Then run:
-```
-sh scala/gui/target/zombies.html
+Then browse:
+```sh
+scala/gui/target/zombies.html
 ```
