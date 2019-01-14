@@ -16,7 +16,7 @@ sbt> project gui
 sbt> buildGUI
 ```
 
-Then run:
-```
-sh scala/gui/target/zombies.html
+Then browse:
+```sh
+scala/gui/target/zombies.html
 ```
