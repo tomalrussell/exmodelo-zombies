@@ -13,10 +13,12 @@ import scaladget.bootstrapnative.{bsn, SelectableButtons}
 object controls {
 
   type Mecanism = String
+  val FollowMode: Mecanism = "No follow"
+  val FollowRunning: Mecanism = "Follow running"
 
   trait Controller {
 
-    def name: String
+    def name: ParameterName
 
     def element: HTMLElement
 
@@ -107,9 +109,9 @@ object controls {
 
   val list = parameters.list.map { p => build(p) }
 
-  def values = list.map {
-    _.value
-  }
+  def values= list.map {p=>
+    p.name -> p.value
+  }.toMap
 
 //  def reset = list.foreach {
 //    _.reset
