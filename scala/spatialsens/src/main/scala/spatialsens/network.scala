@@ -6,12 +6,14 @@ import scala.collection.mutable.ArrayBuffer
 
 import scala.util.Random
 
+/*
 import scalax.collection.{Graph, GraphEdge}
 import scalax.collection.edge.Implicits._
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphTraversal._
 import scalax.collection.edge.WUnDiEdge
+*/
 
 object network {
 
@@ -72,11 +74,12 @@ object network {
       * @param network
       * @return
       */
-    def percolate(network: Network,percolationProba: Double)(implicit rng: Random): Network = {
+    def percolate(network: Network,percolationProba: Double,linkFilter: Link=>Boolean//={_.weight==0.0}
+                 )(implicit rng: Random): Network = {
       //println("percolate : "+network.links.toSeq.map(_.weight).sum)
-      val emptyLinks = network.links.toSeq.filter(_.weight==0.0)
-      val fullLinks = network.links.toSeq.filter(_.weight>0.0)
-      //println("percolating nw with "+emptyLinks.size+" empty links ; "+fullLinks.size+" full links")
+      val emptyLinks = network.links.toSeq.filter(linkFilter)
+      val fullLinks = network.links.toSeq.filter{l => !linkFilter(l)}
+      println("percolating nw with "+emptyLinks.size+" empty links ; "+fullLinks.size+" full links")
       val percolated = emptyLinks.map{case l => if(rng.nextDouble()<percolationProba){Link(l.e1,l.e2,1.0)}else{Link(l.e1,l.e2,0.0)}}
       //println("rem empty links : "+percolated.filter((_.weight==0.0)).size)
       val newlinks=fullLinks++percolated
@@ -93,7 +96,7 @@ object network {
       * @param network
       * @return
       */
-    def networkToGrid(network: Network,footPrintResolution: Double = 1.0): Array[Array[Double]] = {
+    def networkToGrid(network: Network,footPrintResolution: Double = 1.0,linkwidth: Double = 1.0): Array[Array[Double]] = {
       val xmin = network.nodes.map{_.x}.min;val xmax = network.nodes.map{_.x}.max
       val ymin = network.nodes.map{_.y}.min;val ymax = network.nodes.map{_.y}.max
       def xcor(x: Double): Int = math.max(xmin.toDouble,math.min(xmax.toDouble,math.round(x))).toInt
@@ -111,7 +114,9 @@ object network {
         var x = l.e1.x;var y = l.e1.y
         (0.0 to nsteps by 1.0).foreach{_ =>
           //println("x = "+x+"; y = "+y)
-          res(xcor(x))(ycor(y))=1.0
+          ( - (linkwidth-1)/2 to (linkwidth-1)/2 by 1.0).toSeq.zip(( - (linkwidth-1)/2 to (linkwidth-1)/2 by 1.0)).foreach {case (k1,k2) =>
+            res(xcor(x+k1))(ycor(y+k2)) = 1.0
+          }
           x = x + istep;y = y+ jstep
         }
       }
@@ -126,20 +131,21 @@ object network {
       * @param network
       * @return
       */
-    def networkToGraph(network: Network): (Graph[Int,WUnDiEdge],Map[Int,Node]) = {
+    /*def networkToGraph(network: Network): (Graph[Int,WUnDiEdge],Map[Int,Node]) = {
       //var linklist = ArrayBuffer[WUnDiEdge[Int]]()
       //for(link <- network.links){linklist.append()}
       //println("links = "+network.links.toSeq.size)
       val linkset = network.links.toSeq.map{case link => link.e1.id~link.e2.id % link.weight}
       //println("linkset = "+linkset.size)
       (Graph.from(linkset.flatten,linkset.toList),network.nodes.map{(n:Node)=>(n.id,n)}.toMap)
-    }
+    }*/
 
     /**
       *
       * @param graph
       * @return
       */
+    /*
     def graphToNetwork(graph: Graph[Int,WUnDiEdge],nodeMap: Map[Int,Node]): Network = {
       val links = ArrayBuffer[Link]();val nodes = ArrayBuffer[Node]()
       for(edge <-graph.edges){
@@ -148,20 +154,57 @@ object network {
         links.append(Link(nodeMap(edge._1),nodeMap(edge._2),edge.weight))
       }
       Network(nodes.toSet,links.toSet)
-    }
+    }*/
 
 
     /**
       * extract connected components
+      *  using scala-graph component traverser
       * @param network
       * @return
       */
-    def connectedComponents(network: Network): Seq[Network] = {
+    /*def connectedComponentsScalagraph(network: Network): Seq[Network] = {
       val (graph,nodeMap) = networkToGraph(network)
       //val components: Seq[graph.Component] = graph.componentTraverser().toSeq
       val components: Seq[graph.Component] = (for (component <- graph.componentTraverser()) yield component).toSeq
       //println("components : "+components.size)
       components.map{case c => graphToNetwork(c.toGraph,nodeMap)}
+    }*/
+
+    /**
+      * dirty component traverser (not appropriate network data structure)
+      * @param network
+      * @return
+      */
+    def connectedComponents(network: Network): Seq[Network] = {
+      val nlinks = new mutable.HashMap[Node,Seq[Link]]()
+      network.links.foreach{l =>
+        if(nlinks.contains(l.e1)){nlinks(l.e1)=nlinks(l.e1)++Seq(l)}else{nlinks(l.e1)=Seq(l)}
+        if(nlinks.contains(l.e2)){nlinks(l.e2)=nlinks(l.e2)++Seq(l)}else{nlinks(l.e2)=Seq(l)}
+      }
+      network.nodes.foreach{n=> if(!nlinks.contains(n)){nlinks(n)=Seq.empty}}
+
+      //traverse using the map, using hash consing
+      val totraverse = new mutable.HashMap[Node,Node]()
+      network.nodes.foreach{n=>totraverse.put(n,n)}
+      val res = new ArrayBuffer[Network]()
+
+      def otherend(n:Node,l:Link):Node = {if(l.e1==n)l.e2 else l.e1}
+
+      def traversenode(n: Node): (Seq[Node],Seq[Link]) = {
+        if(!totraverse.contains(n)){return((Seq.empty,nlinks(n)))} // note : a bit redundancy on links here as they are not colored
+        totraverse.remove(n)
+        val traversed = nlinks(n).map{l => traversenode(otherend(n,l))}
+        (Seq(n)++traversed.map{_._1}.flatten,traversed.map{_._2}.flatten)
+      }
+
+      while(totraverse.size>0){
+        val entry = totraverse.values.head
+        val currentcomponent = traversenode(entry)
+        res.append(Network(currentcomponent._1.toSet,currentcomponent._2.toSet))
+      }
+
+      res
     }
 
     /**
