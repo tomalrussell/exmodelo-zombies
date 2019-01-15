@@ -19,7 +19,9 @@ object network {
 
   case class Node(id: Int, x: Double, y: Double)
 
-  case class Link(e1: Node,e2: Node,weight: Double = 1.0)
+  case class Link(e1: Node,e2: Node,weight: Double = 1.0,length: Double = 1.0)
+
+  object Link {def apply(e1: Node,e2: Node,weight: Double): Link = Link(e1,e2,weight,math.sqrt((e1.x-e2.x)*(e1.x-e2.x)+(e1.y-e2.y)*(e1.y-e2.y)))}
 
   case class Network(nodes: Set[Node], links: Set[Link])
 
@@ -121,6 +123,31 @@ object network {
         }
       }
       res
+    }
+
+
+    /**
+      * Reconstruct a network from the matrix representation of the world
+      * (level of the patch, different from the generating network in the case of percolation)
+      *  - put links in both senses
+      * @param world
+      * @return
+      */
+    def gridToNetwork(world: Array[Array[Double]]): Network = {
+      val nodes = new ArrayBuffer[Node]()
+      val links = new ArrayBuffer[Link]()
+      var nodeid = 0
+      for(i <- 0 until world.size; j <- 0 until world(0).size) {
+        if(world(i)(j)>0.0){
+          val currentnode = Node(nodeid,i,j);nodeid=nodeid+1
+          nodes.append(currentnode)
+          if(i-1>0){if(world(i-1)(j)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i-1,j)))}}
+          if(i+1<world.size){if(world(i+1)(j)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i+1,j)))}}
+          if(j-1>0){if(world(i)(j-1)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i,j-1)))}}
+          if(j+1<world(0).size){if(world(i)(j+1)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i,j+1)))}}
+        }
+      }
+      Network(nodes.toSet,links.toSet)
     }
 
 
