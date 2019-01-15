@@ -46,13 +46,13 @@ def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS
   IO.copyDirectory(demoResource, demoTarget)
 }
 
-
-lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
-  guiDependencies,
-  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
+lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
+  guiDependencies
 )
 
-
+lazy val gui = Project("gui", file("gui")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings(
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
+)
 
 lazy val vigilence = Project("vigilence", file("vigilence")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
   scalaVersion := "2.12.8",

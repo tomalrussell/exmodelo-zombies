@@ -17,7 +17,7 @@ import zombies.world.{Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
-import zombies.controls.Mecanism
+import zombies.guitutils.controls._
 
 import scala.scalajs.js.timers
 
@@ -55,46 +55,16 @@ object display {
     )
   }
 
-  @JSExportTopLevel("zombies")
-  def zombies(): Unit = {
+  implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
-    implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+  val side = 40
 
-    val side = 40
-
-    val rng = new Random(42)
-
-    def toFollowMode(m: Mecanism, probability: Double): FollowMode = {
-      println("followmode " + m)
-      m match {
-        case controls.FollowRunning =>
-          println("MATCH running " +  probability)
-          FollowRunning(probability)
-        case _ => NoFollow
-      }
-    }
+  val rng = new Random(42)
 
 
-    def initialize = {
-      Simulation.initialize(
-        World.jaude,
-        infectionRange = controls.values(parameters.infectionRange).asInstanceOf[Double],
-        walkSpeed = controls.values(parameters.walkSpeed).asInstanceOf[Double],
-        humanRunSpeed = controls.values(parameters.humanRunSpeed).asInstanceOf[Double],
-        humanStamina = controls.values(parameters.humanStamina).asInstanceOf[Int],
-        humanPerception = controls.values(parameters.humanPerception).asInstanceOf[Double],
-        humanMaxRotation = controls.values(parameters.humanMaxRotation).asInstanceOf[Int],
-        humans = controls.values(parameters.numberHumans).asInstanceOf[Int],
-        zombieRunSpeed = controls.values(parameters.zombieRunSpeed).asInstanceOf[Double],
-        zombieStamina = controls.values(parameters.zombieStamina).asInstanceOf[Int],
-        zombiePerception = controls.values(parameters.zombiePerception).asInstanceOf[Int],
-        zombieMaxRotation = controls.values(parameters.zombieMaxRotation).asInstanceOf[Double],
-        zombies = controls.values(parameters.numberZombies).asInstanceOf[Int],
-        rotationGranularity = controls.values(parameters.rotationGranularity).asInstanceOf[Int],
-        random = rng,
-        humanFollowMode = toFollowMode(controls.values(parameters.followMode).asInstanceOf[Mecanism], controls.values(parameters.followModeProbability).asInstanceOf[Double])
-      )
-    }
+  def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
+
+    initFunction()
 
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
@@ -184,7 +154,7 @@ object display {
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
-      simulation.update(Some(initialize))
+      simulation.update(Some(initFunction()))
       simulation.now.foreach { s =>
         timeOut.update(None)
         buildWorld(side, s.world)
@@ -209,7 +179,7 @@ object display {
 
 
     val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
-      controls.list.map { p =>
+      controllerList.map { p =>
         span(styles.display.flex, flexDirection.row, paddingTop := 10)(span(minWidth := 130)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 10, fontWeight := "bold")).render
       },
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
