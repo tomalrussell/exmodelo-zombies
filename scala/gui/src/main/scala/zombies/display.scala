@@ -6,7 +6,7 @@ import scalatags.JsDom.styles
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
 import scalatags.JsDom.svgAttrs
-import zombies.agent.{Agent, Human, NoFollow}
+import zombies.agent._
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
@@ -17,6 +17,7 @@ import zombies.world.{Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
+import zombies.controls.Mecanism
 
 import scala.scalajs.js.timers
 
@@ -63,23 +64,35 @@ object display {
 
     val rng = new Random(42)
 
+    def toFollowMode(m: Mecanism, probability: Double): FollowMode = {
+      println("followmode " + m)
+      m match {
+        case controls.FollowRunning =>
+          println("MATCH running " +  probability)
+          FollowRunning(probability)
+        case _ => NoFollow
+      }
+    }
+
+
     def initialize = {
-      Simulation.initialize (
+      Simulation.initialize(
         World.jaude,
-        infectionRange = controls.values(0).asInstanceOf[Double],
-        walkSpeed = controls.values(1).asInstanceOf[Double],
-        humanRunSpeed = controls.values(2).asInstanceOf[Double],
-        humanStamina = controls.values(3).asInstanceOf[Int],
-        humanPerception = controls.values(4).asInstanceOf[Double],
-        humanMaxRotation = controls.values(5).asInstanceOf[Int],
-        humans = controls.values(6).asInstanceOf[Int],
-        zombieRunSpeed = controls.values(7).asInstanceOf[Double],
-        zombieStamina = controls.values(8).asInstanceOf[Int],
-        zombiePerception = controls.values(9).asInstanceOf[Int],
-        zombieMaxRotation = controls.values(10).asInstanceOf[Double],
-        zombies = controls.values(11).asInstanceOf[Int],
+        infectionRange = controls.values(parameters.infectionRange).asInstanceOf[Double],
+        walkSpeed = controls.values(parameters.walkSpeed).asInstanceOf[Double],
+        humanRunSpeed = controls.values(parameters.humanRunSpeed).asInstanceOf[Double],
+        humanStamina = controls.values(parameters.humanStamina).asInstanceOf[Int],
+        humanPerception = controls.values(parameters.humanPerception).asInstanceOf[Double],
+        humanMaxRotation = controls.values(parameters.humanMaxRotation).asInstanceOf[Int],
+        humans = controls.values(parameters.numberHumans).asInstanceOf[Int],
+        zombieRunSpeed = controls.values(parameters.zombieRunSpeed).asInstanceOf[Double],
+        zombieStamina = controls.values(parameters.zombieStamina).asInstanceOf[Int],
+        zombiePerception = controls.values(parameters.zombiePerception).asInstanceOf[Int],
+        zombieMaxRotation = controls.values(parameters.zombieMaxRotation).asInstanceOf[Double],
+        zombies = controls.values(parameters.numberZombies).asInstanceOf[Int],
+        rotationGranularity = controls.values(parameters.rotationGranularity).asInstanceOf[Int],
         random = rng,
-        humanFollowMode = NoFollow
+        humanFollowMode = toFollowMode(controls.values(parameters.followMode).asInstanceOf[Mecanism], controls.values(parameters.followModeProbability).asInstanceOf[Double])
       )
     }
 
