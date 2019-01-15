@@ -16,7 +16,7 @@ object simulation {
       humanPerception: Double,
       humanMaxRotation: Double,
       humanStamina: Int,
-      humanFollowRunning: Boolean = false,
+      humanFollowMode: FollowMode = NoFollow,
       humans: Int,
       zombieRunSpeed: Double,
       zombiePerception: Double,
@@ -30,7 +30,7 @@ object simulation {
       val cellSide = space.cellSide(world.side)
 
       val agents =
-        Vector.fill(humans)(Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation,  random)) ++
+        Vector.fill(humans)(Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation, humanFollowMode, random)) ++
           Vector.fill(zombies)(Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieStamina, zombiePerception * cellSide, zombieMaxRotation, random))
 
       Simulation(
@@ -41,7 +41,7 @@ object simulation {
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
         humanStamina = humanStamina,
-        humanFollowRunning = humanFollowRunning,
+        humanFollowMode = humanFollowMode,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
@@ -64,7 +64,7 @@ object simulation {
     humanPerception: Double,
     humanMaxRotation: Double,
     humanStamina: Int,
-    humanFollowRunning: Boolean,
+    humanFollowMode: FollowMode,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
@@ -75,7 +75,7 @@ object simulation {
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
-    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, simulation.humanFollowRunning, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
+    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
     simulation.copy(agents = newAgents)
   }
 
