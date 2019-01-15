@@ -6,6 +6,11 @@ val scalaJSdomVersion = "0.9.2"
 val scaladgetVersion = "1.2.3"
 name := "zombies"
 
+lazy val ode = Project("ode", file("ode")) settings(
+  scalaVersion := "2.12.8"
+)
+
+
 lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
