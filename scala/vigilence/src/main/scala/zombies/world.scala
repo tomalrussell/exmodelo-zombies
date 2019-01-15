@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Slope = Slope(), rescueSlope: Slope = Slope(), rescueZone: Boolean = false) extends Cell
+  case class Floor(wallLevel: Double = 0.0, wallSlope: Slope = Slope()) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -22,7 +22,6 @@ object world {
         def toWall(c: Char): Option[Cell] = c match {
           case '0' => Some(Floor())
           case '+' => Some(Wall)
-          case 'R' => Some(Floor(rescueZone = true))
           case _ => None
         }
 
@@ -37,7 +36,7 @@ object world {
         World(cells, xMax)
       }
       val world = parse(worldDescription)
-      World.computeRescueSlope(World.computeWallSlope(world, altitudeLambdaDecay, slopeIntensity))
+      World.computeSlope(World.computeLevel(world, altitudeLambdaDecay), slopeIntensity)
     }
 
 
@@ -47,8 +46,13 @@ object world {
     def neighbors(w: World, x: Int, y: Int, neighborhoodSize: Int) =
       space.neighbors(get(w, _, _), x, y, neighborhoodSize)
 
-    def computeDistance(world: World, isOrigin: (Int, Int) => Boolean) = {
-      val distances = Array.tabulate(world.side, world.side) { (x, y) => if(isOrigin(x, y)) -1.0 else Double.PositiveInfinity }
+    def computeLevel(world: World, lambda: Double) = {
+      val distances = Array.tabulate(world.side, world.side) { (x, y) =>
+        world.cells(x)(y) match {
+          case Wall => -1.0
+          case _ => Double.PositiveInfinity
+        }
+      }
 
       def pass(): Unit = {
         var finished = true
@@ -57,7 +61,7 @@ object world {
           x <- 0 until world.side
           y <- 0 until world.side
           previousDistance = distances(x)(y)
-          if !isOrigin(x, y)
+          if previousDistance != -1.0
           newDistance = space.neighbors(space.get(distances, _, _), x, y, 1).min + 1.0
           if previousDistance != newDistance
         } {
@@ -69,65 +73,42 @@ object world {
       }
 
       pass()
-      distances
-    }
 
 
-
-    def slope(world: World, x: Int, y: Int, levels: Array[Array[Double]], intensity: Double => Double, repulsion: Boolean = true) = {
-      val level = levels(x)(y)
-      val slopes =
-        for {
-          ox <- -1 to 1
-          oy <- -1 to 1
-          if locationIsInTheWorld(world, x + ox, y + oy)
-          f@Floor(_, _, _) <- Seq(world.cells(x + ox)(y + oy))
-          fLevel = levels(x + ox)(y + oy)
-        } yield (ox * (level - fLevel), oy * (level - fLevel))
-
-      val (slopesX, slopesY) = if(repulsion) average(slopes) else opposite(average(slopes))
-      Slope(slopesX, slopesY, intensity(level))
-    }
-
-
-    def computeRescueSlope(world: World) = {
-      val levels = computeDistance(world, isRescueCell(world, _, _))
-      val cells = copyCells(world.cells)
-
-      for {
-        x <- 0 until world.side
-        y <- 0 until world.side
-        c@Floor(_, _, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, _ => 1.0, repulsion = false))
-
-      world.copy(cells = cells)
-    }
-
-    def computeWallSlope(world: World, lambda: Double, intensity: Double) = {
-      def computeLevel(world: World, lambda: Double) = {
-        val distances = computeDistance(world, isWall(world, _, _))
-
-        def toExponential(cells: Array[Array[Cell]]) =
-          cells.zipWithIndex.map { case (l, x) =>
-            l.zipWithIndex.map { case(c, y) =>
-              c match {
-                case f: Floor => math.exp(-lambda * distances(x)(y))
-                case x => Double.PositiveInfinity
-              }
+      def toExponential(cells: Array[Array[Cell]]) =
+        cells.zipWithIndex.map { case (l, x) =>
+          l.zipWithIndex.map { case(c, y) =>
+            c match {
+              case f: Floor => f.copy(wallLevel = math.exp(-lambda * distances(x)(y)))
+              case x => x
             }
           }
+        }
 
-        toExponential(world.cells)
-      }
+      world.copy(cells = toExponential(world.cells))
+    }
 
-      val levels = computeLevel(world, lambda)
+    def computeSlope(world: World, intensity: Double) = {
       val cells = copyCells(world.cells)
+
+      def slope(x: Int, y: Int, level: Double) = {
+        val slopes =
+          for {
+            ox <- -1 to 1
+            oy <- -1 to 1
+            if locationIsInTheWorld(world, x + ox, y + oy)
+            f@Floor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
+          } yield (ox * (level - cellLevel), oy * (level - cellLevel))
+
+        val (slopesX, slopesY) = average(slopes)
+        Slope(slopesX, slopesY, intensity * level)
+      }
 
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        c@Floor(_, _, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, _* intensity))
+        c@Floor(_, _) <- Seq(cells(x)(y))
+      } cells(x)(y) = c.copy(wallSlope = slope(x, y, c.wallLevel))
 
       world.copy(cells = cells)
     }
@@ -136,11 +117,6 @@ object world {
 
     def isWall(world: World, x: Int, y: Int) = get(world, x, y) match {
       case Some(Wall) => true
-      case _ => false
-    }
-
-    def isRescueCell(world: World, x: Int, y: Int) = get(world, x, y) match {
-      case Some(f: Floor) => f.rescueZone
       case _ => false
     }
 
@@ -177,7 +153,7 @@ object world {
         |++++++++++++000000000000000+++++++++++++
         |++++++++++++00000000000000++++++++++++++
         |++++++++++++++++0000000000++++++++++++++
-        |++++++++++++++++0000R00000++++++++++++++
+        |++++++++++++++++0000000000++++++++++++++
         |++++++++++++++++0000000000++++++++++++++
         |++++++++++++++++0000000000++++++++++++++
         |++++++++++++++++0000000000++++++++++++++
@@ -227,6 +203,7 @@ object world {
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
+
 
   type NeighborhoodCache = Array[Array[Array[(Int, Int)]]]
 

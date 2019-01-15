@@ -33,8 +33,7 @@ object agent {
       zombie.copy(
         position = human.position,
         velocity = human.velocity,
-        speed = zombie.speed.copy(stamina = 0)
-      )
+        speed = zombie.speed.copy(stamina = 0))
     }
 
 
