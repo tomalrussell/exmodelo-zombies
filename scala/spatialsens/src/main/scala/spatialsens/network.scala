@@ -1,0 +1,272 @@
+
+package zombie
+
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
+import scala.util.Random
+
+import scalax.collection.{Graph, GraphEdge}
+import scalax.collection.edge.Implicits._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scalax.collection.GraphTraversal._
+import scalax.collection.edge.WUnDiEdge
+
+object network {
+
+  case class Node(id: Int, x: Double, y: Double)
+
+  case class Link(e1: Node,e2: Node,weight: Double = 1.0)
+
+  case class Network(nodes: Set[Node], links: Set[Link])
+
+
+  object Network {
+
+
+    /**
+      * spatial grid network
+      * @param xstep
+      * @param ystep
+      * @param size
+      * @return
+      */
+    def gridNetwork(xstep: Int,ystep: Int, size: Int,diagLinks: Boolean = false): Network = {
+
+      // create nodes
+      val ycoords = (0 to size by ystep);val xcoords = (0 to size by xstep)
+      val coords: Seq[(Double,Double)] = xcoords.map{case xx: Int => ycoords.map{case yy: Int => (xx.toDouble,yy.toDouble)}}.flatten
+      val nodes: Seq[Seq[Node]] = coords.zipWithIndex.map{case c=>  Node(c._2,c._1._1,c._1._2)}.sliding(ycoords.size,ycoords.size).toSeq
+      //println(nodes.size)
+      //println(nodes(0).size)
+      // create edges
+      val edges = ArrayBuffer[Link]()
+      //dirty
+      for (i <- 0 to nodes.size - 1 ; j <- 0 to nodes(0).size - 1) {
+        if(i-1>0){
+          if(diagLinks&&j-1>0){edges.append(Link(nodes(i)(j),nodes(i-1)(j-1),0.0))}
+          edges.append(Link(nodes(i)(j),nodes(i-1)(j),0.0))
+          if(diagLinks&&j+1<nodes(0).size){edges.append(Link(nodes(i)(j),nodes(i-1)(j+1),0.0))}
+        }
+        if(j-1>0){
+          edges.append(Link(nodes(i)(j),nodes(i)(j-1),0.0))
+        }
+        if(j+1<nodes(0).size){
+          edges.append(Link(nodes(i)(j),nodes(i)(j+1),0.0))
+        }
+        if(i+1<nodes.size){
+          if(diagLinks&&j-1>0){edges.append(Link(nodes(i)(j),nodes(i+1)(j-1),0.0))}
+          edges.append(Link(nodes(i)(j),nodes(i+1)(j),0.0))
+          if(diagLinks&&j+1<nodes(0).size){edges.append(Link(nodes(i)(j),nodes(i+1)(j+1),0.0))}
+        }
+      }
+      //println("grid nw links = "+edges.size)
+      //println("grid nw unique links = "+edges.map{case e => e.e1.id+"-"+e.e2.id+"-"+e.weight}.size)
+      Network(nodes.flatten.toSet,edges.toSet)
+    }
+
+
+    /**
+      * percolate each potential link with a zero proba
+      * @param network
+      * @return
+      */
+    def percolate(network: Network,percolationProba: Double)(implicit rng: Random): Network = {
+      //println("percolate : "+network.links.toSeq.map(_.weight).sum)
+      val emptyLinks = network.links.toSeq.filter(_.weight==0.0)
+      val fullLinks = network.links.toSeq.filter(_.weight>0.0)
+      //println("percolating nw with "+emptyLinks.size+" empty links ; "+fullLinks.size+" full links")
+      val percolated = emptyLinks.map{case l => if(rng.nextDouble()<percolationProba){Link(l.e1,l.e2,1.0)}else{Link(l.e1,l.e2,0.0)}}
+      //println("rem empty links : "+percolated.filter((_.weight==0.0)).size)
+      val newlinks=fullLinks++percolated
+      //println("percolated : "+(network.links.toSeq.map(_.weight).sum+newlinks.map(_.weight).sum))
+      val newLinksSet = newlinks.toSet
+      //println("perc nw links = "+newLinksSet.size)
+      //println("perc nw unique links = "+newLinksSet.map{case e => e.e1.id+"-"+e.e2.id+"-"+e.weight}.size)
+      Network(network.nodes,newLinksSet)
+    }
+
+
+    /**
+      * network to grid
+      * @param network
+      * @return
+      */
+    def networkToGrid(network: Network,footPrintResolution: Double = 1.0): Array[Array[Double]] = {
+      val xmin = network.nodes.map{_.x}.min;val xmax = network.nodes.map{_.x}.max
+      val ymin = network.nodes.map{_.y}.min;val ymax = network.nodes.map{_.y}.max
+      def xcor(x: Double): Int = math.max(xmin.toDouble,math.min(xmax.toDouble,math.round(x))).toInt
+      def ycor(y: Double): Int = math.max(ymin.toDouble,math.min(ymax.toDouble,math.round(y))).toInt
+      val res: Array[Array[Double]] = (xmin to xmax by 1.0).toArray.map{case _ => (ymin to ymax by 1.0).toArray.map{case _ =>0.0}}
+      network.links.toSeq.filter{_.weight>0.0}.foreach{case l =>
+        val i1 = l.e1.x - xmin;val j1 = l.e1.y - ymin
+        val i2 = l.e2.x - xmin;val j2 = l.e2.y - ymin
+        val istep = (i1 - i2) match {case x if math.abs(x) < 1e-10 => 0.0 ;case _ => math.cos(math.atan((j2 - j1)/(i2 - i1)))*footPrintResolution}
+        val jstep = (j1 - j2) match {case x if math.abs(x) < 1e-10 => 0.0 ;case _ => math.sin(math.atan((j2 - j1)/(i2 - i1)))*footPrintResolution}
+        //println("istep,jstep = "+istep+","+jstep)
+        //println(l)
+        val nsteps = (i1 - i2) match {case x if math.abs(x) < 1e-10 => (j2 - j1)/jstep;case _ => (i2 - i1)/istep}
+        //println(nsteps)
+        var x = l.e1.x;var y = l.e1.y
+        (0.0 to nsteps by 1.0).foreach{_ =>
+          //println("x = "+x+"; y = "+y)
+          res(xcor(x))(ycor(y))=1.0
+          x = x + istep;y = y+ jstep
+        }
+      }
+      res
+    }
+
+
+
+
+    /**
+      * convert a Network to a Graph object
+      * @param network
+      * @return
+      */
+    def networkToGraph(network: Network): (Graph[Int,WUnDiEdge],Map[Int,Node]) = {
+      //var linklist = ArrayBuffer[WUnDiEdge[Int]]()
+      //for(link <- network.links){linklist.append()}
+      //println("links = "+network.links.toSeq.size)
+      val linkset = network.links.toSeq.map{case link => link.e1.id~link.e2.id % link.weight}
+      //println("linkset = "+linkset.size)
+      (Graph.from(linkset.flatten,linkset.toList),network.nodes.map{(n:Node)=>(n.id,n)}.toMap)
+    }
+
+    /**
+      *
+      * @param graph
+      * @return
+      */
+    def graphToNetwork(graph: Graph[Int,WUnDiEdge],nodeMap: Map[Int,Node]): Network = {
+      val links = ArrayBuffer[Link]();val nodes = ArrayBuffer[Node]()
+      for(edge <-graph.edges){
+        //links.append(Link(edge._1,edge._2,edge.weight))
+        nodes.append(nodeMap(edge._1),nodeMap(edge._2))
+        links.append(Link(nodeMap(edge._1),nodeMap(edge._2),edge.weight))
+      }
+      Network(nodes.toSet,links.toSet)
+    }
+
+
+    /**
+      * extract connected components
+      * @param network
+      * @return
+      */
+    def connectedComponents(network: Network): Seq[Network] = {
+      val (graph,nodeMap) = networkToGraph(network)
+      //val components: Seq[graph.Component] = graph.componentTraverser().toSeq
+      val components: Seq[graph.Component] = (for (component <- graph.componentTraverser()) yield component).toSeq
+      //println("components : "+components.size)
+      components.map{case c => graphToNetwork(c.toGraph,nodeMap)}
+    }
+
+    /**
+      * get largest connected component
+      * @param network
+      * @return
+      */
+    def largestConnectedComponent(network: Network): Network = {
+      val components = connectedComponents(network)
+      val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>=n2.nodes.size}(0)
+      //println("largest comp size : "+largestComp.nodes.size)
+      largestComp
+    }
+
+
+
+    /**
+      * Floid marshall shortest paths
+      * @param network
+      * @return
+      */
+    def allPairsShortestPath(network: Network): Map[(Node,Node),Seq[Link]] = {
+      val nodenames = network.nodes.map{_.id}
+      val nodeids: Map[Int,Int] = nodenames.zipWithIndex.toMap
+      //val revnodeids: Map[Int,Int] = nodenames.zipWithIndex.map{case(oid,ind)=>(ind,oid)}.toMap
+      val revnodes: Map[Int,Node] = network.nodes.zipWithIndex.map{case(n,i)=>(i,n)}.toMap
+      val nodes = nodeids.keySet //not necessary, for clarity
+      val mlinks = mutable.Map[Int, Set[Int]]()
+      val mlinkweights = mutable.Map[(Int,Int),Double]()
+      val linksMap = mutable.Map[(Int,Int),Link]()
+      for(link <- network.links){
+        if(!mlinks.keySet.contains(nodeids(link.e1.id))) mlinks(nodeids(link.e1.id))=Set.empty[Int]
+        if(!mlinks.keySet.contains(nodeids(link.e2.id))) mlinks(nodeids(link.e2.id))=Set.empty[Int]
+        // links assumed undirected in our case
+        mlinks(nodeids(link.e1.id))+=nodeids(link.e2.id)
+        mlinks(nodeids(link.e2.id))+=nodeids(link.e1.id)
+        mlinkweights((nodeids(link.e1.id),nodeids(link.e2.id)))=link.weight
+        mlinkweights((nodeids(link.e2.id),nodeids(link.e1.id)))=link.weight
+        linksMap((nodeids(link.e2.id),nodeids(link.e1.id)))=link
+        linksMap((nodeids(link.e1.id),nodeids(link.e2.id)))=link
+      }
+
+      val links = mlinks.toMap
+      val linkweights = mlinkweights.toMap
+
+      val n = nodes.size
+      val inf = Double.MaxValue
+
+      // Initialize distance matrix.
+      val ds = Array.fill[Double](n, n)(inf)
+      for (i <- 0 until n) ds(i)(i) = 0.0
+      for (i <- links.keys) {
+        for (j <- links(i)) {
+          ds(i)(j) = linkweights((i,j))
+        }
+      }
+
+      // Initialize next vertex matrix.
+      val ns = Array.fill[Int](n, n)(-1)
+      for (k <- 0 until n; i <- 0 until n; j <- 0 until n)
+        if (ds(i)(k) != inf && ds(k)(j) != inf && ds(i)(k) + ds(k)(j) < ds(i)(j)) {
+          ds(i)(j) = ds(i)(k) + ds(k)(j)
+          ns(i)(j) = k
+        }
+
+      // Helper function to carve out paths from the next vertex matrix.
+      def extractPath(path: ArrayBuffer[Node],pathLinks: ArrayBuffer[Link], i: Int, j: Int) {
+        if (ds(i)(j) == inf) return
+        val k = ns(i)(j)
+        if (k != -1) {
+          extractPath(path,pathLinks, i, k)
+          path.append(revnodes(k))
+          extractPath(path,pathLinks, k, j)
+        }else {
+          // otherwise k is the next node, can add the link
+          pathLinks.append(linksMap(revnodes(i).id,revnodes(j).id))
+        }
+      }
+
+      // Extract paths.
+      //val pss = mutable.Map[Int, Map[Int, Seq[Int]]]()
+      val paths = mutable.Map[(Node,Node),Seq[Link]]()
+      for (i <- 0 until n) {
+        //val ps = mutable.Map[Int, Seq[Int]]()
+        for (j <- 0 until n) {
+          if (ds(i)(j) != inf) {
+          //val p = new ArrayBuffer[Int]()
+          val currentPath = new ArrayBuffer[Node]()
+          val currentPathLinks = new ArrayBuffer[Link]()
+          currentPath.append(revnodes(i))
+          if (i != j) {
+            extractPath(currentPath, currentPathLinks, i, j)
+            currentPath.append(revnodes(j))
+          }
+          paths((revnodes(i), revnodes(j))) = currentPathLinks.toSeq
+           }
+        }
+      }
+
+      paths.toMap
+    }
+
+  }
+
+
+
+}
+
