@@ -37,7 +37,7 @@ object world {
         World(cells, xMax)
       }
       val world = parse(worldDescription)
-      World.computeSlope(world, altitudeLambdaDecay, slopeIntensity)
+      World.computeRescueSlope(World.computeWallSlope(world, altitudeLambdaDecay, slopeIntensity))
     }
 
 
@@ -47,8 +47,8 @@ object world {
     def neighbors(w: World, x: Int, y: Int, neighborhoodSize: Int) =
       space.neighbors(get(w, _, _), x, y, neighborhoodSize)
 
-    def computeDistance(world: World, isOrigin: (Int, Int) => Boolean, isAccessible: (Int, Int) => Boolean) = {
-      val distances = Array.tabulate(world.side, world.side) { (x, y) => if(isOrigin(x, y)) -1.0 else 0.0 }
+    def computeDistance(world: World, isOrigin: (Int, Int) => Boolean) = {
+      val distances = Array.tabulate(world.side, world.side) { (x, y) => if(isOrigin(x, y)) -1.0 else Double.PositiveInfinity }
 
       def pass(): Unit = {
         var finished = true
@@ -57,7 +57,7 @@ object world {
           x <- 0 until world.side
           y <- 0 until world.side
           previousDistance = distances(x)(y)
-          if isAccessible(x, y)
+          if !isOrigin(x, y)
           newDistance = space.neighbors(space.get(distances, _, _), x, y, 1).min + 1.0
           if previousDistance != newDistance
         } {
@@ -74,9 +74,38 @@ object world {
 
 
 
-    def computeSlope(world: World, lambda: Double, intensity: Double) = {
+    def slope(world: World, x: Int, y: Int, levels: Array[Array[Double]], intensity: Double => Double, repulsion: Boolean = true) = {
+      val level = levels(x)(y)
+      val slopes =
+        for {
+          ox <- -1 to 1
+          oy <- -1 to 1
+          if locationIsInTheWorld(world, x + ox, y + oy)
+          f@Floor(_, _, _) <- Seq(world.cells(x + ox)(y + oy))
+          fLevel = levels(x + ox)(y + oy)
+        } yield (ox * (level - fLevel), oy * (level - fLevel))
+
+      val (slopesX, slopesY) = if(repulsion) average(slopes) else opposite(average(slopes))
+      Slope(slopesX, slopesY, intensity(level))
+    }
+
+
+    def computeRescueSlope(world: World) = {
+      val levels = computeDistance(world, isRescueCell(world, _, _))
+      val cells = copyCells(world.cells)
+
+      for {
+        x <- 0 until world.side
+        y <- 0 until world.side
+        c@Floor(_, _, _) <- Seq(cells(x)(y))
+      } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, _ => 1.0, repulsion = false))
+
+      world.copy(cells = cells)
+    }
+
+    def computeWallSlope(world: World, lambda: Double, intensity: Double) = {
       def computeLevel(world: World, lambda: Double) = {
-        val distances = computeDistance(world, isWall(world, _, _), !isWall(world, _, _))
+        val distances = computeDistance(world, isWall(world, _, _))
 
         def toExponential(cells: Array[Array[Cell]]) =
           cells.zipWithIndex.map { case (l, x) =>
@@ -91,30 +120,14 @@ object world {
         toExponential(world.cells)
       }
 
-
       val levels = computeLevel(world, lambda)
-
       val cells = copyCells(world.cells)
-
-      def slope(x: Int, y: Int, level: Double) = {
-        val slopes =
-          for {
-            ox <- -1 to 1
-            oy <- -1 to 1
-            if locationIsInTheWorld(world, x + ox, y + oy)
-            f@Floor(_, _, _) <- Seq(cells(x + ox)(y + oy))
-            fLevel = levels(x + ox)(y + oy)
-          } yield (ox * (level - fLevel), oy * (level - fLevel))
-
-        val (slopesX, slopesY) = average(slopes)
-        Slope(slopesX, slopesY, intensity * level)
-      }
 
       for {
         x <- 0 until world.side
         y <- 0 until world.side
         c@Floor(_, _, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(wallSlope = slope(x, y, levels(x)(y)))
+      } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, _* intensity))
 
       world.copy(cells = cells)
     }
@@ -123,6 +136,11 @@ object world {
 
     def isWall(world: World, x: Int, y: Int) = get(world, x, y) match {
       case Some(Wall) => true
+      case _ => false
+    }
+
+    def isRescueCell(world: World, x: Int, y: Int) = get(world, x, y) match {
+      case Some(f: Floor) => f.rescueZone
       case _ => false
     }
 
