@@ -9,9 +9,13 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
+  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double, followMode: FollowMode) extends Agent
   case class Zombie(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
   case class Speed(walkSpeed: Double, runSpeed: Double, maxStamina: Int, stamina: Int, run: Boolean)
+
+  sealed trait FollowMode
+  object NoFollow extends FollowMode
+  case class FollowRunning(probability: Double) extends FollowMode
 
   object Agent {
 
@@ -141,23 +145,21 @@ object agent {
         case a => a
       }
 
-    def adaptDirectionRotate(world: World, index: Index[Agent], agent: Agent, granularity: Int, humanFollowRuninng: Boolean, neighborhoodCache: NeighborhoodCache, rng: Random) = {
+    def adaptDirectionRotate(world: World, index: Index[Agent], agent: Agent, granularity: Int, neighborhoodCache: NeighborhoodCache, rng: Random) = {
 
       agent match {
         case h: Human =>
           val nhs =  neighbors(index, agent, vision(h), neighborhoodCache)
-          nhs.filter(Agent.isZombie) match {
-            case ns if !ns.isEmpty =>
+          (nhs.filter(Agent.isZombie), h.followMode) match {
+            case (ns, _) if !ns.isEmpty =>
               val running = Human.run(h)
               val pv = projectedVelocities(granularity, running.maxRotation, running.velocity, Speed.effectiveSpeed(running.speed))
               val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv)))
               if(nv.isEmpty) running else running.copy(velocity = nv.maxBy { v => ns.map(n => distance(position(n), sum(running.position, v))).min })
-            case _ if humanFollowRuninng =>
+            case (_, followRunning: FollowRunning) =>
               val runningNeighbors = nhs.collect { case h: Human => h }.filter { _.speed.run }
-              if(!runningNeighbors.isEmpty) {
-                val velocity = average(runningNeighbors.map(_.velocity))
-                Human.run(h.copy(velocity = velocity))
-              } else h
+              if(!runningNeighbors.isEmpty && rng.nextDouble() < followRunning.probability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity))))
+              else h
             case _ => h
           }
         case z: Zombie =>
@@ -206,10 +208,10 @@ object agent {
 
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, followMode: FollowMode, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation)
+      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation, followMode)
     }
 
     def run(h: Human) =

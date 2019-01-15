@@ -8,6 +8,8 @@ import scala.util.Random
 
 object Test extends App {
 
+  val humanFollowMode = NoFollow
+
   val walkSpeed = 0.1
   val infectionRange = 0.2
 

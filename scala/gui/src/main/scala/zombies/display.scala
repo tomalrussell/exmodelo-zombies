@@ -6,7 +6,7 @@ import scalatags.JsDom.styles
 import scalatags.JsDom.svgAttrs.{height, style, width, x, y}
 import scalatags.JsDom.svgTags
 import scalatags.JsDom.svgAttrs
-import zombies.agent.{Agent, Human}
+import zombies.agent.{Agent, Human, NoFollow}
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
@@ -79,7 +79,7 @@ object display {
         zombieMaxRotation = controls.values(10).asInstanceOf[Double],
         zombies = controls.values(11).asInstanceOf[Int],
         random = rng,
-        humanFollowRunning = true
+        humanFollowMode = NoFollow
       )
     }
 
