@@ -1,6 +1,7 @@
 package zombies
 
 import zombie.network.Network
+import zombie.network.Link
 
 import scala.util.Random
 
@@ -46,22 +47,29 @@ object spatialsens {
       * @param percolationProba
       * @return
       */
-    def bondPercolatedWorld(worldSize: Int,percolationProba: Double,bordPoints: Int)(implicit rng: Random): Array[Array[Double]] = {
+    def bondPercolatedWorld(worldSize: Int,percolationProba: Double,bordPoints: Int,linkwidth: Double)(implicit rng: Random): Array[Array[Double]] = {
       var network = Network.gridNetwork(worldSize/10,worldSize/10,worldSize)
       var bordConnected = 0
       val xmin = network.nodes.map{_.x}.min;val xmax = network.nodes.map{_.x}.max
       val ymin = network.nodes.map{_.y}.min;val ymax = network.nodes.map{_.y}.max
       while(bordConnected<bordPoints){
-        network = Network.percolate(network,percolationProba)
+        network = Network.percolate(network,percolationProba,linkFilter={
+          l: Link => l.weight==0.0&&(
+            (((l.e1.x!=xmin)&&(l.e2.x!=xmin))||((l.e1.x==xmin)&&(l.e2.x!=xmin))||((l.e2.x==xmin)&&(l.e1.x!=xmin)))&&
+              (((l.e1.x!=xmax)&&(l.e2.x!=xmax))||((l.e1.x==xmax)&&(l.e2.x!=xmax))||((l.e2.x==xmax)&&(l.e1.x!=xmax)))&&
+                (((l.e1.y!=ymin)&&(l.e2.y!=ymin))||((l.e1.y==ymin)&&(l.e2.y!=ymin))||((l.e2.y==ymin)&&(l.e1.y!=ymin)))&&
+                (((l.e1.y!=ymax)&&(l.e2.y!=ymax))||((l.e1.y==ymax)&&(l.e2.y!=ymax))||((l.e2.y==ymax)&&(l.e1.y!=ymax)))
+            )
+        })
         val giantcomp =  Network.largestConnectedComponent(Network(network.nodes,network.links.filter{_.weight>0}))
-        //println(giantcomp.links.size)
+        println("giantcomp size = "+giantcomp.links.size)
         val nodesOnBord = giantcomp.nodes.filter{case n => n.x==xmin||n.x==xmax||n.y==ymin||n.y==ymax}
         bordConnected =nodesOnBord.size
         println("Percolated links prop : "+(network.links.toSeq.map{_.weight}.sum/network.links.toSeq.size))
         println("bordConnected = "+bordConnected)
         //println("nodesOnBord="+nodesOnBord)
       }
-      Network.networkToGrid(network)
+      Network.networkToGrid(network,linkwidth=linkwidth)
     }
 
   }
