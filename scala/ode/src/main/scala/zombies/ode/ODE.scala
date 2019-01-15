@@ -59,7 +59,7 @@ object Model {
 
 
   def integrate(fs: Vector[(Double, Double) => Double]) = {
-    
+
   }
 
   class Calculator(f: (Double, Double) => Double) {

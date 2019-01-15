@@ -77,8 +77,9 @@ object simulation {
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
-    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
-    simulation.copy(agents = newAgents)
+    val na1 = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
+    val (na2, rescued) = Agent.rescue(simulation.world, na1)
+    simulation.copy(agents = na2, rescued = simulation.rescued ++ rescued)
   }
 
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {

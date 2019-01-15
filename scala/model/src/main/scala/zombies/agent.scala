@@ -115,7 +115,10 @@ object agent {
                 case Some(v) => Some(v)
                 case None => Some(opposite(velocity))
               }
-            case Some(f: Floor) => Some(sum(velocity, normalize((f.wallSlope.x, f.wallSlope.y), f.wallSlope.intensity * speed)))
+            case Some(f: Floor) =>
+              Some(
+                sum(velocity, normalize((f.wallSlope.x, f.wallSlope.y), f.wallSlope.intensity * speed))
+              )
           }
 
         newDirection.map(d => normalize(d, speed))
@@ -157,7 +160,7 @@ object agent {
         case a => newAgents += a
       }
 
-      newAgents.toVector
+      (newAgents.toVector, rescued.toVector)
     }
 
 
@@ -183,6 +186,14 @@ object agent {
               val runningNeighbors = nhs.collect { case h: Human => h }.filter { _.speed.run }
               if(!runningNeighbors.isEmpty && rng.nextDouble() < followRunning.probability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity))))
               else h
+            case _ if h.rescue.towardsRescue =>
+              val (x, y) = location(h, world.side)
+              world.cells(x)(y) match {
+                case f: Floor =>
+                  val running = Human.run(h)
+                  h.copy(velocity = normalize((f.rescueSlope.x, f.rescueSlope.y), Speed.effectiveSpeed(running.speed)))
+                case _ => h
+              }
             case _ => h
           }
         case z: Zombie =>
@@ -227,6 +238,10 @@ object agent {
         case (true, false) => speed.copy(stamina = 0, run = false)
       }
     def canRun(speed: Speed) = speed.stamina >= speed.maxStamina / 2
+  }
+
+  object Rescue {
+    //def rescue() = ""
   }
 
 
