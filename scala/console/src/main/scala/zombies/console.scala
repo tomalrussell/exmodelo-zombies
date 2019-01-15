@@ -6,16 +6,15 @@ import zombies.world._
 import zombies.space._
 
 object console {
-  def display(world: World, agents: Vector[Agent] = Vector.empty, levels: Boolean = false) = {
+  def display(world: World, agents: Vector[Agent] = Vector.empty) = {
     val index = Agent.index(agents, world.side)
     def toChar(c: Cell, x: Int, y: Int) = c match {
       case Wall => '+'
-      case Floor(l, _) =>
+      case f: Floor =>
         val agents = Index.get(index, x, y)
         if(!agents.isEmpty && agents.forall(Agent.isHuman)) 'H'
         else if(!agents.isEmpty && agents.forall(Agent.isZombie)) 'Z'
         else if(!agents.isEmpty) 'M'
-        else if(levels) math.round(l * 10).toInt.toString.take(1) else ' '
       case _ => '?'
     }
 
