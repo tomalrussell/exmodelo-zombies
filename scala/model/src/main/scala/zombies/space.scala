@@ -73,6 +73,11 @@ object space {
   }
 
   def sum(v: Seq[(Double, Double)]): (Double, Double) = v.foldLeft((0.0, 0.0))(sum(_, _))
+  def average(v: Seq[(Double, Double)]): (Double, Double) = {
+    val (x, y) = sum(v)
+    val s = v.size
+    (x / s, y / s)
+  }
 
   def diff(v1: (Double, Double), v2: (Double, Double)) = (v2._1 - v1._1, v2._2 - v1._2)
 
