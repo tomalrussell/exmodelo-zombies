@@ -16,6 +16,7 @@ object simulation {
       humanPerception: Double,
       humanMaxRotation: Double,
       humanStamina: Int,
+      humanFollowRunning: Boolean = false,
       humans: Int,
       zombieRunSpeed: Double,
       zombiePerception: Double,
@@ -40,6 +41,7 @@ object simulation {
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
         humanStamina = humanStamina,
+        humanFollowRunning = humanFollowRunning,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
@@ -62,6 +64,7 @@ object simulation {
     humanPerception: Double,
     humanMaxRotation: Double,
     humanStamina: Int,
+    humanFollowRunning: Boolean,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
@@ -72,7 +75,7 @@ object simulation {
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
-    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
+    val newAgents = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, simulation.humanFollowRunning, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
     simulation.copy(agents = newAgents)
   }
 

@@ -78,7 +78,8 @@ object display {
         zombiePerception = controls.values(9).asInstanceOf[Int],
         zombieMaxRotation = controls.values(10).asInstanceOf[Double],
         zombies = controls.values(11).asInstanceOf[Int],
-        random = rng
+        random = rng,
+        humanFollowRunning = true
       )
     }
 
