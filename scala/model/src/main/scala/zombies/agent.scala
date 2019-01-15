@@ -106,7 +106,7 @@ object agent {
                 case Some(v) => Some(v)
                 case None => Some(opposite(velocity))
               }
-            case Some(f: Floor) => Some(sum(velocity, normalize((f.slope.x, f.slope.y), f.slope.intensity * speed)))
+            case Some(f: Floor) => Some(sum(velocity, normalize((f.wallSlope.x, f.wallSlope.y), f.wallSlope.intensity * speed)))
           }
 
         newDirection.map(d => normalize(d, speed))

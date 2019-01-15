@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(level: Double = 0.0, slope: Slope = Slope()) extends Cell
+  case class Floor(wallLevel: Double = 0.0, wallSlope: Slope = Slope()) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -79,7 +79,7 @@ object world {
         cells.zipWithIndex.map { case (l, x) =>
           l.zipWithIndex.map { case(c, y) =>
             c match {
-              case f: Floor => f.copy(level = math.exp(-lambda * distances(x)(y)))
+              case f: Floor => f.copy(wallLevel = math.exp(-lambda * distances(x)(y)))
               case x => x
             }
           }
@@ -108,7 +108,7 @@ object world {
         x <- 0 until world.side
         y <- 0 until world.side
         c@Floor(_, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(slope = slope(x, y, c.level))
+      } cells(x)(y) = c.copy(wallSlope = slope(x, y, c.wallLevel))
 
       world.copy(cells = cells)
     }
