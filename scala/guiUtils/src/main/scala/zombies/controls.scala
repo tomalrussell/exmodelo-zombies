@@ -1,22 +1,25 @@
-package zombies
+package zombies.guitutils
 
 import scaladget.bootstrapslider
 import scaladget.tools._
 import org.scalajs.dom.raw.HTMLElement
 import scalatags.JsDom.all._
-import zombies.parameters._
 
 import scalajs.js.|
 import rx._
-import scaladget.bootstrapnative.{bsn, SelectableButtons}
+import scaladget.bootstrapnative.{SelectableButtons, bsn}
+import zombies.guitutils.parameters._
 
 object controls {
 
   type Mecanism = String
+  type ControllerType = Double | Int | Mecanism
+
   val FollowMode: Mecanism = "No follow"
   val FollowRunning: Mecanism = "Follow running"
 
   trait Controller {
+
 
     def name: ParameterName
 
@@ -24,7 +27,7 @@ object controls {
 
     def valueElement: HTMLElement
 
-    def value: Double | Int | Mecanism
+    def value: ControllerType
 
     //def reset: Unit
   }
@@ -106,14 +109,4 @@ object controls {
       case o: Options=> OptionController(parameter.name, o.mecanisms: _*)
     }
   }
-
-  val list = parameters.list.map { p => build(p) }
-
-  def values= list.map {p=>
-    p.name -> p.value
-  }.toMap
-
-//  def reset = list.foreach {
-//    _.reset
-//  }
 }
