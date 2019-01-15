@@ -46,14 +46,13 @@ def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS
   IO.copyDirectory(demoResource, demoTarget)
 }
 
+
 lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
   guiDependencies,
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
 )
 
-lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (model) settings (
-  libraryDependencies += "org.scala-graph" %% "graph-core" % "1.12.5"
-  )
+
 
 lazy val vigilence = Project("vigilence", file("vigilence")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
   scalaVersion := "2.12.8",
@@ -62,4 +61,28 @@ lazy val vigilence = Project("vigilence", file("vigilence")) enablePlugins(SbtOs
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
   osgiSettings
+)
+
+
+lazy val spatialsens = Project("spatialsens",file("spatialsens")) dependsOn(model)
+
+lazy val spatialsensgui = Project("spatialsensgui",file("spatialsens")) dependsOn(model) enablePlugins (ExecNpmPlugin) settings (
+  target := file("spatialsens/targetgui"),
+  //libraryDependencies += "org.scala-graph" %% "graph-core" % "1.12.5",
+  libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion,
+  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalaJSdomVersion,
+  libraryDependencies += "com.lihaoyi" %%% "scalarx" % rxVersion,
+  libraryDependencies += "fr.iscpif.scaladget" %%% "svg" % scaladgetVersion,
+  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapnative" % scaladgetVersion,
+  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapslider" % scaladgetVersion,
+  buildGUI := {
+
+    val demoTarget = target.value
+    val demoResource = (resourceDirectory in Compile).value
+
+    IO.copyFile((fullOptJS in Compile).value.data, demoTarget / "js/demo.js")
+    IO.copyFile(dependencyFile.value, demoTarget / "js/deps.js")
+    IO.copyDirectory(cssFile.value, demoTarget / "css")
+    IO.copyDirectory(demoResource, demoTarget)
+  }
 )

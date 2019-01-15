@@ -11,11 +11,12 @@ object TestSpatialSens extends App {
 
   implicit val rng = new Random
 
-  val worldSize =10
-  val percolationProba = 0.1
-  val bordPoints = 8
+  val worldSize =50
+  val percolationProba = 0.2
+  val bordPoints = 20
+  val linkwidth=3.0
 
-  println(wallsToString(bondPercolatedWorld(worldSize=worldSize,percolationProba=percolationProba,bordPoints=bordPoints)))
+  println(wallsToString(bondPercolatedWorld(worldSize=worldSize,percolationProba=percolationProba,bordPoints=bordPoints,linkwidth=linkwidth)))
 
   /*
   var network = Network.gridNetwork(worldSize/10,worldSize/10,worldSize)
