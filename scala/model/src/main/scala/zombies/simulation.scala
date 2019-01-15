@@ -36,6 +36,7 @@ object simulation {
       Simulation(
         world = world,
         agents = agents,
+        rescued = Vector.empty,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
@@ -59,6 +60,7 @@ object simulation {
   case class Simulation(
     world: World,
     agents: Vector[Agent],
+    rescued: Vector[Human],
     infectionRange: Double,
     humanRunSpeed: Double,
     humanPerception: Double,

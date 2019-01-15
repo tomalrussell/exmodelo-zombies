@@ -15,7 +15,7 @@ object console {
         if(!agents.isEmpty && agents.forall(Agent.isHuman)) 'H'
         else if(!agents.isEmpty && agents.forall(Agent.isZombie)) 'Z'
         else if(!agents.isEmpty) 'M'
-        else ' ' 
+        else ' '
       case _ => '?'
     }
 

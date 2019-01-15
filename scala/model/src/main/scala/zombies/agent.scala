@@ -3,19 +3,23 @@ package zombies
 import world._
 import space._
 
+import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double, followMode: FollowMode) extends Agent
+  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double, followMode: FollowMode, rescue: Rescue) extends Agent
   case class Zombie(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
   case class Speed(walkSpeed: Double, runSpeed: Double, maxStamina: Int, stamina: Int, run: Boolean)
 
   sealed trait FollowMode
   object NoFollow extends FollowMode
   case class FollowRunning(probability: Double) extends FollowMode
+  case class FollowRescue(probability: Double) extends FollowMode
+
+  case class Rescue(informed: Boolean, towardsRescue: Boolean)
 
   object Agent {
 
@@ -129,6 +133,7 @@ object agent {
             v <- computeVelocity(h.position, h.velocity, h.maxRotation, Speed.effectiveSpeed(h.speed))
             p <- computePosition(h.position, v)
           } yield h.copy(position = p, velocity = v)
+
         case z: Zombie =>
           for {
             v <- computeVelocity(z.position, z.velocity, z.maxRotation, Speed.effectiveSpeed(z.speed))
@@ -138,6 +143,23 @@ object agent {
       }
 
     }
+
+    def rescue(world: World, agents: Vector[Agent]) = {
+      val rescued = ListBuffer[Human]()
+      val newAgents = ListBuffer[Agent]()
+
+      for {
+        a <- agents
+      } a match {
+        case h: Human =>
+          val (x, y) = positionToLocation(h.position, world.side, world.side)
+          if(h.rescue.informed && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
+        case a => newAgents += a
+      }
+
+      newAgents.toVector
+    }
+
 
     def metabolism(a: Agent) =
       a match  {
@@ -212,7 +234,7 @@ object agent {
     def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, followMode: FollowMode, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation, followMode)
+      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation, followMode, rescue = Rescue(towardsRescue = false, informed = false))
     }
 
     def run(h: Human) =
