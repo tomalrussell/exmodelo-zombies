@@ -1,11 +1,23 @@
 
 package zombies
 
+import zombie.network.Network
+
 
 object spatialindicators {
 
 
-
+  /**
+    * avg detour between all pairs of accessible points
+    *  - FIXME requires a connected world
+    * @param world
+    * @return
+    */
+  def averageDetour(world: Array[Array[Double]]): Double = {
+    val network = Network.gridToNetwork(world)
+    val shortestPaths = Network.allPairsShortestPath(network)
+    shortestPaths.values.map{_.map{_.weight}.sum}.zip(shortestPaths.keys.map{case (n1,n2)=> math.sqrt((n1.x-n2.x)*(n1.x-n2.x)+(n1.y-n2.y)*(n1.y-n2.y))}).map{case (dn,de)=>dn/de}.sum/shortestPaths.size
+  }
 
 
   /**
