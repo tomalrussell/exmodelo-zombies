@@ -47,3 +47,11 @@ lazy val spatialsens = Project("spatialsens",file("spatialsens")) dependsOn(mode
   libraryDependencies += "org.scala-graph" %% "graph-core" % "1.12.5"
 )
 
+lazy val vigilence = Project("vigilence", file("vigilence")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings (
+  scalaVersion := "2.12.8",
+  OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
+  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
+  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
+  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
+  osgiSettings
+)
