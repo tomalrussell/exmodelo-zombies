@@ -141,17 +141,23 @@ object agent {
         case a => a
       }
 
-    def adaptDirectionRotate(world: World, index: Index[Agent], agent: Agent, granularity: Int, neighborhoodCache: NeighborhoodCache, rng: Random) = {
-
+    def adaptDirectionRotate(world: World, index: Index[Agent], agent: Agent, granularity: Int, humanFollowRuninng: Boolean, neighborhoodCache: NeighborhoodCache, rng: Random) = {
 
       agent match {
         case h: Human =>
-          neighbors(index, agent, vision(h), neighborhoodCache).filter(Agent.isZombie) match {
+          val nhs =  neighbors(index, agent, vision(h), neighborhoodCache)
+          nhs.filter(Agent.isZombie) match {
             case ns if !ns.isEmpty =>
               val running = Human.run(h)
               val pv = projectedVelocities(granularity, running.maxRotation, running.velocity, Speed.effectiveSpeed(running.speed))
               val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv)))
               if(nv.isEmpty) running else running.copy(velocity = nv.maxBy { v => ns.map(n => distance(position(n), sum(running.position, v))).min })
+            case _ if humanFollowRuninng =>
+              val runningNeighbors = nhs.collect { case h: Human => h }.filter { _.speed.run }
+              if(!runningNeighbors.isEmpty) {
+                val velocity = average(runningNeighbors.map(_.velocity))
+                Human.run(h.copy(velocity = velocity))
+              } else h
             case _ => h
           }
         case z: Zombie =>

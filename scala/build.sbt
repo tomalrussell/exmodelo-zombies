@@ -42,3 +42,8 @@ lazy val gui = Project("gui", file("gui")) dependsOn (model) enablePlugins (Exec
   }
 )
 
+
+lazy val spatialsens = Project("spatialsens",file("spatialsens")) dependsOn(model) settings (
+  libraryDependencies += "org.scala-graph" %% "graph-core" % "1.12.5"
+)
+

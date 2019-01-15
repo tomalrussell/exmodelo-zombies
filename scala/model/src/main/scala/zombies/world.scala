@@ -100,8 +100,8 @@ object world {
             f@Floor(cellLevel, _) <- Seq(cells(x + ox)(y + oy))
           } yield (ox * (level - cellLevel), oy * (level - cellLevel))
 
-        val (slopesX, slopesY) = slopes.unzip
-        Slope(slopesX.sum / slopesX.size, slopesY.sum / slopesY.size, intensity * level)
+        val (slopesX, slopesY) = average(slopes)
+        Slope(slopesX, slopesY, intensity * level)
       }
 
       for {
