@@ -8,13 +8,13 @@ object ODE extends App {
   val hunt0 = 0.5
   val staminaZ = 5
 
-  val exhaustH = 1 / staminaH
-  val exhaustZ = 1 / staminaZ
+  val exhaustH = 1.0 / staminaH
+  val exhaustZ = 1.0 / staminaZ
 
   // Time steps
-  val T0 = 0
+  val T0 = 1
   val DT = 1
-  val Tmax = 500
+  val Tmax = 100
 
   val nbIntervals = (Tmax - T0) / DT
 
@@ -24,7 +24,7 @@ object ODE extends App {
   val Z_walk0 = 4.0
   val Z_run0 = 0.0
 
-  val condInit = Vector(H_walk0, H_run0, Z_walk0, Z_run0)
+  val condInit = List(Vector(H_walk0, H_run0, Z_walk0, Z_run0))
 
   println(
     Model.integrate(Model.dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(T0, DT, condInit, nbIntervals).mkString("\n")
@@ -73,6 +73,7 @@ object Model {
     def dZ_run(state: Vector[Double]) =
       hunt * state(2) - exhaustZ * state(3)
 
+
     // Output
     Vector(
       dH_walk(state),
@@ -83,7 +84,7 @@ object Model {
   }
 
 
-  def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, yn: Vector[Double], counter: Int): Vector[Double] = {
+  def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, ysol: List[Vector[Double]], counter: Int): List[Vector[Double]] = {
     def multiply(v: Vector[Double], s: Double) = v.map(_ * s)
     def divide(v: Vector[Double], s: Double) = v.map(_ / s)
     def add(vs: Vector[Double]*) = {
@@ -91,14 +92,16 @@ object Model {
       vs.reduceLeft(add0)
     }
 
+    val yn = ysol.head
+
     if (counter > 0) {
       val dy1 = multiply(f(t0, yn), dt)
       val dy2 = multiply(f(t0 + dt / 2, add(yn, divide(dy1, 2))), dt)
       val dy3 = multiply(f(t0 + dt / 2, add(yn, divide(dy2, 2))), dt)
       val dy4 = multiply(f(t0 + dt, add(yn, dy3)), dt)
-      val y = add(yn, divide(add(dy1, multiply(dy2, 2), add(multiply(dy3, 2), dy4)), 6))
+      val y = add(yn, divide(add(dy1, multiply(dy2, 2), add(multiply(dy3, 2), dy4)), 6))::ysol
       val t = t0 + dt
       integrate(f)(t, dt, y, counter - 1)
-    } else yn
+    } else ysol.reverse
   }
 }
