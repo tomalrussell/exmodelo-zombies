@@ -1,6 +1,7 @@
 package zombies
 
 import zombie.network.Network
+import zombies.spatialindicators.SpatialMeasure
 import zombies.world._
 
 import scala.util.Random
@@ -16,7 +17,9 @@ object TestSpatialSens extends App {
   val bordPoints = 20
   val linkwidth=3.0
 
-  println(wallsToString(bondPercolatedWorld(worldSize=worldSize,percolationProba=percolationProba,bordPoints=bordPoints,linkwidth=linkwidth)))
+  val world = bondPercolatedWorld(worldSize=worldSize,percolationProba=percolationProba,bordPoints=bordPoints,linkwidth=linkwidth)
+  println(wallsToString(world))
+  println(SpatialMeasure(world))
 
   /*
   var network = Network.gridNetwork(worldSize/10,worldSize/10,worldSize)
