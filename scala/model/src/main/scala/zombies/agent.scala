@@ -178,7 +178,7 @@ object agent {
           val nhs =  neighbors(index, agent, vision(h), neighborhoodCache)
           (nhs.filter(Agent.isZombie), h.followMode) match {
             case (ns, _) if !ns.isEmpty =>
-              val running = Human.run(h)
+              val running = Human.alerted(h)
               val pv = projectedVelocities(granularity, running.maxRotation, running.velocity, Speed.effectiveSpeed(running.speed))
               val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv)))
               if(nv.isEmpty) running else running.copy(velocity = nv.maxBy { v => ns.map(n => distance(position(n), sum(running.position, v))).min })
@@ -255,6 +255,11 @@ object agent {
     def run(h: Human) =
       if(Speed.canRun(h.speed)) h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(run = true))
       else h
+
+    def towardsRescue(h: Human) =
+      if(h.rescue.informed) h.copy(rescue = h.rescue.copy(towardsRescue = true)) else h
+
+    def alerted(h: Human) = towardsRescue(run(h))
 
     def metabolism(h: Human) = {
       val newSpeed = Speed.metabolism(h.speed)

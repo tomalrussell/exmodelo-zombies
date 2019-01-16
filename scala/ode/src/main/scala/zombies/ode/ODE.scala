@@ -57,24 +57,26 @@ object Model {
 //
 //
 
+  
+  def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, yn: Vector[Double], counter: Int = 1): Vector[Double] = {
+    if (counter > 0) {
+      def multiply(v: Vector[Double], s: Double) = v.map(_ * s)
+      def divide(v: Vector[Double], s: Double) = v.map(_ / s)
+      def add(vs: Vector[Double]*) = {
+        def add0(v1: Vector[Double], v2: Vector[Double]) = (v1 zip v2).map { case(a, b) => a + b }
+        vs.reduceLeft(add0)
+      }
 
-  def integrate(fs: Vector[(Double, Double) => Double]) = {
-
+      val dy1 = multiply(f(t0, yn), dt)
+      val dy2 = multiply(f(t0 + dt / 2, add(yn, divide(dy1, 2))), dt)
+      val dy3 = multiply(f(t0 + dt / 2, add(yn, divide(dy2, 2))), dt)
+      val dy4 = multiply(f(t0 + dt, add(yn, dy3)), dt)
+      val y = add(yn,  divide(add(dy1, multiply(dy2, 2), add(multiply(dy3, 2), dy4)), 6))
+      val t = t0 + dt
+      integrate(f)(t, dt, y, counter - 1)
+    } else yn
   }
 
-  class Calculator(f: (Double, Double) => Double) {
-    def compute(t0: Double, dt: Double, counter: Int, yn: Double): Double = {
-      if (counter > 0) {
-        val dy1 = dt * f(t0, yn)
-        val dy2 = dt * f(t0 + dt / 2, yn + dy1 / 2)
-        val dy3 = dt * f(t0 + dt / 2, yn + dy2 / 2)
-        val dy4 = dt * f(t0 + dt, yn + dy3)
-        val y = yn + (dy1 + 2 * dy2 + 2 * dy3 + dy4) / 6
-        val t = t0 + dt
-        compute(t, dt, counter - 1, y)
-      } else yn
-    }
-  }
 
 
 
