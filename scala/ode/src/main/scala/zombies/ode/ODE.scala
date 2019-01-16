@@ -1,45 +1,49 @@
 package zombies.ode
 
 object ODE extends App {
-  // Model parameters
-  val panic0 = 1
-  val staminaH = 10
-  val inf = 0.25
-  val hunt0 = 0.5
-  val staminaZ = 5
-
-  val exhaustH = 1.0 / staminaH
-  val exhaustZ = 1.0 / staminaZ
-
-  // Time steps
-  val T0 = 1
-  val DT = 1
-  val Tmax = 100
-
-  val nbIntervals = (Tmax - T0) / DT
-
-  // Initial conditions
-  val H_walk0 = 250.0
-  val H_run0 = 0.0
-  val Z_walk0 = 4.0
-  val Z_run0 = 0.0
-
-  val condInit = List(Vector(H_walk0, H_run0, Z_walk0, Z_run0))
-
   println(
-    Model.integrate(Model.dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(T0, DT, condInit, nbIntervals).mkString("\n")
+    Model.run(
+      // Real data
+      //file = File("acquisition10_1.csv").toJava,
+      // ODE parameters
+      panic0 = 1,
+      staminaH = 10,
+      inf = 0.25,
+      hunt0 = 0.5,
+      staminaZ = 5,
+      // Initial conditions
+      statesInit = Vector(250.0, 0.0, 4.0, 0.0),
+      // Time steps
+      t0 = 1,
+      dt = 1,
+      tMax = 100
+    ).mkString("\n")
   )
 }
 
 object Model {
 
-  /*def run(file: java.io.File, panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double, state: Vector[Double], integrationStep: Double = 0.01) = {
-    //val steps = Model.dynamic(panic0, exhaustH, inf, hunt0, exhaustZ, state, integrationStep, (0 until 100).map(_.toDouble).toVector)
+  def run(
+           //file: java.io.File,
+           panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
+           statesInit: Vector[Double],
+           t0: Int, dt: Int, tMax: Int) = {
+    val exhaustH = 1.0 / staminaH
+    val exhaustZ = 1.0 / staminaZ
+    val nbIntervals = (tMax - t0) / dt
 
-    vaIs = state(2) :: steps.map(_ (2)).sliding(2).map { case Vector(t1, t2) => t2 - t1 }.toList
-    val infections = columns.map(_ (6).toDouble).toList
+    val simul = integrate(dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(t0, dt, nbIntervals, List(statesInit))
 
-    val likelihood =
+    val Vector(humansWalking, humansRunning, zombiesWalking, zombiesRunning) = simul.toVector.transpose
+
+    val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
+    val zombies = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b }
+
+    simul
+
+    //val realData = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
+
+    /*val likelihood =
       (Is zip infections).map { case (i, inf) =>
         if (i > 0) (inf * math.log(i) - i) else 0
       }.sum
@@ -50,8 +54,8 @@ object Model {
     (likelihood + llPortage) match {
       case Double.NegativeInfinity | Double.NaN => Double.PositiveInfinity
       case x => -x
-    }
-  }*/
+    }*/
+  }
 
 
   def dynamic(panic0: Double, exhaustH: Double, inf: Double, hunt0: Double, exhaustZ: Double)(t: Double, state: Vector[Double]): Vector[Double] = {
@@ -73,7 +77,6 @@ object Model {
     def dZ_run(state: Vector[Double]) =
       hunt * state(2) - exhaustZ * state(3)
 
-
     // Output
     Vector(
       dH_walk(state),
@@ -84,7 +87,7 @@ object Model {
   }
 
 
-  def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, ysol: List[Vector[Double]], counter: Int): List[Vector[Double]] = {
+  def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, counter: Int, ysol: List[Vector[Double]]): List[Vector[Double]] = {
     def multiply(v: Vector[Double], s: Double) = v.map(_ * s)
     def divide(v: Vector[Double], s: Double) = v.map(_ / s)
     def add(vs: Vector[Double]*) = {
@@ -101,7 +104,7 @@ object Model {
       val dy4 = multiply(f(t0 + dt, add(yn, dy3)), dt)
       val y = add(yn, divide(add(dy1, multiply(dy2, 2), add(multiply(dy3, 2), dy4)), 6))::ysol
       val t = t0 + dt
-      integrate(f)(t, dt, y, counter - 1)
+      integrate(f)(t, dt, counter - 1, y)
     } else ysol.reverse
   }
 }
