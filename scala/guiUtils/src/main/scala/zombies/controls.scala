@@ -15,7 +15,7 @@ object controls {
   type Mecanism = String
   type ControllerType = Double | Int | Mecanism
 
-  val FollowMode: Mecanism = "No follow"
+  val NoFollowMode: Mecanism = "No follow"
   val FollowRunning: Mecanism = "Follow running"
 
   trait Controller {
