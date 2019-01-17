@@ -73,7 +73,6 @@ object world {
     }
 
 
-
     def slope(world: World, x: Int, y: Int, levels: Array[Array[Double]], intensity: Double => Double, repulsion: Boolean = true) = {
       val level = levels(x)(y)
       val slopes =

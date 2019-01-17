@@ -19,7 +19,9 @@ object network {
 
   case class Node(id: Int, x: Double, y: Double)
 
-  case class Link(e1: Node,e2: Node,weight: Double = 1.0)
+  case class Link(e1: Node,e2: Node,weight: Double = 1.0,length: Double = 1.0)
+
+  object Link {def apply(e1: Node,e2: Node,weight: Double): Link = Link(e1,e2,weight,math.sqrt((e1.x-e2.x)*(e1.x-e2.x)+(e1.y-e2.y)*(e1.y-e2.y)))}
 
   case class Network(nodes: Set[Node], links: Set[Link])
 
@@ -124,6 +126,30 @@ object network {
     }
 
 
+    /**
+      * Reconstruct a network from the matrix representation of the world
+      * (level of the patch, different from the generating network in the case of percolation)
+      *  - put links in both senses
+      * @param world
+      * @return
+      */
+    def gridToNetwork(world: Array[Array[Double]]): Network = {
+      val nodes = new ArrayBuffer[Node]()
+      val links = new ArrayBuffer[Link]()
+      var nodeid = 0
+      for(i <- 0 until world.size; j <- 0 until world(0).size) {
+        if(world(i)(j)>0.0){
+          val currentnode = Node(nodeid,i,j);nodeid=nodeid+1
+          if(i-1>0){if(world(i-1)(j)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i-1,j)))}}
+          if(i+1<world.size){if(world(i+1)(j)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i+1,j)))}}
+          if(j-1>0){if(world(i)(j-1)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i,j-1)))}}
+          if(j+1<world(0).size){if(world(i)(j+1)>0.0){nodeid=nodeid+1;links.append(Link(currentnode,Node(nodeid,i,j+1)))}}
+        }
+      }
+      Network(links.map{_.e1}.toSet.union(links.map{_.e2}.toSet),links.toSet)
+    }
+
+
 
 
     /**
@@ -214,7 +240,8 @@ object network {
       */
     def largestConnectedComponent(network: Network): Network = {
       val components = connectedComponents(network)
-      val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>=n2.nodes.size}(0)
+      //val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>=n2.nodes.size}(0)
+      val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>n2.nodes.size}(0)
       //println("largest comp size : "+largestComp.nodes.size)
       largestComp
     }
@@ -223,18 +250,27 @@ object network {
 
     /**
       * Floid marshall shortest paths
+      *
+      * - slow in O(N^3) => DO NOT USE FOR LARGE NETWORKS
+      *    (TODO : implement sinuosity index using "backbone" network extraction (may be tricky though))
+      *
+      * FIXME - issues in nodes ids / management of components ?
+      *
       * @param network
       * @return
       */
     def allPairsShortestPath(network: Network): Map[(Node,Node),Seq[Link]] = {
-      val nodenames = network.nodes.map{_.id}
-      val nodeids: Map[Int,Int] = nodenames.zipWithIndex.toMap
+      println("computing shortest paths between "+network.nodes.toSeq.size+" vertices")
+      val nodenames = network.nodes.toSeq.map{_.id}
+      println("unique nodes id = "+nodenames.size)
+      val nodeids: Map[Int,Int] = nodenames.toSeq.zipWithIndex.toMap
       //val revnodeids: Map[Int,Int] = nodenames.zipWithIndex.map{case(oid,ind)=>(ind,oid)}.toMap
-      val revnodes: Map[Int,Node] = network.nodes.zipWithIndex.map{case(n,i)=>(i,n)}.toMap
+      val revnodes: Map[Int,Node] = network.nodes.toSeq.zipWithIndex.map{case(n,i)=>(i,n)}.toMap
       val nodes = nodeids.keySet //not necessary, for clarity
       val mlinks = mutable.Map[Int, Set[Int]]()
       val mlinkweights = mutable.Map[(Int,Int),Double]()
       val linksMap = mutable.Map[(Int,Int),Link]()
+
       for(link <- network.links){
         if(!mlinks.keySet.contains(nodeids(link.e1.id))) mlinks(nodeids(link.e1.id))=Set.empty[Int]
         if(!mlinks.keySet.contains(nodeids(link.e2.id))) mlinks(nodeids(link.e2.id))=Set.empty[Int]
@@ -262,7 +298,11 @@ object network {
         }
       }
 
-      // Initialize next vertex matrix.
+      println(ds.flatten.filter(_!=inf).size)
+      println(2*network.links.size+network.nodes.size)
+
+      // Initialize next vertex matrix
+      // O(N^3)
       val ns = Array.fill[Int](n, n)(-1)
       for (k <- 0 until n; i <- 0 until n; j <- 0 until n)
         if (ds(i)(k) != inf && ds(k)(j) != inf && ds(i)(k) + ds(k)(j) < ds(i)(j)) {
@@ -270,16 +310,25 @@ object network {
           ns(i)(j) = k
         }
 
+      // FIX for unconnected networks ? should also work as ds(i)(j) = inf ?
+      println(ns.flatten.filter(_==(-1)).size)
+      println(network.links.size)
+
+
       // Helper function to carve out paths from the next vertex matrix.
       def extractPath(path: ArrayBuffer[Node],pathLinks: ArrayBuffer[Link], i: Int, j: Int) {
         if (ds(i)(j) == inf) return
         val k = ns(i)(j)
         if (k != -1) {
           extractPath(path,pathLinks, i, k)
+          //assert(revnodes.contains(j),"error : "+k)
           path.append(revnodes(k))
           extractPath(path,pathLinks, k, j)
         }else {
           // otherwise k is the next node, can add the link
+          //assert(revnodes.contains(i),"error : "+i)
+          //assert(revnodes.contains(j),"error : "+j)
+          assert(linksMap.contains(revnodes(i).id,revnodes(j).id),"error : "+network.links.filter{case l => l.e1.id==revnodes(i).id&&l.e2.id==revnodes(j).id}+" - "+network.links.filter{case l => l.e2.id==revnodes(i).id&&l.e1.id==revnodes(j).id})
           pathLinks.append(linksMap(revnodes(i).id,revnodes(j).id))
         }
       }
