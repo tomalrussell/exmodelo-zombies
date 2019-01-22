@@ -16,7 +16,9 @@ object simulation {
       humanPerception: Double,
       humanMaxRotation: Double,
       humanStamina: Int,
-      humanFollowMode: FollowMode = NoFollow,
+      humanFollowProbability: Double,
+      humanInformedRatio: Double,
+      humanPerceiveInformationProbability: Double,
       humans: Int,
       zombieRunSpeed: Double,
       zombiePerception: Double,
@@ -29,9 +31,16 @@ object simulation {
 
       val cellSide = space.cellSide(world.side)
 
-      val agents =
-        Vector.fill(humans)(Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation, humanFollowMode, random)) ++
-          Vector.fill(zombies)(Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieStamina, zombiePerception * cellSide, zombieMaxRotation, random))
+
+      def generateHuman = {
+        val informed = random.nextDouble() < humanInformedRatio
+        val rescue = Rescue(informed = informed, perceiveInformation = humanPerceiveInformationProbability)
+        Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation, humanFollowProbability, rescue, random)
+      }
+
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieStamina, zombiePerception * cellSide, zombieMaxRotation, random)
+
+      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie)
 
       Simulation(
         world = world,
@@ -42,7 +51,7 @@ object simulation {
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
         humanStamina = humanStamina,
-        humanFollowMode = humanFollowMode,
+        humanFollowProbability = humanFollowProbability,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
@@ -66,7 +75,7 @@ object simulation {
     humanPerception: Double,
     humanMaxRotation: Double,
     humanStamina: Int,
-    humanFollowMode: FollowMode,
+    humanFollowProbability: Double,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
@@ -77,8 +86,18 @@ object simulation {
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
-    val na1 = ai.map(Agent.metabolism).map(Agent.adaptDirectionRotate(simulation.world, index, _, simulation.rotationGranularity, neighborhoodCache, rng)).flatMap(Agent.move(_, simulation.world, simulation.rotationGranularity, rng))
-    val (na2, rescued) = Agent.rescue(simulation.world, na1)
+
+    val na1 =
+      for { a0 <- ai } yield {
+        val ns = Agent.neighbors(index, a0, Agent.vision(a0), neighborhoodCache)
+        val a1 = Agent.inform(a0, ns, rng)
+        val a2 = Agent.run(a1, ns)
+        val a3 = Agent.metabolism(a2)
+        val a4 = Agent.changeDirection(simulation.world, index, a3, simulation.rotationGranularity, ns, rng)
+        Agent.move(a4, simulation.world, simulation.rotationGranularity, rng)
+      }
+
+    val (na2, rescued) = Agent.rescue(simulation.world, na1.flatten)
     simulation.copy(agents = na2, rescued = simulation.rescued ++ rescued)
   }
 

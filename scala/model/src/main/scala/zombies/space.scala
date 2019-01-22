@@ -8,12 +8,13 @@ import scala.util.Random
 @JSExportTopLevel("space")
 object space {
 
-  def neighbors[T](get: (Int, Int) => Traversable[T], x: Int, y: Int, neighborhoodSize: Int) = {
+  def neighbors[T](get: (Int, Int) => Traversable[T], x: Int, y: Int, neighborhoodSize: Int, center: Boolean = true) = {
     val res = ListBuffer[T]()
 
     for {
       ox <- -neighborhoodSize to neighborhoodSize
       oy <- -neighborhoodSize to neighborhoodSize
+      if center || ox != oy
     } res ++= get(x + ox, y + oy)
 
     res.toList

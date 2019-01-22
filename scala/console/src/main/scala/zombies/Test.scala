@@ -8,10 +8,14 @@ import scala.util.Random
 
 object Test extends App {
 
-  val humanFollowMode = NoFollow
+
 
   val walkSpeed = 0.1
   val infectionRange = 0.2
+
+  val humanInformedRatio = 0.1
+  val humanPerceiveInformationProbability = 0.05
+  val humanFollowProbability = 0.2
 
   val humanPerception = 1.5
   val zombiePerception = 3.0
@@ -32,12 +36,15 @@ object Test extends App {
 
   val world = World.jaude
   val noZombie = Simulation.initialize(
-    World.place(40, 3),
+    World.jaude,
     infectionRange = infectionRange,
     humanRunSpeed = humanRunSpeed,
     humanStamina = humanStamina,
     humanPerception = humanPerception,
     humanMaxRotation = humanMaxRotation,
+    humanFollowProbability = humanFollowProbability,
+    humanInformedRatio = humanInformedRatio,
+    humanPerceiveInformationProbability = humanPerceiveInformationProbability,
     humans = humans,
     zombieRunSpeed = zombieRunSpeed,
     zombieStamina = zombieStamina,
@@ -62,10 +69,10 @@ object Test extends App {
 
   def step(simulation: Simulation): Unit = {
     if (!simulation.agents.isEmpty) {
-      print(console.display(world, simulation.agents))
+      print(console.display(simulation))
       val newState = _root_.zombies.simulation.step(simulation, neighborhoodCache, rng)
       Thread.sleep(100)
-      console.clear(newState.world)
+      console.clear(simulation)
       step(newState)
     }
   }

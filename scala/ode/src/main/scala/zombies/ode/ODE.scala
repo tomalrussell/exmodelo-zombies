@@ -57,7 +57,7 @@ object Model {
 //
 //
 
-  
+
   def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, yn: Vector[Double], counter: Int = 1): Vector[Double] = {
     if (counter > 0) {
       def multiply(v: Vector[Double], s: Double) = v.map(_ * s)
