@@ -6,9 +6,9 @@ val scalaJSdomVersion = "0.9.2"
 val scaladgetVersion = "1.2.3"
 name := "zombies"
 
-lazy val ode = Project("ode", file("ode")) settings(
+lazy val ode = Project("ode", file("ode")) settings (
   scalaVersion := "2.12.8"
-)
+  )
 
 
 lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
@@ -46,27 +46,28 @@ def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS
   IO.copyDirectory(demoResource, demoTarget)
 }
 
-lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
+lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings (
   guiDependencies
-)
+  )
 
-lazy val gui = Project("gui", file("gui")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings(
+lazy val gui = Project("gui", file("gui")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings (
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
-)
+  )
 
-lazy val vigilence = Project("vigilence", file("vigilence")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
+lazy val vigilence = Project("vigilence", file("vigilence")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
   OsgiKeys.importPackage := Seq("*;resolution:=optional"),
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
-  osgiSettings
+  osgiSettings,
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
 )
 
 
-lazy val spatialsens = Project("spatialsens",file("spatialsens")) dependsOn(model)
+lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (model)
 
-lazy val spatialsensgui = Project("spatialsensgui",file("spatialsens")) dependsOn(model) enablePlugins (ExecNpmPlugin) settings (
+lazy val spatialsensgui = Project("spatialsensgui", file("spatialsens")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings(
   target := file("spatialsens/targetgui"),
   //libraryDependencies += "org.scala-graph" %% "graph-core" % "1.12.5",
   libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion,

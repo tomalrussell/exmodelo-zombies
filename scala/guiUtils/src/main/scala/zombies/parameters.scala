@@ -19,12 +19,6 @@ object parameters {
 
   case class Parameter(name: ParameterName, parameterType: ParameterType)
 
-  def toFollowMode(m: Mecanism, probability: Double): FollowMode = {
-    m match {
-      case controls.FollowRunning => FollowRunning(probability)
-      case _ => NoFollow
-    }
-  }
 
   val infectionRange: ParameterName = "infectionRange"
   val walkSpeed: ParameterName = "walkSpeed"

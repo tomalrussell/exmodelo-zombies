@@ -2,7 +2,7 @@
 
 package zombies
 
-
+/*
 import org.scalajs.dom.raw.{HTMLElement, SVGElement}
 import scalatags.JsDom.all._
 import scalatags.JsDom.styles
@@ -326,4 +326,6 @@ object spatialsensparameters {
     Parameter("rotationGranularity", Ints(0, 10, 1, 5)),
   )
 }
+
+*/
 
