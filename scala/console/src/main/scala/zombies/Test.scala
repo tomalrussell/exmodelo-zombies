@@ -14,7 +14,7 @@ object Test extends App {
   val infectionRange = 0.2
 
   val humanInformedRatio = 0.1
-  val humanPerceiveInformationProbability = 0.05
+  val humanAwarenessProbability = 0.05
   val humanFollowProbability = 0.2
 
   val humanPerception = 1.5
@@ -44,7 +44,7 @@ object Test extends App {
     humanMaxRotation = humanMaxRotation,
     humanFollowProbability = humanFollowProbability,
     humanInformedRatio = humanInformedRatio,
-    humanPerceiveInformationProbability = humanPerceiveInformationProbability,
+    humanAwarenessProbability = humanAwarenessProbability,
     humans = humans,
     zombieRunSpeed = zombieRunSpeed,
     zombieStamina = zombieStamina,

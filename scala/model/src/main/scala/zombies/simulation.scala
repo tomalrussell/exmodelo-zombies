@@ -10,31 +10,31 @@ object simulation {
   object Simulation {
 
     def initialize(
-      world: World,
-      infectionRange: Double,
-      humanRunSpeed: Double,
-      humanPerception: Double,
-      humanMaxRotation: Double,
-      humanStamina: Int,
-      humanFollowProbability: Double,
-      humanInformedRatio: Double,
-      humanPerceiveInformationProbability: Double,
-      humans: Int,
-      zombieRunSpeed: Double,
-      zombiePerception: Double,
-      zombieMaxRotation: Double,
-      zombieStamina: Int,
-      zombies: Int,
-      walkSpeed: Double,
-      rotationGranularity: Int = 5,
-      random: Random) = {
+                    world: World,
+                    infectionRange: Double,
+                    humanRunSpeed: Double,
+                    humanPerception: Double,
+                    humanMaxRotation: Double,
+                    humanStamina: Int,
+                    humanFollowProbability: Double,
+                    humanInformedRatio: Double,
+                    humanAwarenessProbability: Double,
+                    humans: Int,
+                    zombieRunSpeed: Double,
+                    zombiePerception: Double,
+                    zombieMaxRotation: Double,
+                    zombieStamina: Int,
+                    zombies: Int,
+                    walkSpeed: Double,
+                    rotationGranularity: Int = 5,
+                    random: Random) = {
 
       val cellSide = space.cellSide(world.side)
 
 
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
-        val rescue = Rescue(informed = informed, perceiveInformation = humanPerceiveInformationProbability)
+        val rescue = Rescue(informed = informed, perceiveInformation = humanAwarenessProbability)
         Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation, humanFollowProbability, rescue, random)
       }
 

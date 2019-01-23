@@ -80,9 +80,9 @@ object parameters {
   val zombieMaxRotation = Parameter("zombieMaxRotation", Doubles(0.0, 180.0, 1.0, 45.0, 0.0), Variable)
   val numberZombies = Parameter("numberZombies", Ints(0, 1500, 1, 4, 0), Variable)
   val rotationGranularity = Parameter("rotationGranularity", Ints(0, 10, 1, 5, 0), Variable)
-  //val followMode = Parameter("followMode", Options(Seq(NoFollow, FollowRunning), NoFollow, NoFollow), Variable),
-  val followModeProbability = Parameter("followModeProbability", Doubles(0.0, 1.0, 0.1, 0.5, 0.0), Variable)
-
+  val humanInformedRatio = Parameter("humanInformedRatio", Doubles(0.0, 1.0, 0.1, 0.1, 0.0), Variable)
+  val humanFollowModeProbability = Parameter("humanFollowModeProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
+  val humanAwarenessProbability = Parameter("humanAwarenessProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.05), Variable)
 
 
 }

@@ -13,13 +13,15 @@ object zombieland {
       humanPerception,
       humanStamina,
       humanRunSpeed,
+      humanFollowModeProbability,
+      humanAwarenessProbability,
+      humanInformedRatio,
       numberHumans,
       zombieMaxRotation,
       zombiePerception,
       zombieStamina,
       zombieRunSpeed,
-      numberZombies,
-      followModeProbability
+      numberZombies
     )
   }
 }

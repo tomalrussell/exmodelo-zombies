@@ -17,10 +17,11 @@ object vigilence {
       zombieStamina isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
+      humanFollowModeProbability isOff,
+      humanAwarenessProbability isOff,
+      humanInformedRatio isOff,
       zombieMaxRotation isOff,
-      rotationGranularity isOff,
-      followModeProbability isOff,
-      followModeProbability isOff
+      rotationGranularity isOff
     )
   }
 }

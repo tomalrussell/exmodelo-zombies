@@ -31,6 +31,9 @@ object simulate {
         walkSpeed = controlValues.getOrElse(walkSpeed.name, defaultOrOff(walkSpeed)).asInstanceOf[Double],
         humanRunSpeed = controlValues.getOrElse(humanRunSpeed.name, defaultOrOff(humanRunSpeed)).asInstanceOf[Double],
         humanStamina = controlValues.getOrElse(humanStamina.name, defaultOrOff(humanStamina)).asInstanceOf[Int],
+        humanFollowProbability = controlValues.getOrElse(humanFollowModeProbability.name, defaultOrOff(humanFollowModeProbability)).asInstanceOf[Double],
+        humanInformedRatio = controlValues.getOrElse(humanInformedRatio.name, defaultOrOff(humanInformedRatio)).asInstanceOf[Double],
+        humanAwarenessProbability = controlValues.getOrElse(humanAwarenessProbability.name, defaultOrOff(humanAwarenessProbability)).asInstanceOf[Double],
         humanPerception = controlValues.getOrElse(humanPerception.name, defaultOrOff(humanPerception)).asInstanceOf[Double],
         humanMaxRotation = controlValues.getOrElse(humanMaxRotation.name, defaultOrOff(humanMaxRotation)).asInstanceOf[Double],
         humans = controlValues.getOrElse(numberHumans.name, defaultOrOff(numberHumans)).asInstanceOf[Int],
@@ -40,9 +43,7 @@ object simulate {
         zombieMaxRotation = controlValues.getOrElse(zombieMaxRotation.name, defaultOrOff(zombieMaxRotation)).asInstanceOf[Double],
         zombies = controlValues.getOrElse(numberZombies.name, defaultOrOff(numberZombies)).asInstanceOf[Int],
         rotationGranularity = controlValues.getOrElse(rotationGranularity.name, defaultOrOff(rotationGranularity)).asInstanceOf[Int],
-        random = rng,
-        humanFollowMode = agent.NoFollow //toFollowMode(controlValues.getOrElse(followMode.name, defaultOrOff(followMode)).asInstanceOf[Mecanism],
-       // controlValues.getOrElse(followModeProbability.name, defaultOrOff(followModeProbability)).asInstanceOf[Double]
+        random = rng
       )
     }
 
