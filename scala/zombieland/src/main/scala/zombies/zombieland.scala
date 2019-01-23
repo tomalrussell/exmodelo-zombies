@@ -3,10 +3,10 @@ package zombies
 import zombies.guitutils.parameters._
 import scala.scalajs.js.annotation.JSExportTopLevel
 
-object gui {
+object zombieland {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
-    simulate.buildGUI(Seq(
+    simulate.buildGUI(
       infectionRange,
       walkSpeed,
       humanMaxRotation,
@@ -19,8 +19,7 @@ object gui {
       zombieStamina,
       zombieRunSpeed,
       numberZombies,
-      followMode,
       followModeProbability
-    ))
+    )
   }
 }

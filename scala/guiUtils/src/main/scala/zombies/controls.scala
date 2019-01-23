@@ -103,7 +103,7 @@ object controls {
   }
 
   def build(parameter: Parameter): Controller = {
-    parameter.parameterType match {
+    parameter.value match {
       case d: Doubles => DoubleSlider(parameter.name, d)
       case i: Ints => IntSlider(parameter.name, i)
       case o: Options=> OptionController(parameter.name, o.mecanisms: _*)
