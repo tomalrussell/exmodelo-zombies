@@ -7,6 +7,7 @@ object vigilence {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
     simulate.buildGUI(
+      ()=> world.World.jaude,
       humanPerception,
       zombiePerception,
       humanRunSpeed asDefaultFrom(walkSpeed),

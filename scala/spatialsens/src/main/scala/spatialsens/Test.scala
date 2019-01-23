@@ -5,7 +5,7 @@ import zombies.spatialindicators.SpatialMeasure
 import zombies.world._
 
 import scala.util.Random
-import zombies.spatialsens.Generator._
+import zombies.generator.Generator._
 
 
 object TestSpatialSens extends App {

@@ -3,12 +3,13 @@ package zombies
 import zombies.guitutils.controls._
 import zombies.guitutils.parameters._
 import zombies.simulation._
+import zombies.world.World
 
 import scala.util.Random
 
 object simulate {
 
-  def buildGUI(parameters: Parameter*): Unit = {
+  def buildGUI(world: ()=> World, parameters: Parameter*): Unit = {
 
     def defaultOrOff(parameter: Parameter) = {
       if (parameter.activation == Off) off(parameter.value)
@@ -26,7 +27,7 @@ object simulate {
       }.toMap
 
       Simulation.initialize(
-        world.World.jaude,
+        world(),
         infectionRange = controlValues.getOrElse(infectionRange.name, defaultOrOff(infectionRange)).asInstanceOf[Double],
         walkSpeed = controlValues.getOrElse(walkSpeed.name, defaultOrOff(walkSpeed)).asInstanceOf[Double],
         humanRunSpeed = controlValues.getOrElse(humanRunSpeed.name, defaultOrOff(humanRunSpeed)).asInstanceOf[Double],
