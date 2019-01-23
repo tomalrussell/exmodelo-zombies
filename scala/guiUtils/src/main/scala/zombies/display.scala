@@ -13,7 +13,7 @@ import scala.util.Random
 import scaladget.tools
 import scaladget.bootstrapnative.bsn._
 import zombies.simulation.Simulation
-import zombies.world.{Wall, World}
+import zombies.world.{Floor, Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
@@ -43,16 +43,20 @@ object display {
 
     val coldColor = (255, 238, 170)
     val hotColor = (255, 100, 0)
+    val rescueColor = (55, 170, 200)
 
     val baseR = (hotColor._1 - coldColor._1)
     val baseG = (hotColor._2 - coldColor._2)
     val baseB = (hotColor._3 - coldColor._3)
 
-    def color(value: Double) = (
-      (baseR * value + coldColor._1).toInt,
-      (baseG * value + coldColor._2).toInt,
-      (baseB * value + coldColor._3).toInt
-    )
+    def color(value: Double) = value match {
+      case 10.0 => rescueColor
+      case _ => (
+        (baseR * value + coldColor._1).toInt,
+        (baseG * value + coldColor._2).toInt,
+        (baseB * value + coldColor._3).toInt
+      )
+    }
   }
 
   implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
@@ -61,6 +65,7 @@ object display {
 
   val rng = new Random(42)
 
+  case class People(humans: Int = 0, zombies: Int = 0, rescued: Int = 0)
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
@@ -72,6 +77,7 @@ object display {
     val simulation: Var[Option[Simulation]] = Var(None)
 
     val timeOut: Var[Option[Int]] = Var(None)
+    val people: Var[People] = Var(People())
 
     def neighborhoodCache = simulation.now map { s =>
       World.visibleNeighborhoodCache(s.world, math.max(s.humanPerception, s.zombiePerception))
@@ -97,7 +103,7 @@ object display {
       world.cells(lineIndex).map { cell =>
         cell match {
           case Wall => 1
-          case _ => 0
+          case Floor(_, _, rz: Boolean) => if (rz) 10 else 0
         }
       }
     }
@@ -139,6 +145,14 @@ object display {
     }
 
     def step: Unit = {
+      people.update(
+        simulation.now.map { s =>
+          People(s.agents.count {Agent.isHuman},
+            s.agents.count {Agent.isZombie},
+            s.rescued.length)
+        }.getOrElse(People())
+      )
+
       timeOut.now match {
         case Some(to: Int) =>
           neighborhoodCache.foreach { nc =>
@@ -159,6 +173,7 @@ object display {
         timeOut.update(None)
         buildWorld(side, s.world)
         buildAgents
+        people.update(People())
       }
     })
 
@@ -177,6 +192,17 @@ object display {
       }
     })
 
+    val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      span(Rx {
+        s"# zombies: ${people().zombies}"
+      }),
+      span(Rx {
+        s"# humans: ${people().humans}"
+      }),
+      span(Rx {
+        s"# rescued: ${people().rescued}"
+      })
+    )
 
     val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
       controllerList.map { p =>
@@ -185,7 +211,7 @@ object display {
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene))
+    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene, stats))
 
   }
 }
