@@ -7,7 +7,7 @@ import scalatags.JsDom.all._
 
 import scalajs.js.|
 import rx._
-import scaladget.bootstrapnative.{SelectableButtons, bsn}
+import scaladget.bootstrapnative.bsn
 import zombies.guitutils.parameters._
 
 object controls {
@@ -15,11 +15,7 @@ object controls {
   type Mecanism = String
   type ControllerType = Double | Int | Mecanism
 
-  val NoFollowMode: Mecanism = "No follow"
-  val FollowRunning: Mecanism = "Follow running"
-
   trait Controller {
-
 
     def name: ParameterName
 
