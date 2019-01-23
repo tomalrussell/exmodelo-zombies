@@ -66,12 +66,6 @@ object parameters {
     }
   }
 
-  def toFollowMode(m: Mecanism, probability: Double): FollowMode = {
-    m match {
-      case controls.FollowRunning => FollowRunning(probability)
-      case _ => NoFollow
-    }
-  }
 
   val infectionRange = Parameter("infectionRange", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
   val walkSpeed = Parameter("walkSpeed", Doubles(0.0, 1.0, 0.1, 0.1, 0.0), Variable)

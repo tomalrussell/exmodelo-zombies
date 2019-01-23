@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Slope = Slope(), rescueSlope: Slope = Slope(), rescueZone: Boolean = false) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -58,7 +58,8 @@ object world {
           y <- 0 until world.side
           previousDistance = distances(x)(y)
           if !isOrigin(x, y)
-          newDistance = space.neighbors(space.get(distances, _, _), x, y, 1).min + 1.0
+          if !isWall(world, x, y)
+          newDistance = space.neighbors(space.get(distances, _, _), x, y, 1, center = false).min + 1.0
           if previousDistance != newDistance
         } {
           distances(x)(y) = newDistance
@@ -73,19 +74,18 @@ object world {
     }
 
 
-    def slope(world: World, x: Int, y: Int, levels: Array[Array[Double]], intensity: Double => Double, repulsion: Boolean = true) = {
+    def slope(world: World, x: Int, y: Int, levels: Array[Array[Double]], intensity: (Double, Double) => Double) = {
       val level = levels(x)(y)
       val slopes =
         for {
           ox <- -1 to 1
           oy <- -1 to 1
+          if ox != 0 || oy != 0
           if locationIsInTheWorld(world, x + ox, y + oy)
-          f@Floor(_, _, _) <- Seq(world.cells(x + ox)(y + oy))
           fLevel = levels(x + ox)(y + oy)
-        } yield (ox * (level - fLevel), oy * (level - fLevel))
-
-      val (slopesX, slopesY) = if(repulsion) average(slopes) else opposite(average(slopes))
-      Slope(slopesX, slopesY, intensity(level))
+          if fLevel < level
+        } yield Slope(ox, oy, intensity(level, fLevel))
+      slopes.toVector
     }
 
 
@@ -97,7 +97,8 @@ object world {
         x <- 0 until world.side
         y <- 0 until world.side
         c@Floor(_, _, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, _ => 1.0, repulsion = false))
+        if !levels(x)(y).isInfinite
+      } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, (_, _) => 1.0))
 
       world.copy(cells = cells)
     }
@@ -122,11 +123,13 @@ object world {
       val levels = computeLevel(world, lambda)
       val cells = copyCells(world.cells)
 
+      def computeIntensity(levelFrom: Double, levelTo: Double) = (levelFrom - levelTo) * intensity
+
       for {
         x <- 0 until world.side
         y <- 0 until world.side
         c@Floor(_, _, _) <- Seq(cells(x)(y))
-      } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, _* intensity))
+      } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, computeIntensity))
 
       world.copy(cells = cells)
     }
