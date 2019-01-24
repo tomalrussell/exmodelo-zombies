@@ -32,14 +32,16 @@ object agent {
       case h: Human => h
     }
 
-    def zombify(zombie: Zombie, human: Human) = {
+    def zombie: PartialFunction[Agent, Zombie] = {
+      case z: Zombie => z
+    }
+
+    def zombify(zombie: Zombie, human: Human) =
       zombie.copy(
         position = human.position,
         velocity = human.velocity,
         speed = zombie.speed.copy(stamina = 0)
       )
-    }
-
 
     def position(agent: Agent) = agent match {
       case h: Human => h.position
@@ -193,36 +195,55 @@ object agent {
       }
 
     def changeDirection(world: World, index: Index[Agent], agent: Agent, granularity: Int, neighbors: Array[Agent], rng: Random) = {
-      def runningHumans(agents: Array[Agent]) = agents.collect(Agent.human).filter { _.speed.run }
+
+      def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
+        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Speed.effectiveSpeed(h.speed)).filter(pv => !towardsWall(world, h.position, pv))
+        if (!pv.isEmpty) {
+          val nv = rng.shuffle(pv)
+          h.copy(velocity = nv.maxBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
+        } else h
+      }
+
+      def pursueHuman(z: Zombie, nh: Array[Human], rng: Random) = {
+        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
+        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
+        if (nv.isEmpty) z else z.copy(velocity = nv.minBy { v => nh.map(n => distance(position(n), sum(z.position, v))).min })
+      }
+
+      def runningHumans(agents: Array[Agent]) =
+        agents.collect(Agent.human).filter { _.speed.run }
+
+      def towardsRescue(h: Human, rng: Random) = {
+        val (x, y) = location(h, world.side)
+        world.cells(x)(y) match {
+          case f: Floor =>
+            randomElement(f.rescueSlope, rng) match {
+              case Some(s) => h.copy(velocity = normalize((s.x, s.y), Speed.effectiveSpeed(h.speed)))
+              case None => h
+            }
+          case _ => followRunning(h, rng)
+        }
+      }
+
+      def followRunning(h: Human, rng: Random) = {
+        if(h.followRunningProbability > 0.0) {
+          val runningNeighbors = runningHumans(neighbors)
+          if (!runningNeighbors.isEmpty && rng.nextDouble() < h.followRunningProbability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity))))
+          else h
+        } else h
+      }
+
 
       agent match {
         case h: Human =>
-          neighbors.filter(Agent.isZombie) match {
-            case ns if !ns.isEmpty =>
-              val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Speed.effectiveSpeed(h.speed))
-              val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv)))
-              if (nv.isEmpty) h else h.copy(velocity = nv.maxBy { v => ns.map(n => distance(position(n), sum(h.position, v))).min })
-            case _ if h.rescue.informed && h.rescue.alerted =>
-              val (x, y) = location(h, world.side)
-              world.cells(x)(y) match {
-                case f: Floor =>
-                  randomElement(f.rescueSlope, rng) match {
-                    case Some(s) => h.copy(velocity = normalize((s.x, s.y), Speed.effectiveSpeed(h.speed)))
-                    case None => h
-                  }
-                case _ => h
-              }
-            case _ if h.followRunningProbability > 0.0 =>
-              val runningNeighbors = runningHumans(neighbors)
-              if (!runningNeighbors.isEmpty && rng.nextDouble() < h.followRunningProbability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity)))) else h
-            case _ => h
+          neighbors.collect(Agent.zombie) match {
+            case nz if !nz.isEmpty => fleeZombies(h, nz, rng)
+            case _ if h.rescue.informed && h.rescue.alerted => towardsRescue(h, rng)
+            case _ => followRunning(h, rng)
           }
         case z: Zombie =>
-          neighbors.filter(Agent.isHuman) match {
-            case ns if !ns.isEmpty =>
-              val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
-              val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
-              if (nv.isEmpty) z else z.copy(velocity = nv.minBy { v => ns.map(n => distance(position(n), sum(z.position, v))).min })
+          neighbors.collect(Agent.human) match {
+            case nh if !nh.isEmpty => pursueHuman(z, nh, rng)
             case _ => z
           }
       }
