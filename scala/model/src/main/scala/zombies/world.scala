@@ -150,6 +150,14 @@ object world {
       case _ => false
     }
 
+    def pheromon(world: World, location: Location): Double = {
+      val (x, y) = location
+      World.get(world, x, y) match {
+        case Some(f: Floor) => f.pheromone
+        case _=> 0.0
+      }
+    }
+
     def minCellSide(world: World) = 1.0 / world.side
     def cellDiagonal(world: World) = space.cellDiagonal(world.side)
 

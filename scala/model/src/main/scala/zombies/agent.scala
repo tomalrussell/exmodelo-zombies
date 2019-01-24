@@ -251,18 +251,9 @@ object agent {
         val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
         val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
         if (nv.isEmpty) z else {
-          def pheromon(position: Position): Double = {
-            val (x, y) = positionToLocation(position, world.side)
-            World.get(world, x, y) match {
-              case Some(f: Floor) => f.pheromone
-              case _=> 0.0
-            }
-          }
-
-          val currentPheromon = pheromon(z.position)
-
+          val currentPheromon = World.pheromon(world, positionToLocation(z.position, world.side))
           val ph = nv.flatMap { v =>
-            val projectedPheromon = pheromon(sum(z.position, v))
+            val projectedPheromon = World.pheromon(world, positionToLocation(sum(z.position, v), world.side))
             val deltaPheromon = projectedPheromon - currentPheromon
             if(deltaPheromon > 0.0) Some(v -> deltaPheromon) else None
           }
