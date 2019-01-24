@@ -12,9 +12,9 @@ object agent {
   sealed trait Agent
   case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue) extends Agent
   case class Zombie(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
-  case class Speed(walkSpeed: Double, runSpeed: Double, maxStamina: Int, stamina: Int, run: Boolean)
+  case class Speed(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
-  case class Rescue(informed: Boolean = false, alerted: Boolean = false, perceiveInformation: Double = 0.0)
+  case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
 
   object Agent {
 
@@ -39,8 +39,7 @@ object agent {
     def zombify(zombie: Zombie, human: Human) =
       zombie.copy(
         position = human.position,
-        velocity = human.velocity,
-        speed = zombie.speed.copy(stamina = 0)
+        velocity = human.velocity
       )
 
     def position(agent: Agent) = agent match {
@@ -166,10 +165,10 @@ object agent {
     }
 
 
-    def metabolism(a: Agent) =
+    def metabolism(rng: Random)(a: Agent) =
       a match  {
-        case human: Human => Human.metabolism(human)
-        case zombie: Zombie => Zombie.metabolism(zombie)
+        case human: Human => Human.metabolism(human, rng)
+        case zombie: Zombie => Zombie.metabolism(zombie, rng)
         case a => a
       }
 
@@ -177,7 +176,7 @@ object agent {
       a match {
         case human: Human if !human.rescue.informed =>
           val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
-          if(rng.nextDouble() < human.rescue.perceiveInformation * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true)) else human
+          if(rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true)) else human
         case a => a
       }
 
@@ -189,7 +188,7 @@ object agent {
 
     def run(neighbors: Array[Agent])(a: Agent) =
       a match {
-        case h: Human if neighbors.exists(Agent.isZombie) => Human.run(h)
+        case h: Human if neighbors.exists(Agent.isZombie) || (h.rescue.alerted && h.rescue.informed) => Human.run(h)
         case z: Zombie if neighbors.exists(Agent.isHuman) => Zombie.run(z)
         case a => a
       }
@@ -304,21 +303,21 @@ object agent {
 
   object Speed {
     def effectiveSpeed(speed: Speed) =  if(speed.run) speed.runSpeed else speed.walkSpeed
-    def metabolism(speed: Speed) =
-      (speed.run, speed.stamina > 0) match {
-        case (false, _) if speed.stamina < speed.maxStamina => speed.copy(stamina = speed.stamina + 1)
-        case (false, _) => speed
-        case (true, true) => speed.copy(stamina = speed.stamina - 1)
-        case (true, false) => speed.copy(stamina = 0, run = false)
+    def metabolism(speed: Speed, rng: Random) =
+      (speed.exhausted, speed.run) match {
+        case (false, true) if rng.nextDouble() < speed.exhaustionProbability => speed.copy(run = false, exhausted = true)
+        case (true, _) if rng.nextDouble() < 1 - speed.exhaustionProbability => speed.copy(exhausted = false)
+        case (_, _) => speed
       }
-    def canRun(speed: Speed) = speed.stamina >= speed.maxStamina / 2
+
+    def canRun(speed: Speed) = !speed.exhausted
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation, followRunningProbability, rescue = rescue)
+      Human(p, v, Speed(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation, followRunningProbability, rescue = rescue)
     }
 
     def run(h: Human) =
@@ -330,26 +329,26 @@ object agent {
 
     def alerted(h: Human) = towardsRescue(run(h))
 
-    def metabolism(h: Human) = {
-      val newSpeed = Speed.metabolism(h.speed)
+    def metabolism(h: Human, rng: Random) = {
+      val newSpeed = Speed.metabolism(h.speed, rng)
       val newVelocity = normalize(h.velocity, Speed.effectiveSpeed(newSpeed))
       h.copy(velocity = newVelocity, speed = newSpeed)
     }
   }
 
   object Zombie {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, maxStamina: Int, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Zombie(p, v, Speed(walkSpeed, runSpeed, maxStamina, maxStamina, false), vision, maxRotation)
+      Zombie(p, v, Speed(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation)
     }
 
     def run(z: Zombie) =
       if(Speed.canRun(z.speed)) z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(run = true))
       else z
 
-    def metabolism(z: Zombie) = {
-      val newSpeed = Speed.metabolism(z.speed)
+    def metabolism(z: Zombie, rng: Random) = {
+      val newSpeed = Speed.metabolism(z.speed, rng)
       val newVelocity = normalize(z.velocity, Speed.effectiveSpeed(newSpeed))
       z.copy(velocity = newVelocity, speed = newSpeed)
     }

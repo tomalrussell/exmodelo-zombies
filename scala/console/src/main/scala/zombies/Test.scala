@@ -9,7 +9,7 @@ import scala.util.Random
 object Test extends App {
 
 
-  val pheromonEvaporation = 0.2
+  val pheromonEvaporation = 0.02
   val walkSpeed = 0.1
   val infectionRange = 0.2
 
@@ -23,8 +23,8 @@ object Test extends App {
   val humanRunSpeed = 0.5
   val zombieRunSpeed = 0.3
 
-  val humanStamina = 10
-  val zombieStamina = 10
+  val humanExhaustionProbability = 0.05
+  val zombieExhaustionProbability = 0.02
 
   val zombieMaxRotation = 45
   val humanMaxRotation = 90
@@ -39,7 +39,7 @@ object Test extends App {
     World.jaude,
     infectionRange = infectionRange,
     humanRunSpeed = humanRunSpeed,
-    humanStamina = humanStamina,
+    humanExhaustionProbability = humanExhaustionProbability,
     humanPerception = humanPerception,
     humanMaxRotation = humanMaxRotation,
     humanFollowProbability = humanFollowProbability,
@@ -47,7 +47,7 @@ object Test extends App {
     humanAwarenessProbability = humanAwarenessProbability,
     humans = humans,
     zombieRunSpeed = zombieRunSpeed,
-    zombieStamina = zombieStamina,
+    zombieExhaustionProbability = zombieExhaustionProbability,
     zombiePerception = zombiePerception,
     zombieMaxRotation = zombieMaxRotation,
     zombies = zombies,

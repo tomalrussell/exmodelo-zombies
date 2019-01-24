@@ -15,7 +15,7 @@ object simulation {
       humanRunSpeed: Double,
       humanPerception: Double,
       humanMaxRotation: Double,
-      humanStamina: Int,
+      humanExhaustionProbability: Double,
       humanFollowProbability: Double,
       humanInformedRatio: Double,
       humanAwarenessProbability: Double,
@@ -23,7 +23,7 @@ object simulation {
       zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
-      zombieStamina: Int,
+      zombieExhaustionProbability: Double,
       zombies: Int,
       walkSpeed: Double,
       pheromonEvaporation: Double,
@@ -35,11 +35,11 @@ object simulation {
 
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
-        val rescue = Rescue(informed = informed, perceiveInformation = humanAwarenessProbability)
-        Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanStamina, humanPerception * cellSide, humanMaxRotation, humanFollowProbability, rescue, random)
+        val rescue = Rescue(informed = informed, awarenessProbability = humanAwarenessProbability)
+        Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanExhaustionProbability, humanPerception * cellSide, humanMaxRotation, humanFollowProbability, rescue, random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieStamina, zombiePerception * cellSide, zombieMaxRotation, random)
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieExhaustionProbability, zombiePerception * cellSide, zombieMaxRotation, random)
 
       val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie)
 
@@ -51,12 +51,12 @@ object simulation {
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
-        humanStamina = humanStamina,
+        humanExhaustionProbability = humanExhaustionProbability,
         humanFollowProbability = humanFollowProbability,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
-        zombieStamina = zombieStamina,
+        zombieExhaustionProbability = zombieExhaustionProbability,
         walkSpeed = walkSpeed * cellSide,
         pheromonEvaporation = pheromonEvaporation,
         rotationGranularity = rotationGranularity
@@ -76,12 +76,12 @@ object simulation {
     humanRunSpeed: Double,
     humanPerception: Double,
     humanMaxRotation: Double,
-    humanStamina: Int,
+    humanExhaustionProbability: Double,
     humanFollowProbability: Double,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
-    zombieStamina: Int,
+    zombieExhaustionProbability: Double,
     walkSpeed: Double,
     pheromonEvaporation: Double,
     rotationGranularity: Int)
@@ -99,7 +99,7 @@ object simulation {
           Agent.inform(ns, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
           Agent.run(ns) _ andThen
-          Agent.metabolism _ andThen
+          Agent.metabolism(rng) _ andThen
           Agent.changeDirection(w1, index, simulation.rotationGranularity, ns, rng) _
 
         val a1 = evolve(a0)
