@@ -10,24 +10,24 @@ object simulation {
   object Simulation {
 
     def initialize(
-                    world: World,
-                    infectionRange: Double,
-                    humanRunSpeed: Double,
-                    humanPerception: Double,
-                    humanMaxRotation: Double,
-                    humanStamina: Int,
-                    humanFollowProbability: Double,
-                    humanInformedRatio: Double,
-                    humanAwarenessProbability: Double,
-                    humans: Int,
-                    zombieRunSpeed: Double,
-                    zombiePerception: Double,
-                    zombieMaxRotation: Double,
-                    zombieStamina: Int,
-                    zombies: Int,
-                    walkSpeed: Double,
-                    rotationGranularity: Int = 5,
-                    random: Random) = {
+      world: World,
+      infectionRange: Double,
+      humanRunSpeed: Double,
+      humanPerception: Double,
+      humanMaxRotation: Double,
+      humanStamina: Int,
+      humanFollowProbability: Double,
+      humanInformedRatio: Double,
+      humanAwarenessProbability: Double,
+      humans: Int,
+      zombieRunSpeed: Double,
+      zombiePerception: Double,
+      zombieMaxRotation: Double,
+      zombieStamina: Int,
+      zombies: Int,
+      walkSpeed: Double,
+      rotationGranularity: Int = 5,
+      random: Random) = {
 
       val cellSide = space.cellSide(world.side)
 

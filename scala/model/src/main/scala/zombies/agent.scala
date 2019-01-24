@@ -156,7 +156,7 @@ object agent {
       } a match {
         case h: Human =>
           val (x, y) = positionToLocation(h.position, world.side, world.side)
-          if(h.rescue.informed && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
+          if(h.rescue.informed && h.rescue.alerted && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
         case a => newAgents += a
       }
 
