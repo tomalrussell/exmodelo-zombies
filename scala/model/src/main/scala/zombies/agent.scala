@@ -10,9 +10,9 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue) extends Agent
-  case class Zombie(position: Position, velocity: Velocity, speed: Speed, vision: Double, maxRotation: Double) extends Agent
-  case class Speed(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
+  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue) extends Agent
+  case class Zombie(position: Position, velocity: Velocity, metabolism: Metabolism, vision: Double, maxRotation: Double) extends Agent
+  case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
   case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
 
@@ -135,12 +135,12 @@ object agent {
       agent match {
         case h: Human =>
           for {
-            v <- computeVelocity(h.position, h.velocity, h.maxRotation, Speed.effectiveSpeed(h.speed))
+            v <- computeVelocity(h.position, h.velocity, h.maxRotation, Metabolism.effectiveSpeed(h.metabolism))
             p <- computePosition(h.position, v)
           } yield h.copy(position = p, velocity = v)
         case z: Zombie =>
           for {
-            v <- computeVelocity(z.position, z.velocity, z.maxRotation, Speed.effectiveSpeed(z.speed))
+            v <- computeVelocity(z.position, z.velocity, z.maxRotation, Metabolism.effectiveSpeed(z.metabolism))
             p <- computePosition(z.position, v)
           } yield z.copy(position = p, velocity = v)
         case a => Some(a)
@@ -210,7 +210,7 @@ object agent {
     def changeDirection(world: World, index: Index[Agent], granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
-        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Speed.effectiveSpeed(h.speed)).filter(pv => !towardsWall(world, h.position, pv))
+        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Metabolism.effectiveSpeed(h.metabolism)).filter(pv => !towardsWall(world, h.position, pv))
         if (!pv.isEmpty) {
           val nv = rng.shuffle(pv)
           h.copy(velocity = nv.maxBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
@@ -218,20 +218,20 @@ object agent {
       }
 
       def pursueHuman(z: Zombie, nh: Array[Human], rng: Random) = {
-        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
+        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Metabolism.effectiveSpeed(z.metabolism))
         val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
         if (nv.isEmpty) z else z.copy(velocity = nv.minBy { v => nh.map(n => distance(position(n), sum(z.position, v))).min })
       }
 
       def runningHumans(agents: Array[Agent]) =
-        agents.collect(Agent.human).filter { _.speed.run }
+        agents.collect(Agent.human).filter { _.metabolism.run }
 
       def towardsRescue(h: Human, rng: Random) = {
         val (x, y) = location(h, world.side)
         World.get(world, x, y) match {
           case Some(f: Floor) =>
             randomElement(f.rescueSlope, rng) match {
-              case Some(s) => h.copy(velocity = normalize((s.x, s.y), Speed.effectiveSpeed(h.speed)))
+              case Some(s) => h.copy(velocity = normalize((s.x, s.y), Metabolism.effectiveSpeed(h.metabolism)))
               case None => h
             }
           case _ => followRunning(h, rng)
@@ -248,7 +248,7 @@ object agent {
 
 
       def followPheromon(z: Zombie, world: World, rng: Random) = {
-        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
+        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Metabolism.effectiveSpeed(z.metabolism))
         val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
         if (nv.isEmpty) z else {
           val currentPheromon = World.pheromon(world, positionToLocation(z.position, world.side))
@@ -300,27 +300,27 @@ object agent {
   }
 
 
-  object Speed {
-    def effectiveSpeed(speed: Speed) =  if(speed.run) speed.runSpeed else speed.walkSpeed
-    def metabolism(speed: Speed, rng: Random) =
+  object Metabolism {
+    def effectiveSpeed(speed: Metabolism) =  if(speed.run) speed.runSpeed else speed.walkSpeed
+    def metabolism(speed: Metabolism, rng: Random) =
       (speed.exhausted, speed.run) match {
         case (false, true) if rng.nextDouble() < speed.exhaustionProbability => speed.copy(run = false, exhausted = true)
         case (true, _) if rng.nextDouble() < 1 - speed.exhaustionProbability => speed.copy(exhausted = false)
         case (_, _) => speed
       }
 
-    def canRun(speed: Speed) = !speed.exhausted
+    def canRun(speed: Metabolism) = !speed.exhausted
   }
 
   object Human {
     def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Speed(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation, followRunningProbability, rescue = rescue)
+      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation, followRunningProbability, rescue = rescue)
     }
 
     def run(h: Human) =
-      if(Speed.canRun(h.speed)) h.copy(velocity = normalize(h.velocity, h.speed.runSpeed), speed = h.speed.copy(run = true))
+      if(Metabolism.canRun(h.metabolism)) h.copy(velocity = normalize(h.velocity, h.metabolism.runSpeed), metabolism = h.metabolism.copy(run = true))
       else h
 
     def towardsRescue(h: Human) =
@@ -329,9 +329,9 @@ object agent {
     def alerted(h: Human) = towardsRescue(run(h))
 
     def metabolism(h: Human, rng: Random) = {
-      val newSpeed = Speed.metabolism(h.speed, rng)
-      val newVelocity = normalize(h.velocity, Speed.effectiveSpeed(newSpeed))
-      h.copy(velocity = newVelocity, speed = newSpeed)
+      val newSpeed = Metabolism.metabolism(h.metabolism, rng)
+      val newVelocity = normalize(h.velocity, Metabolism.effectiveSpeed(newSpeed))
+      h.copy(velocity = newVelocity, metabolism = newSpeed)
     }
   }
 
@@ -339,17 +339,17 @@ object agent {
     def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, vision: Double, maxRotation: Double, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Zombie(p, v, Speed(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation)
+      Zombie(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation)
     }
 
     def run(z: Zombie) =
-      if(Speed.canRun(z.speed)) z.copy(velocity = normalize(z.velocity, z.speed.runSpeed), speed = z.speed.copy(run = true))
+      if(Metabolism.canRun(z.metabolism)) z.copy(velocity = normalize(z.velocity, z.metabolism.runSpeed), metabolism = z.metabolism.copy(run = true))
       else z
 
     def metabolism(z: Zombie, rng: Random) = {
-      val newSpeed = Speed.metabolism(z.speed, rng)
-      val newVelocity = normalize(z.velocity, Speed.effectiveSpeed(newSpeed))
-      z.copy(velocity = newVelocity, speed = newSpeed)
+      val newSpeed = Metabolism.metabolism(z.metabolism, rng)
+      val newVelocity = normalize(z.velocity, Metabolism.effectiveSpeed(newSpeed))
+      z.copy(velocity = newVelocity, metabolism = newSpeed)
     }
 
   }
