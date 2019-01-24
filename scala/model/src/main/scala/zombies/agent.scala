@@ -58,7 +58,7 @@ object agent {
       case z: Zombie => z.vision
     }
 
-    def location(agent: Agent, side: Int): Location = positionToLocation(position(agent), side, side)
+    def location(agent: Agent, side: Int): Location = positionToLocation(position(agent), side)
 
     def index(agents: Vector[Agent], side: Int) = Index[Agent](agents, location(_, side), side)
 
@@ -94,18 +94,18 @@ object agent {
       (-granularity to granularity).map(_ * maxRotation).map(r => normalize(rotate(velocity, r), speed))
 
     def towardsWall(world: World, position: Position, velocity: Velocity) = {
-      val (x, y) = space.positionToLocation(sum(position, velocity), world.side, world.side)
+      val (x, y) = space.positionToLocation(sum(position, velocity), world.side)
       World.get(world, x, y) match {
         case Some(Wall) => true
         case _ => false
       }
     }
 
-    def move(agent: Agent, world: World, granularity: Int, rng: Random) = {
+    def move(world: World, granularity: Int, rng: Random)(agent: Agent) = {
 
       def computeVelocity(position: Position, velocity: Velocity, maxRotation: Double, speed: Double) = {
         val (px, py) = sum(position, velocity)
-        val (cx, cy) = positionToLocation((px, py), world.side, world.side)
+        val (cx, cy) = positionToLocation((px, py), world.side)
 
         val newDirection =
           World.get(world, cx, cy) match {
@@ -157,7 +157,7 @@ object agent {
         a <- agents
       } a match {
         case h: Human =>
-          val (x, y) = positionToLocation(h.position, world.side, world.side)
+          val (x, y) = positionToLocation(h.position, world.side)
           if(h.rescue.informed && h.rescue.alerted && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
         case a => newAgents += a
       }
@@ -173,7 +173,7 @@ object agent {
         case a => a
       }
 
-    def inform(a: Agent, neighbors: Array[Agent], rng: Random) =
+    def inform(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {
         case human: Human if !human.rescue.informed =>
           val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
@@ -181,20 +181,34 @@ object agent {
         case a => a
       }
 
-    def alert(a: Agent, neighbors: Array[Agent], rng: Random) =
+    def alert(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
         case a => a
       }
 
-    def run(a: Agent, neighbors: Array[Agent]) =
+    def run(neighbors: Array[Agent])(a: Agent) =
       a match {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.run(h)
         case z: Zombie if neighbors.exists(Agent.isHuman) => Zombie.run(z)
         case a => a
       }
 
-    def changeDirection(world: World, index: Index[Agent], agent: Agent, granularity: Int, neighbors: Array[Agent], rng: Random) = {
+    def pheromon(agents: Index[Agent], world: World, evaporation: Double) = {
+      val newCells =
+        world.cells.zipWithIndex.map { case (l, i) =>
+          l.zipWithIndex.map {
+            case (c: Floor, j) =>
+              val humans = agents.cells(i)(j).count(Agent.isHuman)
+              c.copy(pheromone = math.max(c.pheromone + humans - evaporation, 0))
+            case (x, _) => x
+          }
+        }
+
+      world.copy(cells = newCells)
+    }
+
+    def changeDirection(world: World, index: Index[Agent], granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
         val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Speed.effectiveSpeed(h.speed)).filter(pv => !towardsWall(world, h.position, pv))
@@ -215,8 +229,8 @@ object agent {
 
       def towardsRescue(h: Human, rng: Random) = {
         val (x, y) = location(h, world.side)
-        world.cells(x)(y) match {
-          case f: Floor =>
+        World.get(world, x, y) match {
+          case Some(f: Floor) =>
             randomElement(f.rescueSlope, rng) match {
               case Some(s) => h.copy(velocity = normalize((s.x, s.y), Speed.effectiveSpeed(h.speed)))
               case None => h
@@ -234,6 +248,25 @@ object agent {
       }
 
 
+      def followPheromon(z: Zombie, world: World, rng: Random) = {
+        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Speed.effectiveSpeed(z.speed))
+        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
+        if (nv.isEmpty) z else {
+          val ph = nv.flatMap { v =>
+            val (x, y) = positionToLocation(sum(z.position, v), world.side)
+            World.get(world, x, y) match {
+              case Some(f: Floor) if f.pheromone > 0.0 => Some(v -> f.pheromone)
+              case _ => None
+            }
+          }
+
+          if(!ph.isEmpty) {
+            val newVelocity = (nv zip ph).maxBy(_._2)._1
+            z.copy(velocity = newVelocity)
+          } else z
+        }
+      }
+
       agent match {
         case h: Human =>
           neighbors.collect(Agent.zombie) match {
@@ -244,7 +277,7 @@ object agent {
         case z: Zombie =>
           neighbors.collect(Agent.human) match {
             case nh if !nh.isEmpty => pursueHuman(z, nh, rng)
-            case _ => z
+            case _ => followPheromon(z, world, rng)
           }
       }
     }

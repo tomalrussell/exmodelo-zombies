@@ -84,9 +84,9 @@ object space {
 
   def randomUnitVector(rng: Random) = (rng.nextDouble(), rng.nextDouble())
 
-  def positionToLocation(v: Position, xSize: Int, ySize: Int): Location = {
+  def positionToLocation(v: Position, side: Int): Location = {
     val (x, y) = v
-    ((xSize * x).toInt, (ySize * y).toInt)
+    ((side * x).toInt, (side * y).toInt)
   }
 
   object Index {

@@ -26,6 +26,7 @@ object simulation {
       zombieStamina: Int,
       zombies: Int,
       walkSpeed: Double,
+      pheromonEvaporation: Double,
       rotationGranularity: Int = 5,
       random: Random) = {
 
@@ -57,6 +58,7 @@ object simulation {
         zombieMaxRotation = zombieMaxRotation,
         zombieStamina = zombieStamina,
         walkSpeed = walkSpeed * cellSide,
+        pheromonEvaporation = pheromonEvaporation,
         rotationGranularity = rotationGranularity
       )
 
@@ -81,24 +83,32 @@ object simulation {
     zombieMaxRotation: Double,
     zombieStamina: Int,
     walkSpeed: Double,
+    pheromonEvaporation: Double,
     rotationGranularity: Int)
 
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
+    val w1 = Agent.pheromon(index, simulation.world, simulation.pheromonEvaporation)
     val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
 
     val na1 =
       for { a0 <- ai } yield {
         val ns = Agent.neighbors(index, a0, Agent.vision(a0), neighborhoodCache)
-        val a1 = Agent.inform(a0, ns, rng)
-        val a2 = Agent.run(a1, ns)
-        val a3 = Agent.metabolism(a2)
-        val a4 = Agent.changeDirection(simulation.world, index, a3, simulation.rotationGranularity, ns, rng)
-        Agent.move(a4, simulation.world, simulation.rotationGranularity, rng)
+
+        val evolve =
+          Agent.inform(ns, rng) _ andThen
+          Agent.alert(ns, rng) _ andThen
+          Agent.run(ns) _ andThen
+          Agent.metabolism _ andThen
+          Agent.changeDirection(w1, index, simulation.rotationGranularity, ns, rng) _
+
+        val a1 = evolve(a0)
+
+        Agent.move(w1, simulation.rotationGranularity, rng) (a1)
       }
 
-    val (na2, rescued) = Agent.rescue(simulation.world, na1.flatten)
-    simulation.copy(agents = na2, rescued = simulation.rescued ++ rescued)
+    val (na2, rescued) = Agent.rescue(w1, na1.flatten)
+    simulation.copy(agents = na2, rescued = simulation.rescued ++ rescued, world = w1)
   }
 
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {

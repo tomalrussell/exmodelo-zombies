@@ -11,10 +11,14 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, pheromone: Double = 0.0) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
+    def floor(c: Cell): PartialFunction[Cell, Floor] = {
+      case floor: Floor => floor
+    }
+
     def get(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
 
     def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
@@ -96,7 +100,7 @@ object world {
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        c@Floor(_, _, _) <- Seq(cells(x)(y))
+        c@Floor(_, _, _, _) <- Seq(cells(x)(y))
         if !levels(x)(y).isInfinite
       } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, (_, _) => 1.0))
 
@@ -128,7 +132,7 @@ object world {
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        c@Floor(_, _, _) <- Seq(cells(x)(y))
+        c@Floor(_, _, _, _) <- Seq(cells(x)(y))
       } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, computeIntensity))
 
       world.copy(cells = cells)
@@ -157,7 +161,7 @@ object world {
 
     def randomPosition(world: World, rng: Random): Position = {
       val v = randomUnitVector(rng)
-      val p = positionToLocation(v, world.side, world.side)
+      val p = positionToLocation(v, world.side)
       if(World.isWall(world, p._1, p._2)) randomPosition(world, rng) else v
     }
 
