@@ -19,6 +19,7 @@ object simulation {
       humanFollowProbability: Double,
       humanInformedRatio: Double,
       humanAwarenessProbability: Double,
+      humanFightBackProbability: Double,
       humans: Int,
       zombieRunSpeed: Double,
       zombiePerception: Double,
@@ -36,7 +37,17 @@ object simulation {
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
         val rescue = Rescue(informed = informed, awarenessProbability = humanAwarenessProbability)
-        Human.random(world, walkSpeed * cellSide, humanRunSpeed * cellSide, humanExhaustionProbability, humanPerception * cellSide, humanMaxRotation, humanFollowProbability, rescue, random)
+        Human.random(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = humanRunSpeed * cellSide,
+          exhaustionProbability = humanExhaustionProbability,
+          perception = humanPerception * cellSide,
+          maxRotation = humanMaxRotation,
+          followRunningProbability = humanFollowProbability,
+          fightBackProbability = humanFightBackProbability,
+          rescue = rescue,
+          rng = random)
       }
 
       def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieExhaustionProbability, zombiePerception * cellSide, zombieMaxRotation, random)
@@ -47,6 +58,8 @@ object simulation {
         world = world,
         agents = agents,
         rescued = Vector.empty,
+        infected = Vector.empty,
+        died = Vector.empty,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
@@ -72,6 +85,8 @@ object simulation {
     world: World,
     agents: Vector[Agent],
     rescued: Vector[Human],
+    infected: Vector[Human],
+    died: Vector[Zombie],
     infectionRange: Double,
     humanRunSpeed: Double,
     humanPerception: Double,
@@ -89,11 +104,11 @@ object simulation {
   def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val w1 = Agent.pheromon(index, simulation.world, simulation.pheromonEvaporation)
-    val ai = Agent.infect(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _))
+    val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
     val na1 =
       for { a0 <- ai } yield {
-        val ns = Agent.neighbors(index, a0, Agent.vision(a0), neighborhoodCache)
+        val ns = Agent.neighbors(index, a0, Agent.perception(a0), neighborhoodCache)
 
         val evolve =
           Agent.inform(ns, rng) _ andThen
@@ -108,7 +123,12 @@ object simulation {
       }
 
     val (na2, rescued) = Agent.rescue(w1, na1.flatten)
-    simulation.copy(agents = na2, rescued = simulation.rescued ++ rescued, world = w1)
+    simulation.copy(
+      agents = na2,
+      rescued = simulation.rescued ++ rescued,
+      infected = simulation.infected ++ infected,
+      died = simulation.died ++ died,
+      world = w1)
   }
 
   def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {

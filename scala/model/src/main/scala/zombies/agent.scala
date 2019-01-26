@@ -10,8 +10,8 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue) extends Agent
-  case class Zombie(position: Position, velocity: Velocity, metabolism: Metabolism, vision: Double, maxRotation: Double) extends Agent
+  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fightBackProbability: Double, rescue: Rescue) extends Agent
+  case class Zombie(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
   case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
@@ -52,9 +52,9 @@ object agent {
       case z: Zombie => z.velocity
     }
 
-    def vision(agent: Agent) = agent match {
-      case h: Human => h.vision
-      case z: Zombie => z.vision
+    def perception(agent: Agent) = agent match {
+      case h: Human => h.perception
+      case z: Zombie => z.perception
     }
 
     def location(agent: Agent, side: Int): Location = positionToLocation(position(agent), side)
@@ -207,6 +207,44 @@ object agent {
       world.copy(cells = newCells)
     }
 
+    def fight(index: Index[Agent], agents: Vector[Agent], infectionRange: Double, zombify: (Zombie, Human) => Zombie, rng: Random) = {
+
+      def attackers(index: Index[Agent], agent: Human, range: Double) =
+        neighbors(index, agent, range).collect(Agent.zombie)
+
+      val hasDied = collection.mutable.Set[Zombie]()
+      val infected = collection.mutable.Map[Human, Zombie]()
+
+      for {
+        a <- agents
+      } a match  {
+        case (h: Human) =>
+          val assailants = attackers(index, h, infectionRange)
+          def humanWins() = rng.nextDouble() < h.fightBackProbability
+          val lost = assailants.filter(a => !hasDied.contains(a)).filter(_ => !humanWins())
+
+          rng.shuffle(lost) match {
+            case z :: t => infected.put(h, z)
+            case _ => hasDied ++= assailants
+          }
+        case _ =>
+      }
+
+      val newAgents =
+        agents.flatMap {
+          case h: Human =>
+            infected.get(h) match {
+              case Some(z) => Some(zombify(z, h))
+              case None => Some(h)
+            }
+          case z: Zombie => if(!hasDied.contains(z)) Some(z) else None
+        }
+
+      (newAgents, infected.keys.toVector, hasDied.toVector)
+    }
+
+
+
     def changeDirection(world: World, index: Index[Agent], granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
@@ -255,7 +293,8 @@ object agent {
           val ph = nv.flatMap { v =>
             val projectedPheromon = World.pheromon(world, positionToLocation(sum(z.position, v), world.side))
             val deltaPheromon = projectedPheromon - currentPheromon
-            if(deltaPheromon > 0.0) Some(v -> deltaPheromon) else None
+            if(deltaPheromon > 0.0) Some(v -> deltaPheromon)
+            else None
           }
 
           if(!ph.isEmpty) {
@@ -281,21 +320,7 @@ object agent {
     }
 
 
-    def infect(index: Index[Agent], agents: Vector[Agent], range: Double, zombify: (Zombie, Human) => Zombie) = {
-      val (humansAgents, others) = agents.partition(Agent.isHuman)
-      val humans = humansAgents.collect { case h: Human => h }
-      humans.map {
-        h =>
-          attacker(index, h, range) match {
-            case Some(z: Zombie) => zombify(z, h)
-            case Some(a) => sys.error(s"Attacker is $a, this should never happen")
-            case None => h
-          }
-      } ++ others
-    }
 
-    def attacker(index: Index[Agent], agent: Human, range: Double) =
-      neighbors(index, agent, range).find(Agent.isZombie)
 
   }
 
@@ -313,10 +338,10 @@ object agent {
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, vision: Double, maxRotation: Double, followRunningProbability: Double, rescue: Rescue, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fightBackProbability: Double, rescue: Rescue, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), vision, maxRotation, followRunningProbability, rescue = rescue)
+      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fightBackProbability, rescue = rescue)
     }
 
     def run(h: Human) =

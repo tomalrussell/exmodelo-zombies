@@ -22,11 +22,14 @@ object console {
     }
 
     simulation.world.cells.zipWithIndex.map { case (l, x) => l.zipWithIndex.map { case (c, y) => toChar(c, x, y) }.mkString }.mkString("\n") +
-      s"\nHumans: ${simulation.agents.count(Agent.isHuman)}, Zombies: ${simulation.agents.count(Agent.isZombie)}, Rescued: ${simulation.rescued.size}"
+      s"\nHumans: ${simulation.agents.count(Agent.isHuman)}, Informed: ${simulation.agents.collect{Agent.human}.count(_.rescue.informed)}, Alerted: ${simulation.agents.collect{Agent.human}.count(_.rescue.alerted)}, Zombies: ${simulation.agents.count(Agent.isZombie)}, Rescued: ${simulation.rescued.size}, Dead zombies: ${simulation.died.size}, Infected: ${simulation.infected.size}"
   }
 
   def clear(simulation: Simulation) = {
+
+    print(Ansi.eraseLine())
     print(Ansi.cursorUp(simulation.world.side))
-    print(Ansi.cursorLeft(simulation.world.side))
+    print(Ansi.cursorLeft(simulation.world.side * 20))
+
   }
 }
