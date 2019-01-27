@@ -7,7 +7,7 @@ import zombies.world._
 import zombies.space._
 
 object console {
-  def display(simulation: Simulation) = {
+  def display(simulation: Simulation, events: Iterable[Event]) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     def toChar(c: Cell, x: Int, y: Int) = c match {
       case Wall => '+'
@@ -21,8 +21,12 @@ object console {
       case _ => '?'
     }
 
+    val rescued = events.collect(Event.rescued).size
+    val killed = events.collect(Event.killed).size
+    val zombified = events.collect(Event.zombified).size
+
     simulation.world.cells.zipWithIndex.map { case (l, x) => l.zipWithIndex.map { case (c, y) => toChar(c, x, y) }.mkString }.mkString("\n") +
-      s"\nHumans: ${simulation.agents.count(Agent.isHuman)}, Informed: ${simulation.agents.collect{Agent.human}.count(_.rescue.informed)}, Alerted: ${simulation.agents.collect{Agent.human}.count(_.rescue.alerted)}, Zombies: ${simulation.agents.count(Agent.isZombie)}, Rescued: ${simulation.rescued.size}, Dead zombies: ${simulation.died.size}, Infected: ${simulation.infected.size}"
+      s"\nHumans: ${simulation.agents.count(Agent.isHuman)}, Informed: ${simulation.agents.collect{Agent.human}.count(_.rescue.informed)}, Alerted: ${simulation.agents.collect{Agent.human}.count(_.rescue.alerted)}, Zombies: ${simulation.agents.count(Agent.isZombie)}, Rescued: ${rescued}, Killed zombies: ${killed}, Zombified: ${zombified}"
   }
 
   def clear(simulation: Simulation) = {

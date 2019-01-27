@@ -58,29 +58,19 @@ object Test extends App {
     random = rng
   )
 
-
-//  def zombie(y: Double) = {
-//    val cellSide = space.cellSide(world.side)
-//    val speed = walkSpeed * cellSide
-//    val position = (y * cellSide, 0.0)
-//    val velocity = space.normalize((0.0, 1.0), speed)
-//    Zombie(position, velocity, Speed(walkSpeed, zombieRunSpeed, zombieStamina, zombieStamina, false), zombiePerception * cellSide, zombieMaxRotation)
-//  }
-
   val simulation = noZombie.copy(agents = noZombie.agents /*++ Seq(zombie(25))*/)
   val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
-  def step(simulation: Simulation): Unit = {
-    if (!simulation.agents.isEmpty) {
-      print(console.display(simulation))
-      val newState = _root_.zombies.simulation.step(simulation, neighborhoodCache, rng)
-      Thread.sleep(100)
-      console.clear(simulation)
-      step(newState)
-    }
+  def display(simulation: Simulation, events: Vector[Event], allEvents: List[Event]) = {
+    print(console.display(simulation, allEvents))
+    Thread.sleep(100)
+    console.clear(simulation)
+    allEvents ++ events
   }
 
-  step(simulation)
+  simulate(simulation, rng, 1000, display, List())
+
+
 
 //  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
 //

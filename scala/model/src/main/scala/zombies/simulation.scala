@@ -7,6 +7,26 @@ import scala.util.Random
 
 object simulation {
 
+  object Event {
+    def rescued : PartialFunction[Event, Rescued] = {
+      case e: Rescued => e
+    }
+
+    def zombified: PartialFunction[Event, Zombified] = {
+      case e: Zombified => e
+    }
+
+    def killed: PartialFunction[Event, Killed] = {
+      case e: Killed => e
+    }
+  }
+
+  sealed trait Event
+  case class Zombified(step: Int, human: Human) extends Event
+  case class Killed(step: Int, zombie: Zombie) extends Event
+  case class Rescued(step: Int, human: Human) extends Event
+
+
   object Simulation {
 
     def initialize(
@@ -57,9 +77,6 @@ object simulation {
       Simulation(
         world = world,
         agents = agents,
-        rescued = Vector.empty,
-        infected = Vector.empty,
-        died = Vector.empty,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
@@ -77,16 +94,11 @@ object simulation {
 
     }
 
-
-
   }
 
   case class Simulation(
     world: World,
     agents: Vector[Agent],
-    rescued: Vector[Human],
-    infected: Vector[Human],
-    died: Vector[Zombie],
     infectionRange: Double,
     humanRunSpeed: Double,
     humanPerception: Double,
@@ -101,7 +113,7 @@ object simulation {
     pheromonEvaporation: Double,
     rotationGranularity: Int)
 
-  def step(simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
+  def step(step: Int, simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val w1 = Agent.pheromon(index, simulation.world, simulation.pheromonEvaporation)
     val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
@@ -123,24 +135,27 @@ object simulation {
       }
 
     val (na2, rescued) = Agent.rescue(w1, na1.flatten)
-    simulation.copy(
-      agents = na2,
-      rescued = simulation.rescued ++ rescued,
-      infected = simulation.infected ++ infected,
-      died = simulation.died ++ died,
-      world = w1)
+
+    val events =
+      infected.map(i => Zombified(step, i)) ++
+      died.map(d => Killed(step, d)) ++
+      rescued.map(r => Rescued(step, r))
+
+    (simulation.copy(agents = na2, world = w1), events)
   }
 
-  def simulate[T](simulation: Simulation, rng: Random, steps: Int, result: Simulation => T): List[T] = {
+  def simulate[ACC](simulation: Simulation, rng: Random, steps: Int, accumulate: (Simulation, Vector[Event], ACC) => ACC, accumulator: ACC): ACC = {
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
-    def run0(steps: Int, simulation: Simulation, acc: List[T]): List[T] =
-      if(steps == 0) acc.reverse else {
-        val s = step(simulation, neighborhoodCache, rng)
-        run0(steps - 1, s, result(s) :: acc)
+    def run0(s: Int, simulation: Simulation, events: Vector[Event], r: (Simulation, Vector[Event], ACC) => ACC, accumulator: ACC): ACC =
+      if(s == 0) r(simulation, events, accumulator)
+      else {
+        val newAccumulator = r(simulation, events, accumulator)
+        val (newSimulation, newEvents) = step(steps - s, simulation, neighborhoodCache, rng)
+        run0(s - 1, newSimulation, newEvents, r, newAccumulator)
       }
 
-    run0(steps, simulation, List())
+    run0(steps, simulation, Vector.empty, accumulate, accumulator)
   }
 
 }
