@@ -9,14 +9,14 @@ import scala.util.Random
 object Test extends App {
 
 
-  val pheromonEvaporation = 0.2
+  val pheromonEvaporation = 0.1
   val walkSpeed = 0.1
-  val infectionRange = 0.2
+  val infectionRange = 0.25
 
   val humanInformedRatio = 0.1
-  val humanAwarenessProbability = 0.05
-  val humanFollowProbability = 0.2
-  val humanFightBackProbability = 0.05
+  val humanAwarenessProbability = 0.7
+  val humanFollowProbability = 0.3
+  val humanFightBackProbability = 0.2
 
   val humanPerception = 1.5
   val zombiePerception = 3.0
@@ -25,13 +25,13 @@ object Test extends App {
   val zombieRunSpeed = 0.3
 
   val humanExhaustionProbability = 0.05
-  val zombieExhaustionProbability = 0.02
+  val zombieExhaustionProbability = 0.2
 
-  val zombieMaxRotation = 45
+  val zombieMaxRotation = 60
   val humanMaxRotation = 90
 
   val humans = 250
-  val zombies = 4
+  val zombies = 10
 
   val rng = new Random(42)
 
@@ -68,7 +68,7 @@ object Test extends App {
     allEvents ++ events
   }
 
-  simulate(simulation, rng, 1000, display, List())
+  simulate(simulation, rng, 5000, display, List())
 
 
 

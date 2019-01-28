@@ -174,7 +174,7 @@ object agent {
 
     def inform(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {
-        case human: Human if !human.rescue.informed =>
+        case human: Human if !human.rescue.informed && human.rescue.alerted =>
           val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
           if(rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true)) else human
         case a => a
@@ -198,8 +198,8 @@ object agent {
         world.cells.zipWithIndex.map { case (l, i) =>
           l.zipWithIndex.map {
             case (c: Floor, j) =>
-              val humans = agents.cells(i)(j).count(Agent.isHuman)
-              c.copy(pheromone = math.max(c.pheromone + humans - evaporation, 0))
+              val runningZombies = agents.cells(i)(j).collect(Agent.zombie).count(_.metabolism.run)
+              c.copy(pheromone = math.max(c.pheromone + runningZombies - evaporation, 0))
             case (x, _) => x
           }
         }
@@ -214,6 +214,7 @@ object agent {
 
       val hasDied = collection.mutable.Set[Zombie]()
       val infected = collection.mutable.Map[Human, Zombie]()
+      val hasEaten = collection.mutable.Set[Zombie]()
 
       for {
         a <- agents
@@ -224,7 +225,9 @@ object agent {
           val lost = assailants.filter(a => !hasDied.contains(a)).filter(_ => !humanWins())
 
           rng.shuffle(lost) match {
-            case z :: t => infected.put(h, z)
+            case z :: t =>
+              hasEaten += z
+              infected.put(h, z)
             case _ => hasDied ++= assailants
           }
         case _ =>
@@ -237,7 +240,13 @@ object agent {
               case Some(z) => Some(zombify(z, h))
               case None => Some(h)
             }
-          case z: Zombie => if(!hasDied.contains(z)) Some(z) else None
+          case z: Zombie =>
+            if(!hasDied.contains(z))
+              if(hasEaten.contains(z)) {
+                val newMetabolism = z.metabolism.copy(run = false, exhausted = false)
+                Some(z.copy(metabolism = newMetabolism))
+              } else Some(z)
+            else None
         }
 
       (newAgents, infected.keys.toVector, hasDied.toVector)
@@ -348,10 +357,7 @@ object agent {
       if(Metabolism.canRun(h.metabolism)) h.copy(velocity = normalize(h.velocity, h.metabolism.runSpeed), metabolism = h.metabolism.copy(run = true))
       else h
 
-    def towardsRescue(h: Human) =
-      if(h.rescue.informed) h.copy(rescue = h.rescue.copy(alerted = true)) else h
-
-    def alerted(h: Human) = towardsRescue(run(h))
+    def alerted(h: Human) = run(h).copy(rescue = h.rescue.copy(alerted = true))
 
     def metabolism(h: Human, rng: Random) = {
       val newSpeed = Metabolism.metabolism(h.metabolism, rng)
