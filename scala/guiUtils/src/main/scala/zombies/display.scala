@@ -65,7 +65,14 @@ object display {
 
   val rng = new Random(42)
 
-  case class People(humans: Int = 0, zombies: Int = 0, rescued: Int = 0)
+  case class People(
+    humans: Int = 0,
+    zombies: Int = 0,
+    rescued: Int = 0,
+    alerted: Int = 0,
+    killed: Int = 0,
+    informed: Int = 0,
+    zombified: Int = 0)
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
@@ -146,9 +153,14 @@ object display {
         stepBuffer.update(None)
 
         val p = People(
-          simulationBuffer.agents.count(Agent.isHuman),
-          simulationBuffer.agents.count(Agent.isZombie),
-          eventBuffer.collect(Event.rescued).size)
+          humans = simulationBuffer.agents.count(Agent.isHuman),
+          zombies = simulationBuffer.agents.count(Agent.isZombie),
+          rescued = eventBuffer.collect(Event.rescued).size,
+          killed = eventBuffer.collect(Event.killed).size,
+          informed = simulationBuffer.agents.collect(Agent.human).count(_.rescue.informed),
+          alerted = simulationBuffer.agents.collect(Agent.human).count(_.rescue.alerted),
+          zombified = eventBuffer.collect(Event.zombified).size,
+        )
 
         people.update(p)
         timeOut.now.foreach(to => timers.setTimeout(to) { step })
@@ -185,15 +197,13 @@ object display {
     })
 
     val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
-      span(Rx {
-        s"# zombies: ${people().zombies}"
-      }),
-      span(Rx {
-        s"# humans: ${people().humans}"
-      }),
-      span(Rx {
-        s"# rescued: ${people().rescued}"
-      })
+      span(Rx { s"# humans: ${people().humans}" }),
+      span(Rx { s"# rescued: ${people().rescued}" }),
+      span(Rx { s"# informed: ${people().informed}" }),
+      span(Rx { s"# alerted: ${people().alerted}" }),
+      span(Rx { s"# zombified:  ${people().zombified}" }),
+      span(Rx { s"# zombies: ${people().zombies}" }),
+      span(Rx { s"# killed zombies: ${people().killed}" }),
     )
 
     val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
