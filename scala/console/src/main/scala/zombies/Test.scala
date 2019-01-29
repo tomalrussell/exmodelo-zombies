@@ -54,7 +54,7 @@ object Test extends App {
     zombieMaxRotation = zombieMaxRotation,
     zombies = zombies,
     walkSpeed = walkSpeed,
-    pheromonEvaporation = pheromonEvaporation,
+    zombiePheromonEvaporation = pheromonEvaporation,
     random = rng
   )
 

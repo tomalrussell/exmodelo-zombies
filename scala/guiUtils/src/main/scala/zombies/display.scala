@@ -12,8 +12,8 @@ import scala.scalajs.js.annotation._
 import scala.util.Random
 import scaladget.tools
 import scaladget.bootstrapnative.bsn._
-import zombies.simulation.Simulation
-import zombies.world.{Floor, Wall, World}
+import zombies.simulation.{Event, Simulation}
+import zombies.world.{Floor, NeighborhoodCache, Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
@@ -74,14 +74,12 @@ object display {
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
 
-    val simulation: Var[Option[Simulation]] = Var(None)
+    val stepBuffer: Var[Option[(Simulation, List[Event], Int, NeighborhoodCache)]] = Var(None)
+    val stepState: Var[Option[(Simulation, List[Event], Int, NeighborhoodCache)]] = Var(None)
 
     val timeOut: Var[Option[Int]] = Var(None)
     val people: Var[People] = Var(People())
 
-    def neighborhoodCache = simulation.now map { s =>
-      World.visibleNeighborhoodCache(s.world, math.max(s.humanPerception, s.zombiePerception))
-    }
 
     val gridSize = 800
 
@@ -103,7 +101,7 @@ object display {
       world.cells(lineIndex).map { cell =>
         cell match {
           case Wall => 1
-          case Floor(_, _, rz: Boolean) => if (rz) 10 else 0
+          case f: Floor => if (f.rescueZone) 10 else 0
         }
       }
     }
@@ -126,9 +124,7 @@ object display {
     def buildAgents = {
       val element: SVGElement = tools.rxSVGMod(Rx {
         svgTags.g((for {
-          a <- simulation().map {
-            _.agents
-          }.getOrElse(Vector())
+          a <- stepState().map { _._1.agents }.getOrElse(Vector())
         } yield {
           val ax = "%1.2f".format((Agent.position(a)._2 * gridSize) + 1 - offsetX)
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
@@ -144,37 +140,35 @@ object display {
       scene.appendChild(element)
     }
 
-    def step: Unit = {
-      people.update(
-        simulation.now.map { s =>
-          People(s.agents.count {Agent.isHuman},
-            s.agents.count {Agent.isZombie},
-            s.rescued.length)
-        }.getOrElse(People())
-      )
+    def step: Unit = stepBuffer.now match {
+      case state@Some((simulationBuffer, eventBuffer, stateNumberBuffer, neighborhoodCache)) =>
+        stepState.update(state)
+        stepBuffer.update(None)
 
-      timeOut.now match {
-        case Some(to: Int) =>
-          neighborhoodCache.foreach { nc =>
-            simulation.now.foreach { s =>
-              simulation.update(Some(_root_.zombies.simulation.step(s, nc, rng)))
-            }
-          }
-          timers.setTimeout(to) {
-            step
-          }
-        case _ =>
-      }
+        val p = People(
+          simulationBuffer.agents.count(Agent.isHuman),
+          simulationBuffer.agents.count(Agent.isZombie),
+          eventBuffer.collect(Event.rescued).size)
+
+        people.update(p)
+        timeOut.now.foreach(to => timers.setTimeout(to) { step })
+
+        val (ns, ev) = _root_.zombies.simulation.step(stateNumberBuffer + 1, simulationBuffer, neighborhoodCache, rng)
+        stepBuffer.update(Some(ns, eventBuffer ++ ev, stateNumberBuffer + 1, neighborhoodCache))
+      case None => timeOut.now.foreach(to => timers.setTimeout(to) { step })
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
-      simulation.update(Some(initFunction()))
-      simulation.now.foreach { s =>
-        timeOut.update(None)
-        buildWorld(side, s.world)
-        buildAgents
-        people.update(People())
-      }
+      val simulation = initFunction()
+      val stepNumber = 0
+      val neighborhoodCache =  World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
+
+      stepBuffer.update(Some(simulation, List(), stepNumber, neighborhoodCache))
+      stepState.update(Some(simulation, List(), stepNumber, neighborhoodCache))
+
+      buildWorld(side, simulation.world)
+      buildAgents
+      people.update(People())
     })
 
     val stepButton = button(span(Rx {
@@ -187,9 +181,7 @@ object display {
         case None => Some(100)
         case _ => None
       }
-      timeOut.now.foreach { _ =>
-        step
-      }
+      timeOut.now.foreach { _ => step }
     })
 
     val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(

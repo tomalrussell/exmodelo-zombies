@@ -10,19 +10,27 @@ object zombieland {
       ()=> world.World.jaude,
       infectionRange,
       walkSpeed,
+      rotationGranularity,
+
       humanMaxRotation,
       humanPerception,
-      humanStamina,
+      humanExhaustionProbability,
+      humanFightBackProbability,
       humanRunSpeed,
-      humanFollowModeProbability,
+      humanFollowProbability,
       humanAwarenessProbability,
       humanInformedRatio,
       numberHumans,
+
       zombieMaxRotation,
       zombiePerception,
-      zombieStamina,
+      zombieExhaustionProbability,
       zombieRunSpeed,
+      zombiePheromonEvaporation,
       numberZombies
     )
   }
+
+
+
 }

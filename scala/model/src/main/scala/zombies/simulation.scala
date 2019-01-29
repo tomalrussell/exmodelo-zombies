@@ -45,9 +45,9 @@ object simulation {
       zombiePerception: Double,
       zombieMaxRotation: Double,
       zombieExhaustionProbability: Double,
+      zombiePheromonEvaporation: Double,
       zombies: Int,
       walkSpeed: Double,
-      pheromonEvaporation: Double,
       rotationGranularity: Int = 5,
       random: Random) = {
 
@@ -88,7 +88,7 @@ object simulation {
         zombieMaxRotation = zombieMaxRotation,
         zombieExhaustionProbability = zombieExhaustionProbability,
         walkSpeed = walkSpeed * cellSide,
-        pheromonEvaporation = pheromonEvaporation,
+        pheromonEvaporation = zombiePheromonEvaporation,
         rotationGranularity = rotationGranularity
       )
 
