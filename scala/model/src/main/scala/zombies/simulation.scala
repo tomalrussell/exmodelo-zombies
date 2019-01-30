@@ -19,12 +19,27 @@ object simulation {
     def killed: PartialFunction[Event, Killed] = {
       case e: Killed => e
     }
+
+    def gone: PartialFunction[Event, Gone] = {
+      case e: Gone => e
+    }
+
+    def flee: PartialFunction[Event, Flee] = {
+      case e: Flee => e
+    }
+
+    def pursue: PartialFunction[Event, Pursue] = {
+      case e: Pursue => e
+    }
   }
 
   sealed trait Event
-  case class Zombified(step: Int, human: Human) extends Event
-  case class Killed(step: Int, zombie: Zombie) extends Event
-  case class Rescued(step: Int, human: Human) extends Event
+  case class Zombified(human: Human) extends Event
+  case class Killed(zombie: Zombie) extends Event
+  case class Rescued(human: Human) extends Event
+  case class Gone(agent: Agent) extends Event
+  case class Flee(human: Human) extends Event
+  case class Pursue(zombie: Zombie) extends Event
 
 
   object Simulation {
@@ -118,30 +133,44 @@ object simulation {
     val w1 = Agent.pheromon(index, simulation.world, simulation.pheromonEvaporation)
     val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
-    val na1 =
-      for { a0 <- ai } yield {
+    val (na1, moveEvents) =
+      ai.map { a0 =>
         val ns = Agent.neighbors(index, a0, Agent.perception(a0), neighborhoodCache)
 
         val evolve =
           Agent.inform(ns, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
           Agent.run(ns) _ andThen
-          Agent.metabolism(rng) _ andThen
-          Agent.changeDirection(w1, index, simulation.rotationGranularity, ns, rng) _
+          Agent.metabolism(rng) _
 
         val a1 = evolve(a0)
 
-        Agent.move(w1, simulation.rotationGranularity, rng) (a1)
-      }
+        val (a2, ev) = Agent.changeDirection(w1, simulation.rotationGranularity, ns, rng)(a1)
+
+        Agent.move(w1, simulation.rotationGranularity, rng) (a2) match {
+          case Some(a) => (Some(a), ev.toVector)
+          case None => (None, Vector(Gone(a2)) ++ ev)
+        }
+      }.unzip
 
     val (na2, rescued) = Agent.rescue(w1, na1.flatten)
 
     val events =
-      infected.map(i => Zombified(step, i)) ++
-      died.map(d => Killed(step, d)) ++
-      rescued.map(r => Rescued(step, r))
+      infected.map(i => Zombified(i)) ++
+      died.map(d => Killed(d)) ++
+      rescued.map(r => Rescued(r)) ++
+      moveEvents.flatten
 
     (simulation.copy(agents = na2, world = w1), events)
+  }
+
+
+
+
+  def simulate(simulation: Simulation, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
+    def result(s: Simulation, events: Vector[Event], acc: (List[Simulation], List[Vector[Event]])) = (s :: acc._1, events :: acc._2)
+    val (simulations, events) = simulate(simulation, rng, steps, result, (List(), List()))
+    (simulations.reverse, events.reverse)
   }
 
   def simulate[ACC](simulation: Simulation, rng: Random, steps: Int, accumulate: (Simulation, Vector[Event], ACC) => ACC, accumulator: ACC): ACC = {

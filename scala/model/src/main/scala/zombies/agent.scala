@@ -2,6 +2,7 @@ package zombies
 
 import world._
 import space._
+import simulation._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
@@ -253,8 +254,7 @@ object agent {
     }
 
 
-
-    def changeDirection(world: World, index: Index[Agent], granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
+    def changeDirection(world: World, granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
         val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Metabolism.effectiveSpeed(h.metabolism)).filter(pv => !towardsWall(world, h.position, pv))
@@ -293,7 +293,6 @@ object agent {
         } else h
       }
 
-
       def followPheromon(z: Zombie, world: World, rng: Random) = {
         val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Metabolism.effectiveSpeed(z.metabolism))
         val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
@@ -316,14 +315,14 @@ object agent {
       agent match {
         case h: Human =>
           neighbors.collect(Agent.zombie) match {
-            case nz if !nz.isEmpty => fleeZombies(h, nz, rng)
-            case _ if h.rescue.informed && h.rescue.alerted => towardsRescue(h, rng)
-            case _ => followRunning(h, rng)
+            case nz if !nz.isEmpty => (fleeZombies(h, nz, rng), Some(Flee(h)))
+            case _ if h.rescue.informed && h.rescue.alerted => (towardsRescue(h, rng), None)
+            case _ => (followRunning(h, rng), None)
           }
         case z: Zombie =>
           neighbors.collect(Agent.human) match {
-            case nh if !nh.isEmpty => pursueHuman(z, nh, rng)
-            case _ => followPheromon(z, world, rng)
+            case nh if !nh.isEmpty => (pursueHuman(z, nh, rng), Some(Pursue(z)))
+            case _ => (followPheromon(z, world, rng), None)
           }
       }
     }
