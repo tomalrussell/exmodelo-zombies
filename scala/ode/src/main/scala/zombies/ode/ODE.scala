@@ -4,7 +4,7 @@ object ODE extends App {
   println(
     Model.run(
       // Real data
-      //file = File("acquisition10_1.csv").toJava,
+      //file = File("realData.csv").toJava,
       // ODE parameters
       panic0 = 1,
       staminaH = 10,
@@ -17,7 +17,8 @@ object ODE extends App {
       t0 = 1,
       dt = 1,
       tMax = 100
-    ).mkString("\n")
+    )
+      //.mkString("\n")
   )
 }
 
@@ -39,25 +40,32 @@ object Model {
     val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
     val zombies = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b }
 
-    simul
+    //simul
 
-    //val realData = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
+    /*val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
+    val realHumans = columns.map(_(0).toDouble)
+    val realZombies = columns.map(_(1).toDouble)*/
+    val realHumans = Vector(250,249,246,242,235,227,221,216,206,202,
+      194,191,187,181,169,163,157,144,138,132,
+      128,123,122,119,113,108,105,102,101,101,
+      100,99,98,96,93,91,89,89,87,85,
+      85,83,82,81,79,79,78,78,77,77)
+    val realZombies = Vector(10,4,3,1,1,1,1,1,0,0,
+      0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0)
 
-    /*val likelihood =
-      (Is zip infections).map { case (i, inf) =>
-        if (i > 0) (inf * math.log(i) - i) else 0
-      }.sum
+    val likelihoodHumans =
+      (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+    val likelihoodZombies =
+      (realZombies zip zombies).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
-    val portageMean = steps.map(_ (1)).sum / steps.size
-    val llPortage = 0.3 * N * math.log(portageMean) - portageMean
-
-    (likelihood + llPortage) match {
-      case Double.NegativeInfinity | Double.NaN => Double.PositiveInfinity
-      case x => -x
-    }*/
+    likelihoodHumans + likelihoodZombies
   }
 
 
+  // Description of the ODE system
   def dynamic(panic0: Double, exhaustH: Double, inf: Double, hunt0: Double, exhaustZ: Double)(t: Double, state: Vector[Double]): Vector[Double] = {
     // Param
     val N = state.sum
@@ -87,6 +95,7 @@ object Model {
   }
 
 
+  // ODE solver
   def integrate(f: (Double, Vector[Double]) => Vector[Double])(t0: Double, dt: Double, counter: Int, ysol: List[Vector[Double]]): List[Vector[Double]] = {
     def multiply(v: Vector[Double], s: Double) = v.map(_ * s)
     def divide(v: Vector[Double], s: Double) = v.map(_ / s)
