@@ -74,7 +74,6 @@ object parameters {
 
   val numberZombies = Parameter("numberZombies", Ints(0, 1500, 1, 4, 0), Variable)
   val zombieRunSpeed = Parameter("zombieRunSpeed", Doubles(0.0, 1.0, 0.1, 0.3, 0.0), Variable)
-  val zombieStamina = Parameter("zombieStamina", Ints(0, 50, 1, 10, 0), Variable)
   val zombiePerception = Parameter("zombiePerception", Doubles(0.0, 5.0, 0.1, 3.0, 0.0), Variable)
   val zombieMaxRotation = Parameter("zombieMaxRotation", Doubles(0.0, 180.0, 1.0, 60.0, 0.0), Variable)
   val zombieExhaustionProbability = Parameter("zombieExhaustionProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
