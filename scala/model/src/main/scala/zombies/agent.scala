@@ -329,10 +329,10 @@ object agent {
 
   object Metabolism {
     def effectiveSpeed(speed: Metabolism) =  if(speed.run) speed.runSpeed else speed.walkSpeed
-    def metabolism(speed: Metabolism, rng: Random) =
+    def metabolism(speed: Metabolism, rng: Random, timeScale: Int = 10) =
       (speed.exhausted, speed.run) match {
-        case (false, true) if rng.nextDouble() < speed.exhaustionProbability => speed.copy(run = false, exhausted = true)
-        case (true, _) if rng.nextDouble() < 1 - speed.exhaustionProbability => speed.copy(exhausted = false)
+        case (false, true) if rng.nextDouble() < speed.exhaustionProbability / timeScale => speed.copy(run = false, exhausted = true)
+        case (true, _) if rng.nextDouble() < (1 - speed.exhaustionProbability) / timeScale => speed.copy(exhausted = false)
         case (_, _) => speed
       }
 

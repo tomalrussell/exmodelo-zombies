@@ -84,7 +84,7 @@ object parameters {
   val humanPerception = Parameter("humanPerception", Doubles(0.0, 5.0, 0.1, 1.5, 0.0), Variable)
   val humanMaxRotation = Parameter("humanMaxRotation", Doubles(0.0, 180.0, 1.0, 60.0, 0.0), Variable)
   val humanInformedRatio = Parameter("humanInformedRatio", Doubles(0.0, 1.0, 0.1, 0.01, 0.0), Variable)
-  val humanExhaustionProbability = Parameter("humanExhaustionProbability", Doubles(0.0, 1.0, 0.01, 0.45, 0.0), Variable)
+  val humanExhaustionProbability = Parameter("humanExhaustionProbability", Doubles(0.0, 1.0, 0.01, 0.63, 0.0), Variable)
   val humanFightBackProbability = Parameter("humanFightBackProbability", Doubles(0.0, 1.0,  0.01, 0.2, 0.0), Variable)
   val humanFollowProbability = Parameter("humanFollowProbability", Doubles(0.0, 1.0, 0.1, 0.01, 0.0), Variable)
   val humanAwarenessProbability = Parameter("humanAwarenessProbability", Doubles(0.0, 1.0, 0.01, 0.2, 0.05), Variable)
