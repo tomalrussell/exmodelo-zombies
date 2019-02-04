@@ -59,7 +59,6 @@ object simulation {
       zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
-      zombieExhaustionProbability: Double,
       zombiePheromonEvaporation: Double,
       zombies: Int,
       walkSpeed: Double,
@@ -85,7 +84,7 @@ object simulation {
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieExhaustionProbability, zombiePerception * cellSide, zombieMaxRotation, random)
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random)
 
       val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie)
 
@@ -101,7 +100,6 @@ object simulation {
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
-        zombieExhaustionProbability = zombieExhaustionProbability,
         walkSpeed = walkSpeed * cellSide,
         zombiePheromonEvaporation = zombiePheromonEvaporation,
         rotationGranularity = rotationGranularity
@@ -123,7 +121,6 @@ object simulation {
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
-    zombieExhaustionProbability: Double,
     walkSpeed: Double,
     zombiePheromonEvaporation: Double,
     rotationGranularity: Int)
@@ -204,7 +201,6 @@ object simulation {
         humanFightBackProbability = 0.0,
         humans = humans,
         zombieRunSpeed = walkSpeed,
-        zombieExhaustionProbability = 1.0,
         zombiePerception = zombiePerception,
         zombieMaxRotation = rotation,
         zombies = zombies,

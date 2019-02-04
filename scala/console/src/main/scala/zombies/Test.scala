@@ -25,7 +25,6 @@ object Test extends App {
   val zombieRunSpeed = 0.3
 
   val humanExhaustionProbability = 0.05
-  val zombieExhaustionProbability = 0.2
 
   val zombieMaxRotation = 60
   val humanMaxRotation = 90
@@ -49,7 +48,6 @@ object Test extends App {
     humanFightBackProbability = humanFightBackProbability,
     humans = humans,
     zombieRunSpeed = zombieRunSpeed,
-    zombieExhaustionProbability = zombieExhaustionProbability,
     zombiePerception = zombiePerception,
     zombieMaxRotation = zombieMaxRotation,
     zombies = zombies,
