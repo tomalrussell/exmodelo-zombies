@@ -196,6 +196,7 @@ object display {
     })
 
     val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      span(Rx { s"# step: ${stepState().map(_._3).getOrElse(0)}" }),
       span(Rx { s"# humans: ${people().humans}" }),
       span(Rx { s"# rescued: ${people().rescued}" }),
       span(Rx { s"# informed: ${people().informed}" }),
