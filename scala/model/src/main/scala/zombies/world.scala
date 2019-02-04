@@ -11,11 +11,11 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, pheromone: Double = 0.0) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
-    def floor(c: Cell): PartialFunction[Cell, Floor] = {
+    def floor: PartialFunction[Cell, Floor] = {
       case floor: Floor => floor
     }
 
@@ -27,6 +27,7 @@ object world {
           case '0' => Some(Floor())
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
+          case 'E' => Some(Floor(rescueZone = true, information = 1.0))
           case _ => None
         }
 
@@ -100,7 +101,7 @@ object world {
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        c@Floor(_, _, _, _) <- Seq(cells(x)(y))
+        c <- floor.lift(cells(x)(y))
         if !levels(x)(y).isInfinite
       } cells(x)(y) = c.copy(rescueSlope = slope(world, x, y, levels, (_, _) => 1.0))
 
@@ -132,7 +133,7 @@ object world {
       for {
         x <- 0 until world.side
         y <- 0 until world.side
-        c@Floor(_, _, _, _) <- Seq(cells(x)(y))
+        c <- floor.lift(cells(x)(y))
       } cells(x)(y) = c.copy(wallSlope = slope(world, x, y, levels, computeIntensity))
 
       world.copy(cells = cells)
@@ -236,6 +237,20 @@ object world {
         s"""${"0" * side}\n""" * doorSize +
         s"""+${"0" * (side - 2)}+\n""" * (wallSize - 1) +
         s"""${"+" * wallSize}${"0" * doorSize}${"+" * wallSize}\n"""
+    }
+
+    def stadium(wallSize: Int, fieldSide: Int, doorSize: Int) = parse() {
+
+      val side = wallSize * 2 + doorSize
+      val bleacherSize = (side - 2 - fieldSide) / 2
+
+      s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n""" +
+        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
+        s"""+${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""E${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}E\n""" * doorSize +
+        s"""+${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
+        s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n"""
     }
 
   }

@@ -172,13 +172,24 @@ object agent {
         case a => a
       }
 
-    def inform(neighbors: Array[Agent], rng: Random)(a: Agent) =
+    def inform(neighbors: Array[Agent], world: World, rng: Random)(a: Agent) = {
+      def lookForInformation(h: Human) = {
+        val (x, y) = positionToLocation(h.position, world.side)
+        World.get(world, x, y) match {
+          case Some(floor: Floor) => if(rng.nextDouble() < floor.information) h.copy(rescue = h.rescue.copy(informed = true)) else h
+          case _ => h
+        }
+      }
+
       a match {
         case human: Human if !human.rescue.informed && human.rescue.alerted =>
           val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
-          if(rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true)) else human
+          if (rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true))
+          else lookForInformation(human)
+        case human: Human => lookForInformation(human)
         case a => a
       }
+    }
 
     def alert(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {

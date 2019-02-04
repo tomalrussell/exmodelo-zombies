@@ -135,7 +135,7 @@ object simulation {
         val ns = Agent.neighbors(index, a0, Agent.perception(a0), neighborhoodCache)
 
         val evolve =
-          Agent.inform(ns, rng) _ andThen
+          Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _

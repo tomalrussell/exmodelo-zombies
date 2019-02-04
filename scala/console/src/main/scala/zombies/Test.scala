@@ -36,7 +36,7 @@ object Test extends App {
 
   val world = World.jaude
   val noZombie = Simulation.initialize(
-    World.jaude,
+    World.stadium(15, 15, 5),
     infectionRange = infectionRange,
     humanRunSpeed = humanRunSpeed,
     humanExhaustionProbability = humanExhaustionProbability,
