@@ -139,7 +139,11 @@ object world {
       world.copy(cells = cells)
     }
 
-    def copyCells(cells: Array[Array[Cell]]) = cells.map(_.map(identity))
+    def copyCells(cells: Array[Array[Cell]]) = {
+      Array.tabulate(cells.size, cells.size)((x, y) => cells(x)(y))
+
+      //cells.map(_.map(identity))
+    }
 
     def isWall(world: World, x: Int, y: Int) = get(world, x, y) match {
       case Some(Wall) => true
@@ -151,7 +155,7 @@ object world {
       case _ => false
     }
 
-    def pheromon(world: World, location: Location): Double = {
+    def pheromone(world: World, location: Location): Double = {
       val (x, y) = location
       World.get(world, x, y) match {
         case Some(f: Floor) => f.pheromone
@@ -241,14 +245,17 @@ object world {
 
     def stadium(wallSize: Int, fieldSide: Int, doorSize: Int) = parse() {
 
+      def totalBleacherSide(wallSide: Int, fieldSide: Int) = (wallSize * 2 + doorSize - 2 - fieldSide)
+      val adjustedFieldSize = if(totalBleacherSide(wallSize, fieldSide) % 2 == 0) fieldSide else fieldSide + 1
+
       val side = wallSize * 2 + doorSize
       val bleacherSize = (side - 2 - fieldSide) / 2
 
       s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n""" +
         s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
-        s"""+${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
-        s"""E${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}E\n""" * doorSize +
-        s"""+${"0" * bleacherSize}${"+" * fieldSide}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""E${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}E\n""" * doorSize +
+        s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
         s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
         s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n"""
     }

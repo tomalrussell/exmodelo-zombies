@@ -101,7 +101,7 @@ object simulation {
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromonEvaporation = zombiePheromonEvaporation,
+        zombiePheromoneEvaporation = zombiePheromonEvaporation,
         rotationGranularity = rotationGranularity
       )
 
@@ -110,24 +110,24 @@ object simulation {
   }
 
   case class Simulation(
-    world: World,
-    agents: Vector[Agent],
-    infectionRange: Double,
-    humanRunSpeed: Double,
-    humanPerception: Double,
-    humanMaxRotation: Double,
-    humanExhaustionProbability: Double,
-    humanFollowProbability: Double,
-    zombieRunSpeed: Double,
-    zombiePerception: Double,
-    zombieMaxRotation: Double,
-    walkSpeed: Double,
-    zombiePheromonEvaporation: Double,
-    rotationGranularity: Int)
+                         world: World,
+                         agents: Vector[Agent],
+                         infectionRange: Double,
+                         humanRunSpeed: Double,
+                         humanPerception: Double,
+                         humanMaxRotation: Double,
+                         humanExhaustionProbability: Double,
+                         humanFollowProbability: Double,
+                         zombieRunSpeed: Double,
+                         zombiePerception: Double,
+                         zombieMaxRotation: Double,
+                         walkSpeed: Double,
+                         zombiePheromoneEvaporation: Double,
+                         rotationGranularity: Int)
 
   def step(step: Int, simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
-    val w1 = Agent.pheromon(index, simulation.world, simulation.zombiePheromonEvaporation)
+    val w1 = Agent.releasePheromone(index, simulation.world, simulation.zombiePheromoneEvaporation)
     val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
     val (na1, moveEvents) =
@@ -185,21 +185,21 @@ object simulation {
   }
 
   object physic {
-    val pheromonEvaporation = 0.05
+    val pheromonEvaporation = 0.38
 
     val walkSpeed = 0.1
-    val infectionRange = 0.2
+    val infectionRange = 0.32
 
-    val humanInformedRatio = 0.1
-    val humanAwarenessProbability = 0.7
-    val humanFollowProbability = 0.3
+    val humanInformedRatio = 0.11
+    val humanAwarenessProbability = 0.09
+    val humanFollowProbability = 0.27
     val humanFightBackProbability = 0.01
 
-    val humanPerception = 1.5
-    val zombiePerception = 3.0
+    val humanPerception = 1.4
+    val zombiePerception = 2.9
 
-    val humanRunSpeed = 0.5
-    val zombieRunSpeed = 0.3
+    val humanRunSpeed = 0.49
+    val zombieRunSpeed = 0.28
 
     val humanExhaustionProbability = 0.45
 

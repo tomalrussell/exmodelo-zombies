@@ -47,14 +47,14 @@ object Test extends App {
     allEvents ++ events
   }
 
-  simulate(simulation, rng, 5000, display, List())
+ // simulate(simulation, rng, 5000, display, List())
 
 
 
-//  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
-//
-//  val begin = System.currentTimeMillis()
-//  val end = bench(500)
-//  println(System.currentTimeMillis() - begin)
+  def bench(steps: Int) = simulate[Unit](simulation, rng, steps, (_, _, _) => Unit, Unit)
+
+  val begin = System.currentTimeMillis()
+  val end = bench(500)
+  println(System.currentTimeMillis() - begin)
 
 }

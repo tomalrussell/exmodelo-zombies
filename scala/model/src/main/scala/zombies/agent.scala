@@ -3,6 +3,7 @@ package zombies
 import world._
 import space._
 import simulation._
+import zombies.world.World.copyCells
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
@@ -194,6 +195,9 @@ object agent {
     def alert(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
+        case h: Human =>
+          val alertedNeighbors = neighbors.collect(Agent.human).count(_.rescue.alerted)
+          if (rng.nextDouble() < h.rescue.awarenessProbability * alertedNeighbors) h.copy(rescue = h.rescue.copy(alerted = true)) else h
         case a => a
       }
 
@@ -205,14 +209,14 @@ object agent {
         case a => a
       }
 
-    def pheromon(agents: Index[Agent], world: World, evaporation: Double) = {
+    def releasePheromone(agents: Index[Agent], world: World, evaporation: Double) = {
       val newCells =
-        world.cells.zipWithIndex.map { case (l, i) =>
-          l.zipWithIndex.map {
-            case (c: Floor, j) =>
-              val pursuingZombies = agents.cells(i)(j).collect(Agent.zombie).count(_.pursuing)
-              c.copy(pheromone = math.max(c.pheromone + pursuingZombies - evaporation, 0))
-            case (x, _) => x
+        Array.tabulate[Cell](world.side, world.side) { (x, y) =>
+          val pursuingZombies = agents.cells(x)(y).collect(Agent.zombie).count(_.pursuing)
+          val cell = world.cells(x)(y)
+          cell match {
+            case f: Floor =>  f.copy(pheromone = math.max(f.pheromone + pursuingZombies - evaporation, 0.0))
+            case c => c
           }
         }
 
@@ -301,23 +305,24 @@ object agent {
         } else h
       }
 
-      def followPheromon(z: Zombie, world: World, rng: Random) = {
+      def followPheromone(z: Zombie, world: World, rng: Random) = {
         val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Zombie.speed(z))
         val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
-        if (nv.isEmpty) z else {
-          val currentPheromon = World.pheromon(world, positionToLocation(z.position, world.side))
-          val ph = nv.flatMap { v =>
-            val projectedPheromon = World.pheromon(world, positionToLocation(sum(z.position, v), world.side))
-            val deltaPheromon = projectedPheromon - currentPheromon
-            if(deltaPheromon > 0.0) Some(v -> deltaPheromon)
-            else None
-          }
 
-          if(!ph.isEmpty) {
-            val newVelocity = (nv zip ph).maxBy(_._2)._1
+        if (!nv.isEmpty) {
+          val currentPheromone = World.pheromone(world, positionToLocation(z.position, world.side))
+
+          val reachablePheromones =
+            nv.map { v =>
+              val projectedPheromone = World.pheromone(world, positionToLocation(sum(z.position, v), world.side))
+              projectedPheromone - currentPheromone
+            }
+
+          if(reachablePheromones.exists(_ > 0.0)) {
+            val newVelocity = (nv zip reachablePheromones).maxBy(_._2)._1
             z.copy(velocity = newVelocity)
           } else z
-        }
+        } else z
       }
 
       agent match {
@@ -330,7 +335,7 @@ object agent {
         case z: Zombie =>
           neighbors.collect(Agent.human) match {
             case nh if !nh.isEmpty => (pursueHuman(z, nh, rng), Some(Pursue(z)))
-            case _ => (followPheromon(z, world, rng), None)
+            case _ => (followPheromone(z, world, rng), None)
           }
       }
     }

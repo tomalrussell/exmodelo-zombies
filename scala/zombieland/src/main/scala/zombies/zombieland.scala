@@ -10,7 +10,6 @@ object zombieland {
       () => world.World.stadium(15, 15, 5),
       infectionRange,
       walkSpeed,
-      rotationGranularity,
 
       humanMaxRotation,
       humanPerception,
@@ -25,7 +24,7 @@ object zombieland {
       zombieMaxRotation,
       zombiePerception,
       zombieRunSpeed,
-      zombiePheromonEvaporation,
+      zombiePheromoneEvaporation,
       numberZombies
     )
   }
