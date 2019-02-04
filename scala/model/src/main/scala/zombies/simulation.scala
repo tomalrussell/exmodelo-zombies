@@ -184,6 +184,28 @@ object simulation {
     run0(steps, simulation, Vector.empty, accumulate, accumulator)
   }
 
+  object physic {
+    val pheromonEvaporation = 0.05
+
+    val walkSpeed = 0.1
+    val infectionRange = 0.2
+
+    val humanInformedRatio = 0.1
+    val humanAwarenessProbability = 0.7
+    val humanFollowProbability = 0.3
+    val humanFightBackProbability = 0.01
+
+    val humanPerception = 1.5
+    val zombiePerception = 3.0
+
+    val humanRunSpeed = 0.5
+    val zombieRunSpeed = 0.3
+
+    val humanExhaustionProbability = 0.45
+
+    val zombieMaxRotation = 30
+    val humanMaxRotation = 60
+  }
 
   def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Int, humanPerception: Double, zombiePerception: Double, pheromonEvaporation: Double, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
 
