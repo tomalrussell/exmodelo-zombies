@@ -61,8 +61,6 @@ object display {
 
   implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
-  val side = 40
-
   val rng = new Random(42)
 
   case class People(
@@ -76,7 +74,8 @@ object display {
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
-    initFunction()
+    val simulation = initFunction()
+    val side = simulation.world.side
 
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
