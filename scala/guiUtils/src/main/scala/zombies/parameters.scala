@@ -76,19 +76,18 @@ object parameters {
   val zombieRunSpeed = Parameter("zombieRunSpeed", Doubles(0.0, 1.0, 0.1, 0.3, 0.0), Variable)
   val zombiePerception = Parameter("zombiePerception", Doubles(0.0, 5.0, 0.1, 3.0, 0.0), Variable)
   val zombieMaxRotation = Parameter("zombieMaxRotation", Doubles(0.0, 180.0, 1.0, 60.0, 0.0), Variable)
-  val zombieExhaustionProbability = Parameter("zombieExhaustionProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
-  val zombiePheromonEvaporation = Parameter("zombiePheromonEvaporation", Doubles(0.0, 1.0, 0.1, 0.05, 0.0), Variable)
+  val zombiePheromonEvaporation = Parameter("zombiePheromonEvaporation", Doubles(0.0, 1.0, 0.05, 0.01, 0.0), Variable)
 
 
   val numberHumans = Parameter("numberHumans", Ints(0, 1500, 1, 250, 0), Variable)
   val humanRunSpeed = Parameter("humanRunSpeed", Doubles(0.0, 1.0, 0.1, 0.5, 0.0), Variable)
   val humanPerception = Parameter("humanPerception", Doubles(0.0, 5.0, 0.1, 1.5, 0.0), Variable)
   val humanMaxRotation = Parameter("humanMaxRotation", Doubles(0.0, 180.0, 1.0, 60.0, 0.0), Variable)
-  val humanInformedRatio = Parameter("humanInformedRatio", Doubles(0.0, 1.0, 0.1, 0.1, 0.0), Variable)
-  val humanExhaustionProbability = Parameter("humanExhaustionProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
-  val humanFightBackProbability = Parameter("humanFightBackProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
-  val humanFollowProbability = Parameter("humanFollowProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.0), Variable)
-  val humanAwarenessProbability = Parameter("humanAwarenessProbability", Doubles(0.0, 1.0, 0.1, 0.2, 0.05), Variable)
+  val humanInformedRatio = Parameter("humanInformedRatio", Doubles(0.0, 1.0, 0.1, 0.01, 0.0), Variable)
+  val humanExhaustionProbability = Parameter("humanExhaustionProbability", Doubles(0.0, 1.0, 0.01, 0.45, 0.0), Variable)
+  val humanFightBackProbability = Parameter("humanFightBackProbability", Doubles(0.0, 1.0,  0.01, 0.2, 0.0), Variable)
+  val humanFollowProbability = Parameter("humanFollowProbability", Doubles(0.0, 1.0, 0.1, 0.01, 0.0), Variable)
+  val humanAwarenessProbability = Parameter("humanAwarenessProbability", Doubles(0.0, 1.0, 0.01, 0.2, 0.05), Variable)
 
 
 

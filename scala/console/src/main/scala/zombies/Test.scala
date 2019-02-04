@@ -9,7 +9,7 @@ import scala.util.Random
 object Test extends App {
 
 
-  val pheromonEvaporation = 0.1
+  val pheromonEvaporation = 0.05
   val walkSpeed = 0.1
   val infectionRange = 0.25
 
@@ -24,7 +24,7 @@ object Test extends App {
   val humanRunSpeed = 0.5
   val zombieRunSpeed = 0.3
 
-  val humanExhaustionProbability = 0.05
+  val humanExhaustionProbability = 0.45
 
   val zombieMaxRotation = 60
   val humanMaxRotation = 90

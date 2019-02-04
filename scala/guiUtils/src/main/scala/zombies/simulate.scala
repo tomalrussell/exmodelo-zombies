@@ -40,7 +40,6 @@ object simulate {
         humanMaxRotation = controlValues.getOrElse(humanMaxRotation.name, defaultOrOff(humanMaxRotation)).asInstanceOf[Double],
         humans = controlValues.getOrElse(numberHumans.name, defaultOrOff(numberHumans)).asInstanceOf[Int],
         zombieRunSpeed = controlValues.getOrElse(zombieRunSpeed.name, defaultOrOff(zombieRunSpeed)).asInstanceOf[Double],
-        zombieExhaustionProbability = controlValues.getOrElse(zombieExhaustionProbability.name, defaultOrOff(zombieExhaustionProbability)).asInstanceOf[Double],
         zombiePerception = controlValues.getOrElse(zombiePerception.name, defaultOrOff(zombiePerception)).asInstanceOf[Double],
         zombieMaxRotation = controlValues.getOrElse(zombieMaxRotation.name, defaultOrOff(zombieMaxRotation)).asInstanceOf[Double],
         zombiePheromonEvaporation = controlValues.getOrElse(zombiePheromonEvaporation.name, defaultOrOff(zombiePheromonEvaporation)).asInstanceOf[Double],

@@ -24,7 +24,6 @@ object zombieland {
 
       zombieMaxRotation,
       zombiePerception,
-      zombieExhaustionProbability,
       zombieRunSpeed,
       zombiePheromonEvaporation,
       numberZombies
