@@ -18,6 +18,11 @@ object agent {
 
   case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
 
+
+  sealed trait PheromoneMechanism
+  case object NoPheromone extends PheromoneMechanism
+  case class Pheromone(evaporation: Double) extends PheromoneMechanism
+
   object Agent {
 
     def isHuman(agent: Agent) = agent match {
@@ -209,19 +214,22 @@ object agent {
         case a => a
       }
 
-    def releasePheromone(agents: Index[Agent], world: World, evaporation: Double) = {
-      val newCells =
-        Array.tabulate[Cell](world.side, world.side) { (x, y) =>
-          val pursuingZombies = agents.cells(x)(y).collect(Agent.zombie).count(_.pursuing)
-          val cell = world.cells(x)(y)
-          cell match {
-            case f: Floor =>  f.copy(pheromone = math.max(f.pheromone + pursuingZombies - evaporation, 0.0))
-            case c => c
-          }
-        }
+    def releasePheromone(agents: Index[Agent], world: World, pheromoneMechanism: PheromoneMechanism) =
+      pheromoneMechanism match {
+        case Pheromone(evaporation) =>
+          val newCells =
+            Array.tabulate[Cell] (world.side, world.side) { (x, y) =>
+              val pursuingZombies = agents.cells (x) (y).collect (Agent.zombie).count (_.pursuing)
+              val cell = world.cells (x) (y)
+              cell match {
+                case f: Floor => f.copy (pheromone = math.max (f.pheromone + pursuingZombies - evaporation, 0.0) )
+                case c => c
+              }
+            }
+          world.copy (cells = newCells)
+        case NoPheromone => world
+      }
 
-      world.copy(cells = newCells)
-    }
 
     def fight(index: Index[Agent], agents: Vector[Agent], infectionRange: Double, zombify: (Zombie, Human) => Zombie, rng: Random) = {
 

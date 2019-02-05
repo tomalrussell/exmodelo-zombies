@@ -59,7 +59,7 @@ object simulation {
       zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
-      zombiePheromoneEvaporation: Double,
+      zombiePheromone: PheromoneMechanism,
       zombies: Int,
       walkSpeed: Double,
       rotationGranularity: Int = 5,
@@ -101,7 +101,7 @@ object simulation {
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromoneEvaporation = zombiePheromoneEvaporation,
+        zombiePheromone = zombiePheromone,
         rotationGranularity = rotationGranularity
       )
 
@@ -110,24 +110,25 @@ object simulation {
   }
 
   case class Simulation(
-                         world: World,
-                         agents: Vector[Agent],
-                         infectionRange: Double,
-                         humanRunSpeed: Double,
-                         humanPerception: Double,
-                         humanMaxRotation: Double,
-                         humanExhaustionProbability: Double,
-                         humanFollowProbability: Double,
-                         zombieRunSpeed: Double,
-                         zombiePerception: Double,
-                         zombieMaxRotation: Double,
-                         walkSpeed: Double,
-                         zombiePheromoneEvaporation: Double,
-                         rotationGranularity: Int)
+    world: World,
+    agents: Vector[Agent],
+    infectionRange: Double,
+    humanRunSpeed: Double,
+    humanPerception: Double,
+    humanMaxRotation: Double,
+    humanExhaustionProbability: Double,
+    humanFollowProbability: Double,
+    zombieRunSpeed: Double,
+    zombiePerception: Double,
+    zombieMaxRotation: Double,
+    walkSpeed: Double,
+    zombiePheromone: PheromoneMechanism,
+    rotationGranularity: Int)
 
   def step(step: Int, simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
-    val w1 = Agent.releasePheromone(index, simulation.world, simulation.zombiePheromoneEvaporation)
+    val w1 = Agent.releasePheromone(index, simulation.world, simulation.zombiePheromone)
+
     val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
     val (na1, moveEvents) =
@@ -208,11 +209,11 @@ object simulation {
     /* Zombie parameters */
     val zombiePerception = 2.9
     val zombieRunSpeed = 0.28
-    val zombiePheromoneEvaporation = 0.38
+    val zombiePheromone = Pheromone(evaporation = 0.38)
     val zombieMaxRotation = 30
   }
 
-  def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Int, humanPerception: Double, zombiePerception: Double, pheromonEvaporation: Double, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
+  def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Double, humanPerception: Double, humanInformedRatio: Double, humanAwarenessProbability: Double, zombiePerception: Double, random: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
 
     val simulation =
       Simulation.initialize(
@@ -223,8 +224,8 @@ object simulation {
         humanPerception = humanPerception,
         humanMaxRotation = rotation,
         humanFollowProbability = 0.0,
-        humanInformedRatio = 0.0,
-        humanAwarenessProbability = 0.0,
+        humanInformedRatio = humanInformedRatio,
+        humanAwarenessProbability = humanAwarenessProbability,
         humanFightBackProbability = 0.0,
         humans = humans,
         zombieRunSpeed = walkSpeed,
@@ -232,11 +233,11 @@ object simulation {
         zombieMaxRotation = rotation,
         zombies = zombies,
         walkSpeed = walkSpeed,
-        zombiePheromoneEvaporation = pheromonEvaporation,
-        random = rng
+        zombiePheromone = NoPheromone,
+        random = random
       )
 
-    simulate(simulation, rng, steps)
+    simulate(simulation, random, steps)
   }
 
 }
