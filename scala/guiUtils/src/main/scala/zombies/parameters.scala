@@ -77,7 +77,7 @@ object parameters {
   val zombieRunSpeed = Parameter("zombieRunSpeed", Doubles(0.0, 1.0, 0.01, physic.zombieRunSpeed, 0.0), Variable)
   val zombiePerception = Parameter("zombiePerception", Doubles(0.0, 5.0, 0.01, physic.zombiePerception, 0.0), Variable)
   val zombieMaxRotation = Parameter("zombieMaxRotation", Doubles(0.0, 180.0, 1.0, physic.zombieMaxRotation, 0.0), Variable)
-  val zombiePheromoneEvaporation = Parameter("zombiePheromoneEvaporation", Doubles(0.0, 10.0, 0.01, physic.pheromonEvaporation, 0.0), Variable)
+  val zombiePheromoneEvaporation = Parameter("zombiePheromoneEvaporation", Doubles(0.0, 10.0, 0.01, physic.pheromoneEvaporation, 0.0), Variable)
 
 
   val humanRunSpeed = Parameter("humanRunSpeed", Doubles(0.0, 1.0, 0.01, physic.humanRunSpeed, 0.0), Variable)

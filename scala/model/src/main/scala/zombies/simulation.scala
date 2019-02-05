@@ -191,7 +191,7 @@ object simulation {
   }
 
   object physic {
-    val pheromonEvaporation = 0.38
+    val pheromoneEvaporation = 0.38
 
     val walkSpeed = 0.1
     val infectionRange = 0.32
