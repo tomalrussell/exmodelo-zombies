@@ -59,7 +59,7 @@ object simulation {
       zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
-      zombiePheromonEvaporation: Double,
+      zombiePheromoneEvaporation: Double,
       zombies: Int,
       walkSpeed: Double,
       rotationGranularity: Int = 5,
@@ -101,7 +101,7 @@ object simulation {
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromoneEvaporation = zombiePheromonEvaporation,
+        zombiePheromoneEvaporation = zombiePheromoneEvaporation,
         rotationGranularity = rotationGranularity
       )
 
@@ -191,26 +191,25 @@ object simulation {
   }
 
   object physic {
-    val pheromoneEvaporation = 0.38
-
+    /* General parameters */
     val walkSpeed = 0.1
     val infectionRange = 0.32
 
+    /* Human parameters */
+    val humanPerception = 1.4
+    val humanRunSpeed = 0.49
+    val humanExhaustionProbability = 0.45
+    val humanMaxRotation = 60
     val humanInformedRatio = 0.11
     val humanAwarenessProbability = 0.09
     val humanFollowProbability = 0.27
     val humanFightBackProbability = 0.01
 
-    val humanPerception = 1.4
+    /* Zombie parameters */
     val zombiePerception = 2.9
-
-    val humanRunSpeed = 0.49
     val zombieRunSpeed = 0.28
-
-    val humanExhaustionProbability = 0.45
-
+    val zombiePheromoneEvaporation = 0.38
     val zombieMaxRotation = 30
-    val humanMaxRotation = 60
   }
 
   def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Int, humanPerception: Double, zombiePerception: Double, pheromonEvaporation: Double, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
@@ -233,7 +232,7 @@ object simulation {
         zombieMaxRotation = rotation,
         zombies = zombies,
         walkSpeed = walkSpeed,
-        zombiePheromonEvaporation = pheromonEvaporation,
+        zombiePheromoneEvaporation = pheromonEvaporation,
         random = rng
       )
 
