@@ -184,6 +184,12 @@ object simulation {
     run0(steps, simulation, Vector.empty, accumulate, accumulator)
   }
 
+  object environment {
+    def all = Vector(stadium, jaude)
+    def stadium = world.World.stadium(15, 15, 5)
+    def jaude = world.World.jaude
+  }
+
   object physic {
     val pheromonEvaporation = 0.38
 
