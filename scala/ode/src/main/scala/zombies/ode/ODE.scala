@@ -1,10 +1,12 @@
 package zombies.ode
 
+import better.files._
+
 object ODE extends App {
   println(
     Model.run(
       // Real data
-      //file = File("realData.csv").toJava,
+      file = File("ode/realData.csv").toJava,
       // ODE parameters
       panic0 = 1,
       staminaH = 10,
@@ -18,14 +20,14 @@ object ODE extends App {
       dt = 1,
       tMax = 100
     )
-      //.mkString("\n")
+    //.mkString("\n")
   )
 }
 
 object Model {
 
   def run(
-           //file: java.io.File,
+           file: java.io.File,
            panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
            statesInit: Vector[Double],
            t0: Int, dt: Int, tMax: Int) = {
@@ -33,6 +35,7 @@ object Model {
     val exhaustZ = 1.0 / staminaZ
     val nbIntervals = (tMax - t0) / dt
 
+    // Simulation data
     val simul = integrate(dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(t0, dt, nbIntervals, List(statesInit))
 
     val Vector(humansWalking, humansRunning, zombiesWalking, zombiesRunning) = simul.toVector.transpose
@@ -40,22 +43,13 @@ object Model {
     val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
     val zombies = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b }
 
-    //simul
+    // Zombieland data
+    val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
 
-    /*val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
     val realHumans = columns.map(_(0).toDouble)
-    val realZombies = columns.map(_(1).toDouble)*/
-    val realHumans = Vector(250,249,246,242,235,227,221,216,206,202,
-      194,191,187,181,169,163,157,144,138,132,
-      128,123,122,119,113,108,105,102,101,101,
-      100,99,98,96,93,91,89,89,87,85,
-      85,83,82,81,79,79,78,78,77,77)
-    val realZombies = Vector(10,4,3,1,1,1,1,1,0,0,
-      0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0)
+    val realZombies = columns.map(_(1).toDouble)
 
+    // Likelihood calculation
     val likelihoodHumans =
       (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
     val likelihoodZombies =

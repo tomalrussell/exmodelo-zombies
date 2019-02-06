@@ -7,7 +7,8 @@ val scaladgetVersion = "1.2.3"
 name := "zombies"
 
 lazy val ode = Project("ode", file("ode")) settings (
-  scalaVersion := "2.12.8"
+  scalaVersion := "2.12.8",
+  libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0"
   )
 
 
