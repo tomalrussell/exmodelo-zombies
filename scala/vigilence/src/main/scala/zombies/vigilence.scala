@@ -15,7 +15,6 @@ object vigilence {
       infectionRange.isDefault,
       humanExhaustionProbability isDefault,
       numberHumans isDefault,
-      zombieExhaustionProbability isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
       humanFollowProbability isOff,

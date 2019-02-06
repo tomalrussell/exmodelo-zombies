@@ -8,27 +8,7 @@ import scala.util.Random
 
 object Test extends App {
 
-
-  val pheromonEvaporation = 0.1
-  val walkSpeed = 0.1
-  val infectionRange = 0.25
-
-  val humanInformedRatio = 0.1
-  val humanAwarenessProbability = 0.7
-  val humanFollowProbability = 0.3
-  val humanFightBackProbability = 0.2
-
-  val humanPerception = 1.5
-  val zombiePerception = 3.0
-
-  val humanRunSpeed = 0.5
-  val zombieRunSpeed = 0.3
-
-  val humanExhaustionProbability = 0.05
-  val zombieExhaustionProbability = 0.2
-
-  val zombieMaxRotation = 60
-  val humanMaxRotation = 90
+  import physic._
 
   val humans = 250
   val zombies = 10
@@ -37,7 +17,7 @@ object Test extends App {
 
   val world = World.jaude
   val noZombie = Simulation.initialize(
-    World.jaude,
+    environment.stadium,
     infectionRange = infectionRange,
     humanRunSpeed = humanRunSpeed,
     humanExhaustionProbability = humanExhaustionProbability,
@@ -49,12 +29,11 @@ object Test extends App {
     humanFightBackProbability = humanFightBackProbability,
     humans = humans,
     zombieRunSpeed = zombieRunSpeed,
-    zombieExhaustionProbability = zombieExhaustionProbability,
     zombiePerception = zombiePerception,
     zombieMaxRotation = zombieMaxRotation,
     zombies = zombies,
     walkSpeed = walkSpeed,
-    zombiePheromonEvaporation = pheromonEvaporation,
+    zombiePheromoneEvaporation = zombiePheromoneEvaporation,
     random = rng
   )
 
@@ -68,14 +47,14 @@ object Test extends App {
     allEvents ++ events
   }
 
-  simulate(simulation, rng, 5000, display, List())
+ // simulate(simulation, rng, 5000, display, List())
 
 
 
-//  def bench(steps: Int) = simulate(simulation, rng, steps, _ => Unit)
-//
-//  val begin = System.currentTimeMillis()
-//  val end = bench(500)
-//  println(System.currentTimeMillis() - begin)
+  def bench(steps: Int) = simulate[Unit](simulation, rng, steps, (_, _, _) => Unit, Unit)
+
+  val begin = System.currentTimeMillis()
+  val end = bench(500)
+  println(System.currentTimeMillis() - begin)
 
 }

@@ -61,8 +61,6 @@ object display {
 
   implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
-  val side = 40
-
   val rng = new Random(42)
 
   case class People(
@@ -76,7 +74,8 @@ object display {
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
-    initFunction()
+    val simulation = initFunction()
+    val side = simulation.world.side
 
     val doorSize = 2
     val wallSize = (side - doorSize) / 2
@@ -197,6 +196,7 @@ object display {
     })
 
     val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      span(Rx { s"# step: ${stepState().map(_._3).getOrElse(0)}" }),
       span(Rx { s"# humans: ${people().humans}" }),
       span(Rx { s"# rescued: ${people().rescued}" }),
       span(Rx { s"# informed: ${people().informed}" }),

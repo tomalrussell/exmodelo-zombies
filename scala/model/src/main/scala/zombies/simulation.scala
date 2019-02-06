@@ -59,8 +59,7 @@ object simulation {
       zombieRunSpeed: Double,
       zombiePerception: Double,
       zombieMaxRotation: Double,
-      zombieExhaustionProbability: Double,
-      zombiePheromonEvaporation: Double,
+      zombiePheromone: PheromoneMechanism,
       zombies: Int,
       walkSpeed: Double,
       rotationGranularity: Int = 5,
@@ -85,7 +84,7 @@ object simulation {
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombieExhaustionProbability, zombiePerception * cellSide, zombieMaxRotation, random)
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random)
 
       val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie)
 
@@ -101,9 +100,8 @@ object simulation {
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
-        zombieExhaustionProbability = zombieExhaustionProbability,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromonEvaporation = zombiePheromonEvaporation,
+        zombiePheromone = zombiePheromone,
         rotationGranularity = rotationGranularity
       )
 
@@ -123,14 +121,14 @@ object simulation {
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
-    zombieExhaustionProbability: Double,
     walkSpeed: Double,
-    zombiePheromonEvaporation: Double,
+    zombiePheromone: PheromoneMechanism,
     rotationGranularity: Int)
 
   def step(step: Int, simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
-    val w1 = Agent.pheromon(index, simulation.world, simulation.zombiePheromonEvaporation)
+    val w1 = Agent.releasePheromone(index, simulation.world, simulation.zombiePheromone)
+
     val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
     val (na1, moveEvents) =
@@ -138,7 +136,7 @@ object simulation {
         val ns = Agent.neighbors(index, a0, Agent.perception(a0), neighborhoodCache)
 
         val evolve =
-          Agent.inform(ns, rng) _ andThen
+          Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _
@@ -187,8 +185,35 @@ object simulation {
     run0(steps, simulation, Vector.empty, accumulate, accumulator)
   }
 
+  object environment {
+    def all = Vector(stadium, jaude)
+    def stadium = world.World.stadium(15, 15, 5)
+    def jaude = world.World.jaude
+  }
 
-  def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Int, humanPerception: Double, zombiePerception: Double, pheromonEvaporation: Double, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
+  object physic {
+    /* General parameters */
+    val walkSpeed = 0.1
+    val infectionRange = 0.32
+
+    /* Human parameters */
+    val humanPerception = 1.4
+    val humanRunSpeed = 0.49
+    val humanExhaustionProbability = 0.45
+    val humanMaxRotation = 60
+    val humanInformedRatio = 0.11
+    val humanAwarenessProbability = 0.09
+    val humanFollowProbability = 0.27
+    val humanFightBackProbability = 0.01
+
+    /* Zombie parameters */
+    val zombiePerception = 2.9
+    val zombieRunSpeed = 0.28
+    val zombiePheromone = Pheromone(evaporation = 0.38)
+    val zombieMaxRotation = 30
+  }
+
+  def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Double, humanPerception: Double, humanInformedRatio: Double, humanAwarenessProbability: Double, zombiePerception: Double, random: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
 
     val simulation =
       Simulation.initialize(
@@ -199,21 +224,20 @@ object simulation {
         humanPerception = humanPerception,
         humanMaxRotation = rotation,
         humanFollowProbability = 0.0,
-        humanInformedRatio = 0.0,
-        humanAwarenessProbability = 0.0,
+        humanInformedRatio = humanInformedRatio,
+        humanAwarenessProbability = humanAwarenessProbability,
         humanFightBackProbability = 0.0,
         humans = humans,
         zombieRunSpeed = walkSpeed,
-        zombieExhaustionProbability = 1.0,
         zombiePerception = zombiePerception,
         zombieMaxRotation = rotation,
         zombies = zombies,
         walkSpeed = walkSpeed,
-        zombiePheromonEvaporation = pheromonEvaporation,
-        random = rng
+        zombiePheromone = NoPheromone,
+        random = random
       )
 
-    simulate(simulation, rng, steps)
+    simulate(simulation, random, steps)
   }
 
 }
