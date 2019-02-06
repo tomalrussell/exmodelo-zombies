@@ -27,6 +27,8 @@ object simulate {
         p.name -> p.value
       }.toMap
 
+      //val army = Army(4, fightBackProbability = 0.99, exhaustionProbability = 0.1, perception = 4.0, runSpeed = 0.9, followRunning = 0.05, maxRotation = 180)
+
       Simulation.initialize(
         world(),
         infectionRange = controlValues.getOrElse(infectionRange.name, defaultOrOff(infectionRange)).asInstanceOf[Double],
@@ -45,6 +47,7 @@ object simulate {
         zombieMaxRotation = controlValues.getOrElse(zombieMaxRotation.name, defaultOrOff(zombieMaxRotation)).asInstanceOf[Double],
         zombiePheromone = Pheromone(evaporation = controlValues.getOrElse(zombiePheromoneEvaporation.name, defaultOrOff(zombiePheromoneEvaporation)).asInstanceOf[Double]),
         zombies = controlValues.getOrElse(numberZombies.name, defaultOrOff(numberZombies)).asInstanceOf[Int],
+        army = NoArmy,
         random = rng
       )
     }
