@@ -55,7 +55,7 @@ val model =
       zombieRunSpeed = zombieRunSpeed,
       zombiePerception = zombiePerception,
       zombieMaxRotation = zombieMaxRotation,
-      zombiePheromoneEvaporation = zombiePheromoneEvaporation,
+      zombiePheromone = Pheromone(zombiePheromoneEvaporation),
       zombies = zombies,
       walkSpeed = walkSpeed,
       random = rng)
@@ -64,17 +64,15 @@ val model =
 
     val (simulations, events) = simulate(simulation, rng, steps)
     
-    val simulationArray = simulations.toArray
-    val humansDynamic = (0 until steps by 10).map(i => simulationArray(i).agents.collect(Agent.human).size).toArray
-    val zombiesDynamic = (0 until steps by 10).map(i => simulationArray(i).agents.collect(Agent.zombie).size).toArray
+    val humansDynamic = simulations.map(_.agents.collect(Agent.human).size).grouped(10).map(_.head).toArray
+    val zombiesDynamic = simulations.map(_.agents.collect(Agent.zombie).size).grouped(10).map(_.head).toArray
     
-    val eventsArray = events.toArray
-    val rescuedDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.rescued).size).toArray
-    val killedDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.killed).size).toArray
-    val zombifiedDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.zombified).size).toArray
-    val fleeDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.flee).size).toArray
-    val pursueDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.pursue).size).toArray
-    val goneDynamic = (0 until steps by 10).map(i => eventsArray(i).collect(Event.gone).size).toArray
+    val rescuedDynamic = events.map(_.collect(Event.rescued).size).grouped(10).map(_.sum).toArray
+    val killedDynamic = events.map(_.collect(Event.killed).size).grouped(10).map(_.sum).toArray
+    val zombifiedDynamic = events.map(_.collect(Event.zombified).size).grouped(10).map(_.sum).toArray
+    val fleeDynamic = events.map(_.collect(Event.flee).size).grouped(10).map(_.sum).toArray
+    val pursueDynamic = events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum).toArray
+    val goneDynamic = events.map(_.collect(Event.gone).size).grouped(10).map(_.sum).toArray
   """) set (
     inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanAwarenessProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
     outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic, humans, zombies, walkSpeed),
@@ -101,7 +99,7 @@ val model =
     zombieMaxRotation := physic.zombieMaxRotation,
     humanMaxRotation := physic.humanMaxRotation,
 
-    zombiePheromoneEvaporation := physic.zombiePheromoneEvaporation,
+    zombiePheromoneEvaporation := physic.zombiePheromone.evaporation,
 
     humans := 250,
     zombies := 4,

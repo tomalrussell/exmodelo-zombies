@@ -24,12 +24,12 @@ object simulation {
       case e: Gone => e
     }
 
-    def flee: PartialFunction[Event, Flee] = {
-      case e: Flee => e
+    def flee: PartialFunction[Event, FleeZombie] = {
+      case e: FleeZombie => e
     }
 
-    def pursue: PartialFunction[Event, Pursue] = {
-      case e: Pursue => e
+    def pursue: PartialFunction[Event, PursueHuman] = {
+      case e: PursueHuman => e
     }
   }
 
@@ -38,9 +38,12 @@ object simulation {
   case class Killed(zombie: Zombie) extends Event
   case class Rescued(human: Human) extends Event
   case class Gone(agent: Agent) extends Event
-  case class Flee(human: Human) extends Event
-  case class Pursue(zombie: Zombie) extends Event
+  case class FleeZombie(human: Human) extends Event
+  case class PursueHuman(zombie: Zombie) extends Event
 
+  sealed trait ArmyOption
+  case object NoArmy extends ArmyOption
+  case class Army(size: Int, fightBackProbability: Double, exhaustionProbability: Double, perception: Double, runSpeed: Double, followRunning: Double, maxRotation: Double) extends ArmyOption
 
   object Simulation {
 
@@ -63,6 +66,7 @@ object simulation {
       zombies: Int,
       walkSpeed: Double,
       rotationGranularity: Int = 5,
+      army: ArmyOption = NoArmy,
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
@@ -79,14 +83,36 @@ object simulation {
           perception = humanPerception * cellSide,
           maxRotation = humanMaxRotation,
           followRunningProbability = humanFollowProbability,
-          fightBackProbability = humanFightBackProbability,
+          fight = Fight(humanFightBackProbability),
           rescue = rescue,
           rng = random)
       }
 
       def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random)
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie)
+
+      def generateSoldier(army: Army) = {
+        val rescue = Rescue(informed = true, awarenessProbability = 0.0)
+        Human.random(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = army.runSpeed * cellSide,
+          exhaustionProbability = army.exhaustionProbability,
+          perception = army.perception * cellSide,
+          maxRotation = army.maxRotation,
+          followRunningProbability = army.followRunning,
+          fight = Fight(army.fightBackProbability, aggressive = true),
+          rescue = rescue,
+          rng = random)
+      }
+
+      def soldiers =
+        army match {
+          case NoArmy => Vector.empty
+          case a: Army => Vector.fill(a.size)(generateSoldier(a))
+        }
+
+      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers
 
       Simulation(
         world = world,

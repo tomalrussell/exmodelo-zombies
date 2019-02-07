@@ -136,7 +136,8 @@ object display {
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
           val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
-            case h: Human => "green"
+            case h: Human if h.fight.aggressive => "green"
+            case h: Human => "bleu"
             case _ => "red"
           }
           svgTags.g(agentPath.render(svgAttrs.fill := color), svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax},${ay})")
