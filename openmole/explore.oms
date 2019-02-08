@@ -1,0 +1,67 @@
+import _file_.model._
+
+
+//val env = LocalEnvironment(4)
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+//val env = SLURMEnvironment("sreyco01", "myria-front4.criann.fr", queue = "debug" /*queue = "tcourt_intra"*/) // wallTime = 1 hour)
+
+val values = Seq(
+  seed, 
+  infectionRange, 
+  walkSpeed, 
+  humans, 
+  humanRunSpeed, 
+  humanExhaustionProbability, 
+  humanAwarenessProbability,
+  humanFightBackProbability,
+  humanInformedRatio,
+  humanPerception, 
+  humanMaxRotation, 
+  zombies, 
+  zombieRunSpeed, 
+  zombiePheromoneEvaporation,
+  zombiePerception, 
+  zombieMaxRotation, 
+  humansDynamic, 
+  zombiesDynamic,
+  killedDynamic, 
+  zombifiedDynamic, 
+  goneDynamic, 
+  fleeDynamic, 
+  pursueDynamic, 
+  rescuedDynamic)
+
+
+val replications = 
+  Replication(
+    evaluation = model on env,
+    seed = seed,
+    replications = 100
+  )  hook  CSVHook(workDirectory / "results_test/lhs_grid.csv", arrayOnRow = true, values = values) on env by 100// on env
+
+
+val exploration = 
+  DirectSampling(
+    evaluation = replications,
+    sampling = LHS(
+      2000,
+      infectionRange in (0.0, 0.5),
+      humanRunSpeed in (0.1, 0.9),
+      humanExhaustionProbability in (0.1, 0.9),
+      humanAwarenessProbability in (0.1, 0.9),
+      humanFightBackProbability in (0.1, 0.9),
+      humanInformedRatio in (0.1, 0.9),
+      humanFollowProbability in (0.1, 0.9),
+      humanPerception in (0.1, 3.0),
+      humanMaxRotation in (5.0, 90.0),
+      
+      zombieRunSpeed in (0.1, 0.9),
+      zombiePheromoneEvaporation in (0.0, 1.0),
+      zombiePerception in (0.1, 3.0), 
+      zombieMaxRotation in (5.0, 90.0)
+    )
+  ) 
+
+//replications 
+exploration 
