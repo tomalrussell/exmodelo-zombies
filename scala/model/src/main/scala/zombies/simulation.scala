@@ -93,6 +93,7 @@ object simulation {
           followRunningProbability = humanFollowProbability,
           fight = Fight(humanFightBackProbability),
           rescue = rescue,
+          canLeave = true,
           rng = random)
       }
 
@@ -100,7 +101,7 @@ object simulation {
 
 
       def generateSoldier(army: Army) = {
-        val rescue = Rescue(informed = true, informProbability = army.informProbability)
+        val rescue = Rescue(informed = true, alerted = true, informProbability = army.informProbability)
         Human.random(
           world = world,
           walkSpeed = walkSpeed * cellSide,
@@ -111,6 +112,7 @@ object simulation {
           followRunningProbability = army.followProbability,
           fight = Fight(army.fightBackProbability, aggressive = true),
           rescue = rescue,
+          canLeave = false,
           rng = random)
       }
 
@@ -172,6 +174,7 @@ object simulation {
         val evolve =
           Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
+          Agent.chooseRescue andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _
 
