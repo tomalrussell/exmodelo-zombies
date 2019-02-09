@@ -16,7 +16,7 @@ object agent {
   case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
-  case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
+  case class Rescue(informed: Boolean = false, alerted: Boolean = false, informProbability: Double = 0.0)
   case class Fight(fightBackProbability: Double, aggressive: Boolean = false)
 
   sealed trait PheromoneMechanism
@@ -189,9 +189,9 @@ object agent {
 
       a match {
         case human: Human if !human.rescue.informed && human.rescue.alerted =>
-          val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
-          if (rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true))
-          else lookForInformation(human)
+          val informedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.informed)
+          val transmit = informedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
+          if (transmit) human.copy(rescue = human.rescue.copy(informed = true)) else lookForInformation(human)
         case human: Human => lookForInformation(human)
         case a => a
       }
@@ -202,7 +202,7 @@ object agent {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
         case h: Human =>
           val alertedNeighbors = neighbors.collect(Agent.human).count(_.rescue.alerted)
-          if (rng.nextDouble() < h.rescue.awarenessProbability * alertedNeighbors) h.copy(rescue = h.rescue.copy(alerted = true)) else h
+          if (rng.nextDouble() < h.rescue.informProbability * alertedNeighbors) h.copy(rescue = h.rescue.copy(alerted = true)) else h
         case a => a
       }
 

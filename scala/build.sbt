@@ -36,7 +36,8 @@ lazy val guiDependencies = Seq(
   libraryDependencies += "com.lihaoyi" %%% "scalarx" % rxVersion,
   libraryDependencies += "fr.iscpif.scaladget" %%% "svg" % scaladgetVersion,
   libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapnative" % scaladgetVersion,
-  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapslider" % scaladgetVersion
+  libraryDependencies += "fr.iscpif.scaladget" %%% "bootstrapslider" % scaladgetVersion,
+  libraryDependencies += "com.chuusai" %%% "shapeless" % "2.3.2",
 )
 
 def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS: File, depsCSS: File) = {
