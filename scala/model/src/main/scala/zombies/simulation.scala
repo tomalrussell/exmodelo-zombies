@@ -51,7 +51,8 @@ object simulation {
     runSpeed: Double = physic.humanRunSpeed,
     followProbability: Double = physic.humanFollowProbability,
     maxRotation: Double = physic.humanMaxRotation,
-    informProbability: Double = 0.0) extends ArmyOption
+    informProbability: Double = 0.0,
+    aggressive: Boolean = true) extends ArmyOption
 
   object Simulation {
 
@@ -110,7 +111,7 @@ object simulation {
           perception = army.perception * cellSide,
           maxRotation = army.maxRotation,
           followRunningProbability = army.followProbability,
-          fight = Fight(army.fightBackProbability, aggressive = true),
+          fight = Fight(army.fightBackProbability, aggressive = army.aggressive),
           rescue = rescue,
           canLeave = false,
           rng = random)
