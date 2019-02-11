@@ -33,12 +33,10 @@ object parameters {
   object Default extends Activation
 
   object Range {
-    val t = 9
     val caseInt = TypeCase[Range[Int]]
     val caseDouble = TypeCase[Range[Double]]
   }
-
-
+  
   case class RangeValue[T](min: T, max: T, step: T, default: T, off: T)
   case class Range[T](name: ParameterName, value: RangeValue[T], activation: Activation) extends Parameter {
     def isDefault = copy(activation = Default)
