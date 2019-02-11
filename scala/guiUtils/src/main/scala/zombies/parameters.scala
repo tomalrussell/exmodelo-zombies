@@ -19,25 +19,10 @@ object parameters {
 
   case class Options(name: ParameterName, mecanisms: Seq[controls.Mecanism], default: Mecanism, off: Mecanism, activation: Activation) extends Parameter
 
-  //case class Booleans(default: Boolean) extends Value
-
   def defaultOrOff[T](parameter: Range[T]) = {
     if (parameter.activation == Off) parameter.value.off
     else parameter.value.default
   }
-
-//  def off(p: Parameter) =
-//    p match {
-//      case r: Range[_] => r.value.off
-//      case m: Options => m.off
-//    }
-//
-//  def default(value: Value) = value match {
-//    case d: Doubles => d.default
-//    case i: Ints => i.default
-//    case m: Options => m.default
-//    case b: Booleans => b.default
-//  }
 
   trait Activation
 
@@ -56,30 +41,10 @@ object parameters {
 
   case class RangeValue[T](min: T, max: T, step: T, default: T, off: T)
   case class Range[T](name: ParameterName, value: RangeValue[T], activation: Activation) extends Parameter {
-
     def isDefault = copy(activation = Default)
-
     def asDefaultFrom(parameter: Range[T]) = parameter.copy(value = from(parameter), activation = Default)
-
     def isOff = copy(activation = Off)
-
     def from(aParameter: Range[T]) = aParameter.value
-//    value match {
-//      case d: Doubles =>
-//        val default = aParameter.value match {
-//          case d: Doubles => d.default
-//          case i: Ints => i.asInstanceOf[Double]
-//          case _ => throw new Throwable(s"The default value of parameter $aParameter cannot set to the parameter $this")
-//        }
-//        d.copy(default = default)
-//      case i: Ints =>
-//        val default = aParameter.value match {
-//          case i: Ints => i.default
-//          case _ => throw new Throwable(s"The default value of parameter $aParameter cannot set to the parameter $this")
-//        }
-//        i.copy(default = default)
-//      case _ => value
-//    }
   }
 
   val numberZombies = Range("numberZombies", RangeValue(0, 1500, 1, 4, 0), Variable)
