@@ -12,11 +12,11 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue) extends Agent
+  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean) extends Agent
   case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
-  case class Rescue(informed: Boolean = false, alerted: Boolean = false, awarenessProbability: Double = 0.0)
+  case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0)
   case class Fight(fightBackProbability: Double, aggressive: Boolean = false)
 
   sealed trait PheromoneMechanism
@@ -64,6 +64,11 @@ object agent {
       case z: Zombie => z.perception
     }
 
+    def canLeave(agent: Agent) = agent match {
+      case h: Human => h.canLeave
+      case z: Zombie => true
+    }
+
     def location(agent: Agent, side: Int): Location = positionToLocation(position(agent), side)
 
     def index(agents: Vector[Agent], side: Int) = Index[Agent](agents, location(_, side), side)
@@ -99,61 +104,78 @@ object agent {
     def projectedVelocities(granularity: Int, maxRotation: Double, velocity: Velocity, speed: Double) =
       (-granularity to granularity).map(_ * maxRotation).map(r => normalize(rotate(velocity, r), speed))
 
-    def towardsWall(world: World, position: Position, velocity: Velocity) = {
+    def towardsWall(world: World, position: Position, velocity: Velocity, outsideWall: Boolean) = {
       val (x, y) = space.positionToLocation(sum(position, velocity), world.side)
       World.get(world, x, y) match {
         case Some(Wall) => true
+        case None => outsideWall
         case _ => false
       }
     }
 
     def move(world: World, granularity: Int, rng: Random)(agent: Agent) = {
 
-      def computeVelocity(position: Position, velocity: Velocity, maxRotation: Double, speed: Double) = {
-        val (px, py) = sum(position, velocity)
+      def computeVelocity(position: Position, velocity: Velocity, maxRotation: Double, speed: Double, canLeave: Boolean) = {
+        val adaptedVelocity: Velocity = {
+          val (lx, ly) = positionToLocation(position, world.side)
+          World.get(world, lx, ly) match {
+            case Some(f: Floor) =>
+              randomElement(f.wallSlope, rng) match {
+                case Some(s) => normalize(sum(velocity, normalize((s.x, s.y), s.intensity * speed)), speed)
+                case None => velocity
+              }
+            case _ => velocity
+          }
+        }
+
+        val (px, py) = sum(position, adaptedVelocity)
         val (cx, cy) = positionToLocation((px, py), world.side)
+
+        def avoidWall(velocity: Velocity) = {
+          val velocities = projectedVelocities(granularity, maxRotation, velocity, speed)
+          rng.shuffle(velocities).find(v => !towardsWall(world, position, v, outsideWall = !canLeave)) match {
+            case Some(v) => Some(v)
+            case None => Some(opposite(velocity))
+          }
+        }
 
         val newDirection =
           World.get(world, cx, cy) match {
-            case None => None
-            case Some(Wall) =>
-              val velocities = projectedVelocities(granularity, maxRotation, velocity, speed)
-              rng.shuffle(velocities).find(v => !towardsWall(world, position, v)) match {
-                case Some(v) => Some(v)
-                case None => Some(opposite(velocity))
-              }
-            case Some(f: Floor) =>
-              randomElement(f.wallSlope, rng) match {
-                case Some(s) =>  Some(sum(velocity, normalize((s.x, s.y), s.intensity * speed)))
-                case None => Some(velocity)
-              }
-
+            case None if canLeave => None
+            case None => avoidWall(adaptedVelocity)
+            case Some(Wall) => avoidWall(adaptedVelocity)
+            case Some(_: Floor) => Some(adaptedVelocity)
           }
 
-        newDirection.map(d => normalize(d, speed))
+        newDirection
       }
 
       def computePosition(position: Position, velocity: Velocity) = {
         val newPosition = sum(position, velocity)
-        val (px, py) = newPosition
-        if (px < 0 || px > 1 || py < 0 || py > 1) None else Some(newPosition)
+        if (World.outsideOfTheWorld(world, positionToLocation(newPosition, world.side))) None else Some(newPosition)
       }
 
       agent match {
         case h: Human =>
           for {
-            v <- computeVelocity(h.position, h.velocity, h.maxRotation, Human.speed(h))
+            v <- computeVelocity(h.position, h.velocity, h.maxRotation, Human.speed(h), Agent.canLeave(h))
             p <- computePosition(h.position, v)
           } yield h.copy(position = p, velocity = v)
         case z: Zombie =>
           for {
-            v <- computeVelocity(z.position, z.velocity, z.maxRotation, Zombie.speed(z))
+            v <- computeVelocity(z.position, z.velocity, z.maxRotation, Zombie.speed(z), Agent.canLeave(z))
             p <- computePosition(z.position, v)
           } yield z.copy(position = p, velocity = v)
         case a => Some(a)
       }
 
     }
+
+    def chooseRescue(agent: Agent) =
+      agent match {
+        case h: Human => if(h.rescue.informed && h.rescue.alerted && !h.fight.aggressive && h.canLeave) h.copy(rescue = h.rescue.copy(reach = true)) else h
+        case a => a
+      }
 
     def rescue(world: World, agents: Vector[Agent]) = {
       val rescued = ListBuffer[Human]()
@@ -164,7 +186,7 @@ object agent {
       } a match {
         case h: Human =>
           val (x, y) = positionToLocation(h.position, world.side)
-          if(h.rescue.informed && h.rescue.alerted && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
+          if(h.rescue.informed && h.rescue.alerted && h.canLeave && World.isRescueCell(world, x, y)) rescued += h else newAgents += h
         case a => newAgents += a
       }
 
@@ -189,9 +211,9 @@ object agent {
 
       a match {
         case human: Human if !human.rescue.informed && human.rescue.alerted =>
-          val informedNeighbors = neighbors.collect(Agent.human).count(_.rescue.informed)
-          if (rng.nextDouble() < human.rescue.awarenessProbability * informedNeighbors) human.copy(rescue = human.rescue.copy(informed = true))
-          else lookForInformation(human)
+          val informedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.informed)
+          val transmit = informedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
+          if (transmit) human.copy(rescue = human.rescue.copy(informed = true)) else lookForInformation(human)
         case human: Human => lookForInformation(human)
         case a => a
       }
@@ -202,13 +224,13 @@ object agent {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
         case h: Human =>
           val alertedNeighbors = neighbors.collect(Agent.human).count(_.rescue.alerted)
-          if (rng.nextDouble() < h.rescue.awarenessProbability * alertedNeighbors) h.copy(rescue = h.rescue.copy(alerted = true)) else h
+          if (rng.nextDouble() < h.rescue.informProbability * alertedNeighbors) h.copy(rescue = h.rescue.copy(alerted = true)) else h
         case a => a
       }
 
     def run(neighbors: Array[Agent])(a: Agent) =
       a match {
-        case h: Human if neighbors.exists(Agent.isZombie) || (h.rescue.alerted && h.rescue.informed) => Human.run(h)
+        case h: Human if neighbors.exists(Agent.isZombie) || h.rescue.reach => Human.run(h)
         case z: Zombie if neighbors.exists(Agent.isHuman) => Zombie.pursue(z)
         case z: Zombie => Zombie.stopPursuit(z)
         case a => a
@@ -275,7 +297,7 @@ object agent {
     def changeDirection(world: World, granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
-        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Human.speed(h)).filter(pv => !towardsWall(world, h.position, pv))
+        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Human.speed(h)).filter(pv => !towardsWall(world, h.position, pv, outsideWall = !Agent.canLeave(h)))
         if (!pv.isEmpty) {
           val nv = rng.shuffle(pv)
           h.copy(velocity = nv.maxBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
@@ -284,17 +306,15 @@ object agent {
 
       def pursueHuman(z: Zombie, nh: Array[Human], rng: Random) = {
         val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Zombie.speed(z))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
+        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv, outsideWall = !Agent.canLeave(z))))
         if (nv.isEmpty) z else z.copy(velocity = nv.minBy { v => nh.map(n => distance(position(n), sum(z.position, v))).min })
       }
 
       def pursueZombie(h: Human, nz: Array[Zombie], rng: Random) = {
         val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Human.speed(h))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv)))
+        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv, outsideWall = !Agent.canLeave(h))))
         if (nv.isEmpty) h else h.copy(velocity = nv.minBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
       }
-
-      def stopPursuit(z: Zombie) = z.copy(pursuing = false)
 
       def runningHumans(agents: Array[Agent]) =
         agents.collect(Agent.human).filter { _.metabolism.run }
@@ -320,7 +340,7 @@ object agent {
 
       def followPheromone(z: Zombie, world: World, rng: Random) = {
         val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Zombie.speed(z))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv)))
+        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv, outsideWall = !Agent.canLeave(z))))
 
         if (!nv.isEmpty) {
           val currentPheromone = World.pheromone(world, positionToLocation(z.position, world.side))
@@ -343,7 +363,7 @@ object agent {
           neighbors.collect(Agent.zombie) match {
             case nz if !nz.isEmpty =>
               if(!h.fight.aggressive) (fleeZombies(h, nz, rng), Some(FleeZombie(h))) else (pursueZombie(h, nz, rng), None)
-            case _ if h.rescue.informed && h.rescue.alerted && !h.fight.aggressive => (towardsRescue(h, rng), None)
+            case _ if h.rescue.reach => (towardsRescue(h, rng), None)
             case _ => (followRunning(h, rng), None)
           }
         case z: Zombie =>
@@ -370,10 +390,10 @@ object agent {
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, rng: Random, canLeave: Boolean) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue)
+      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave)
     }
 
     def run(h: Human) =

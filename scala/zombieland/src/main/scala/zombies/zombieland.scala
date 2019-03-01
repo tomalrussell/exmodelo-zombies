@@ -17,7 +17,7 @@ object zombieland {
       humanFightBackProbability,
       humanRunSpeed,
       humanFollowProbability,
-      humanAwarenessProbability,
+      humanInformProbability,
       humanInformedRatio,
       numberHumans,
 
@@ -25,7 +25,16 @@ object zombieland {
       zombiePerception,
       zombieRunSpeed,
       zombiePheromoneEvaporation,
-      numberZombies
+      numberZombies,
+
+      armySize,
+      armyFightBackProbability,
+      armyExhaustionProbability,
+      armyPerception,
+      armyRunSpeed,
+      armyFollowProbability,
+      armyMaxRotation,
+      armyInformProbability
     )
   }
 

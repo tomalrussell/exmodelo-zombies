@@ -43,28 +43,37 @@ object simulation {
 
   sealed trait ArmyOption
   case object NoArmy extends ArmyOption
-  case class Army(size: Int, fightBackProbability: Double, exhaustionProbability: Double, perception: Double, runSpeed: Double, followRunning: Double, maxRotation: Double) extends ArmyOption
+  case class Army(
+    size: Int,
+    fightBackProbability: Double = 1.0,
+    exhaustionProbability: Double = physic.humanExhaustionProbability,
+    perception: Double = physic.humanPerception,
+    runSpeed: Double = physic.humanRunSpeed,
+    followProbability: Double = physic.humanFollowProbability,
+    maxRotation: Double = physic.humanMaxRotation,
+    informProbability: Double = 0.0,
+    aggressive: Boolean = true) extends ArmyOption
 
   object Simulation {
 
     def initialize(
       world: World,
-      infectionRange: Double,
-      humanRunSpeed: Double,
-      humanPerception: Double,
-      humanMaxRotation: Double,
-      humanExhaustionProbability: Double,
-      humanFollowProbability: Double,
-      humanInformedRatio: Double,
-      humanAwarenessProbability: Double,
-      humanFightBackProbability: Double,
+      infectionRange: Double = physic.infectionRange,
+      humanRunSpeed: Double = physic.humanRunSpeed,
+      humanPerception: Double = physic.humanPerception,
+      humanMaxRotation: Double = physic.humanMaxRotation,
+      humanExhaustionProbability: Double = physic.humanExhaustionProbability,
+      humanFollowProbability: Double = physic.humanFollowProbability,
+      humanInformedRatio: Double = physic.humanInformedRatio,
+      humanInformProbability: Double = physic.humanInformProbability,
+      humanFightBackProbability: Double = physic.humanFightBackProbability,
       humans: Int,
-      zombieRunSpeed: Double,
-      zombiePerception: Double,
-      zombieMaxRotation: Double,
-      zombiePheromone: PheromoneMechanism,
+      zombieRunSpeed: Double = physic.zombieRunSpeed,
+      zombiePerception: Double = physic.zombiePerception,
+      zombieMaxRotation: Double = physic.zombieMaxRotation,
+      zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
       zombies: Int,
-      walkSpeed: Double,
+      walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       random: Random) = {
@@ -74,7 +83,7 @@ object simulation {
 
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
-        val rescue = Rescue(informed = informed, awarenessProbability = humanAwarenessProbability)
+        val rescue = Rescue(informed = informed, informProbability = humanInformProbability)
         Human.random(
           world = world,
           walkSpeed = walkSpeed * cellSide,
@@ -85,6 +94,7 @@ object simulation {
           followRunningProbability = humanFollowProbability,
           fight = Fight(humanFightBackProbability),
           rescue = rescue,
+          canLeave = true,
           rng = random)
       }
 
@@ -92,7 +102,7 @@ object simulation {
 
 
       def generateSoldier(army: Army) = {
-        val rescue = Rescue(informed = true, awarenessProbability = 0.0)
+        val rescue = Rescue(informed = true, alerted = true, informProbability = army.informProbability)
         Human.random(
           world = world,
           walkSpeed = walkSpeed * cellSide,
@@ -100,9 +110,10 @@ object simulation {
           exhaustionProbability = army.exhaustionProbability,
           perception = army.perception * cellSide,
           maxRotation = army.maxRotation,
-          followRunningProbability = army.followRunning,
-          fight = Fight(army.fightBackProbability, aggressive = true),
+          followRunningProbability = army.followProbability,
+          fight = Fight(army.fightBackProbability, aggressive = army.aggressive),
           rescue = rescue,
+          canLeave = false,
           rng = random)
       }
 
@@ -164,6 +175,7 @@ object simulation {
         val evolve =
           Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
+          Agent.chooseRescue andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _
 
@@ -228,7 +240,7 @@ object simulation {
     val humanExhaustionProbability = 0.45
     val humanMaxRotation = 60
     val humanInformedRatio = 0.11
-    val humanAwarenessProbability = 0.09
+    val humanInformProbability = 0.09
     val humanFollowProbability = 0.27
     val humanFightBackProbability = 0.01
 
@@ -251,7 +263,7 @@ object simulation {
         humanMaxRotation = rotation,
         humanFollowProbability = 0.0,
         humanInformedRatio = humanInformedRatio,
-        humanAwarenessProbability = humanAwarenessProbability,
+        humanInformProbability = humanAwarenessProbability,
         humanFightBackProbability = 0.0,
         humans = humans,
         zombieRunSpeed = walkSpeed,

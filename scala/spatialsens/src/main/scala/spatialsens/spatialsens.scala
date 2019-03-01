@@ -33,7 +33,7 @@ object vigilence {
       numberZombies isDefault,
       humanMaxRotation isOff,
       humanFollowProbability isOff,
-      humanAwarenessProbability isOff,
+      humanInformProbability isOff,
       humanInformedRatio isOff,
       zombieMaxRotation isOff,
       rotationGranularity isOff

@@ -44,7 +44,7 @@ object controls {
     }
   }
 
-  case class DoubleSlider(name: String, doubles: Doubles) extends Controller {
+  case class DoubleSlider(name: String, doubles: RangeValue[Double]) extends Controller {
 
     implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
@@ -63,7 +63,7 @@ object controls {
     def reset = slider.setValue(doubles.default)
   }
 
-  case class IntSlider(name: String, ints: Ints) extends Controller {
+  case class IntSlider(name: String, ints: RangeValue[Int]) extends Controller {
 
     val element = div.render
 
@@ -99,10 +99,11 @@ object controls {
   }
 
   def build(parameter: Parameter): Controller = {
-    parameter.value match {
-      case d: Doubles => DoubleSlider(parameter.name, d)
-      case i: Ints => IntSlider(parameter.name, i)
-      case o: Options=> OptionController(parameter.name, o.mecanisms: _*)
+    parameter match {
+      case Range.caseDouble(d) => DoubleSlider(d.name, d.value)
+      case Range.caseInt(i) => IntSlider(i.name, i.value)
+      case o: Options=> OptionController(o.name, o.mecanisms: _*)
+      case _ => throw new RuntimeException(s"Unsupported parameter type ${parameter}")
     }
   }
 }

@@ -19,7 +19,11 @@ object world {
       case floor: Floor => floor
     }
 
-    def get(world: World, x: Int, y: Int) = space.get(world.cells, x, y)
+    def get(world: World, x: Int, y: Int) =
+      if(outsideOfTheWorld(world, (x, y))) None
+      else Some(world.cells(x)(y))
+
+    def outsideOfTheWorld(world: World, l: Location) = l._1 < 0 || l._1 >= world.side || l._2 < 0 || l._2 >= world.side
 
     def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
       def parse(s: String) = {
@@ -141,12 +145,11 @@ object world {
 
     def copyCells(cells: Array[Array[Cell]]) = {
       Array.tabulate(cells.size, cells.size)((x, y) => cells(x)(y))
-
-      //cells.map(_.map(identity))
     }
 
-    def isWall(world: World, x: Int, y: Int) = get(world, x, y) match {
+    def isWall(world: World, x: Int, y: Int, outsideWall: Boolean = false) = get(world, x, y) match {
       case Some(Wall) => true
+      case None if outsideWall => true
       case _ => false
     }
 
