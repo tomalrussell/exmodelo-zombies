@@ -14,14 +14,16 @@ object vigilence {
       zombieRunSpeed asDefaultFrom(walkSpeed),
       infectionRange.isDefault,
       humanExhaustionProbability isDefault,
+      humanFightBackProbability isDefault,
+      humanFollowProbability isDefault,
+      humanInformProbability isDefault,
       numberHumans isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
       humanFollowProbability isOff,
       humanInformProbability isOff,
       humanInformedRatio isOff,
-      zombieMaxRotation isOff,
-      rotationGranularity isOff
+      zombieMaxRotation isOff
     )
   }
 }
