@@ -8,7 +8,7 @@ val humanRunSpeed = Val[Double]
 val humanExhaustionProbability = Val[Double]
 val humanFollowProbability = Val[Double]
 val humanInformedRatio = Val[Double]
-val humanAwarenessProbability = Val[Double]
+val humanInformProbability = Val[Double]
 val humanFightBackProbability = Val[Double]
 val humanPerception = Val[Double]
 val humanMaxRotation = Val[Double]
@@ -49,7 +49,7 @@ val model =
       humanMaxRotation = humanMaxRotation,
       humanFollowProbability = humanFollowProbability,
       humanInformedRatio = humanInformedRatio,
-      humanAwarenessProbability = humanAwarenessProbability,
+      humanInformProbability = humanInformProbability,
       humanFightBackProbability = humanFightBackProbability,
       humans = humans,
       zombieRunSpeed = zombieRunSpeed,
@@ -74,7 +74,7 @@ val model =
     val pursueDynamic = events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum).toArray
     val goneDynamic = events.map(_.collect(Event.gone).size).grouped(10).map(_.sum).toArray
   """) set (
-    inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanAwarenessProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
+    inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
     outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic, humans, zombies, walkSpeed),
     
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
@@ -85,7 +85,7 @@ val model =
     infectionRange := physic.infectionRange,
 
     humanInformedRatio := physic.humanInformedRatio,
-    humanAwarenessProbability := physic.humanAwarenessProbability,
+    humanInformProbability := physic.humanInformProbability,
     humanFollowProbability := physic.humanFollowProbability,
     humanFightBackProbability := physic.humanFightBackProbability,
 
