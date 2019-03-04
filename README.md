@@ -12,7 +12,7 @@ sbt> run
 ```sh
 > cd scala
 > sbt
-sbt> project gui
+sbt> project zombieland
 sbt> buildGUI
 ```
 
