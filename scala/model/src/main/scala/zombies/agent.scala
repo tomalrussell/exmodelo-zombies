@@ -12,16 +12,26 @@ object agent {
 
 
   sealed trait Agent
-  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean) extends Agent
+  case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism) extends Agent
   case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
-  case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0)
+  case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0, noFollow: Boolean = false)
   case class Fight(fightBackProbability: Double, aggressive: Boolean = false)
 
   sealed trait PheromoneMechanism
   case object NoPheromone extends PheromoneMechanism
   case class Pheromone(evaporation: Double) extends PheromoneMechanism
+
+
+  sealed trait AntidoteMechanism
+  case object NoAntidote extends AntidoteMechanism
+
+  object Antidote {
+    def activated(antidote: Antidote) = antidote.activationDelay <= 0
+  }
+
+  case class Antidote(activationDelay: Int, efficiencyProbability: Double, exhaustionProbability: Option[Double], taken: Boolean = false) extends AntidoteMechanism
 
   object Agent {
 
@@ -223,9 +233,20 @@ object agent {
       a match {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
         case h: Human =>
-          val alertedNeighbors = neighbors.collect(Agent.human)
+          val alertedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.alerted)
           val transmit = alertedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
           if (transmit) h.copy(rescue = h.rescue.copy(alerted = true)) else h
+        case a => a
+      }
+
+    def takeAntidote(a: Agent) =
+      a match {
+        case h: Human if h.rescue.alerted =>
+          h.antidote match {
+            case ant: Antidote if !ant.taken => h.copy(antidote = ant.copy(taken = true))
+            case ant: Antidote if ant.activationDelay > 0 => h.copy(antidote = ant.copy(activationDelay = ant.activationDelay - 1))
+            case _ => a
+          }
         case a => a
       }
 
@@ -261,21 +282,21 @@ object agent {
 
       val hasDied = collection.mutable.Set[Zombie]()
       val infected = collection.mutable.Map[Human, Zombie]()
-      val hasEaten = collection.mutable.Set[Zombie]()
 
       for {
         a <- agents
       } a match  {
-        case (h: Human) =>
+        case h: Human =>
           val assailants = attackers(index, h, infectionRange)
           def humanWins() = rng.nextDouble() < h.fight.fightBackProbability
           val lost = assailants.filter(a => !hasDied.contains(a)).filter(_ => !humanWins())
 
-          rng.shuffle(lost) match {
-            case z :: t =>
-              hasEaten += z
-              infected.put(h, z)
-            case _ => hasDied ++= assailants
+          (rng.shuffle(lost), h.antidote) match {
+            case (z :: _, NoAntidote) => infected.put(h, z)
+            case (z :: _, a: Antidote) =>
+              def worked = rng.nextDouble() < a.efficiencyProbability
+              if(Antidote.activated(a) && !worked) infected.put(h, z)
+            case (Nil, _) => hasDied ++= assailants
           }
         case _ =>
       }
@@ -318,7 +339,7 @@ object agent {
       }
 
       def runningHumans(agents: Array[Agent]) =
-        agents.collect(Agent.human).filter { _.metabolism.run }
+        agents.collect(Agent.human).filter { h => h.metabolism.run && !h.rescue.noFollow }
 
       def towardsRescue(h: Human, rng: Random) = {
         val (x, y) = location(h, world.side)
@@ -333,7 +354,7 @@ object agent {
       }
 
       def followRunning(h: Human, rng: Random) =
-        if(h.followRunningProbability > 0.0) {
+        if (h.followRunningProbability > 0.0) {
           val runningNeighbors = runningHumans(neighbors)
           if (!runningNeighbors.isEmpty && rng.nextDouble() < h.followRunningProbability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity))))
           else h
@@ -380,21 +401,28 @@ object agent {
 
   object Metabolism {
     def effectiveSpeed(speed: Metabolism) =  if(speed.run) speed.runSpeed else speed.walkSpeed
-    def metabolism(speed: Metabolism, rng: Random, timeScale: Int = 10) =
-      (speed.exhausted, speed.run) match {
-        case (false, true) if rng.nextDouble() < speed.exhaustionProbability / timeScale => speed.copy(run = false, exhausted = true)
-        case (true, _) if rng.nextDouble() < (1 - speed.exhaustionProbability) / timeScale => speed.copy(exhausted = false)
-        case (_, _) => speed
+
+    def exhaustionProbability(metabolism: Metabolism, antidote: AntidoteMechanism) =
+      antidote match {
+        case antidote: Antidote if antidote.taken && !Antidote.activated(antidote) => antidote.exhaustionProbability.getOrElse(metabolism.exhaustionProbability)
+        case _ => metabolism.exhaustionProbability
+      }
+
+    def metabolism(metabolism: Metabolism, antidote: AntidoteMechanism, rng: Random, timeScale: Int = 10) =
+      (metabolism.exhausted, metabolism.run) match {
+        case (false, true) if rng.nextDouble() < exhaustionProbability(metabolism, antidote) / timeScale => metabolism.copy(run = false, exhausted = true)
+        case (true, _) if rng.nextDouble() < (1 - exhaustionProbability(metabolism, antidote)) / timeScale => metabolism.copy(exhausted = false)
+        case (_, _) => metabolism
       }
 
     def canRun(speed: Metabolism) = !speed.exhausted
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, rng: Random, canLeave: Boolean) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave)
+      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote)
     }
 
     def run(h: Human) =
@@ -404,7 +432,7 @@ object agent {
     def alerted(h: Human) = run(h).copy(rescue = h.rescue.copy(alerted = true))
 
     def metabolism(h: Human, rng: Random) = {
-      val newSpeed = Metabolism.metabolism(h.metabolism, rng)
+      val newSpeed = Metabolism.metabolism(h.metabolism, h.antidote, rng)
       val newVelocity = normalize(h.velocity, Metabolism.effectiveSpeed(newSpeed))
       h.copy(velocity = newVelocity, metabolism = newSpeed)
     }

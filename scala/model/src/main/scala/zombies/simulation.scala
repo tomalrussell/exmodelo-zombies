@@ -54,6 +54,17 @@ object simulation {
     informProbability: Double = 0.0,
     aggressive: Boolean = true) extends ArmyOption
 
+  sealed trait RedCrossOption
+  case object NoRedCross extends RedCrossOption
+  case class RedCross(
+    size: Int,
+    exhaustionProbability: Option[Double] = None,
+    followProbability: Double = 0.0,
+    informProbability: Double = physic.humanInformProbability,
+    aggressive: Boolean = true,
+    activationDelay: Int,
+    efficiencyProbability: Double) extends RedCrossOption
+
   object Simulation {
 
     def initialize(
@@ -76,6 +87,8 @@ object simulation {
       walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
+      redCross: RedCrossOption = NoRedCross,
+
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
@@ -123,7 +136,31 @@ object simulation {
           case a: Army => Vector.fill(a.size)(generateSoldier(a))
         }
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers
+      def generateRedCrossVolunteers(redCross: RedCross) = {
+        val rescue = Rescue(informProbability = redCross.informProbability, noFollow = true)
+        val antidote = Antidote(activationDelay = redCross.activationDelay, efficiencyProbability = redCross.efficiencyProbability, exhaustionProbability = redCross.exhaustionProbability)
+        Human.random(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = humanRunSpeed * cellSide,
+          exhaustionProbability = humanExhaustionProbability,
+          perception = humanPerception * cellSide,
+          maxRotation = humanMaxRotation,
+          followRunningProbability = redCross.followProbability,
+          fight = Fight(humanFightBackProbability, aggressive = redCross.aggressive),
+          rescue = rescue,
+          canLeave = false,
+          antidote = antidote,
+          rng = random)
+      }
+
+      def redCrossVolunteers =
+        redCross match {
+          case NoRedCross => Vector.empty
+          case a: RedCross => Vector.fill(a.size)(generateRedCrossVolunteers(a))
+        }
+
+      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers ++ redCrossVolunteers
 
       Simulation(
         world = world,
@@ -175,7 +212,8 @@ object simulation {
         val evolve =
           Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
-          Agent.chooseRescue andThen
+          Agent.takeAntidote _ andThen
+          Agent.chooseRescue _ andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _
 
