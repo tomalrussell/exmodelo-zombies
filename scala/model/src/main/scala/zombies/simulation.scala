@@ -54,6 +54,15 @@ object simulation {
     informProbability: Double = 0.0,
     aggressive: Boolean = true) extends ArmyOption
 
+  sealed trait RedCrossOption
+  case object NoRedCross extends RedCrossOption
+  case class RedCross(
+                   size: Int,
+                   exhaustionProbability: Double = physic.humanExhaustionProbability,
+                   followProbability: Double = 0.0,
+                   informProbability: Double = physic.humanInformProbability,
+                   aggressive: Boolean = true) extends RedCrossOption
+
   object Simulation {
 
     def initialize(
@@ -76,6 +85,8 @@ object simulation {
       walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
+      redCross: RedCrossOption = NoRedCross,
+
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
@@ -175,7 +186,8 @@ object simulation {
         val evolve =
           Agent.inform(ns, w1, rng) _ andThen
           Agent.alert(ns, rng) _ andThen
-          Agent.chooseRescue andThen
+          Agent.takeAntidote _ andThen
+          Agent.chooseRescue _ andThen
           Agent.run(ns) _ andThen
           Agent.metabolism(rng) _
 
