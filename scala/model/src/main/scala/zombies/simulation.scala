@@ -57,11 +57,11 @@ object simulation {
   sealed trait RedCrossOption
   case object NoRedCross extends RedCrossOption
   case class RedCross(
-                   size: Int,
-                   exhaustionProbability: Double = physic.humanExhaustionProbability,
-                   followProbability: Double = 0.0,
-                   informProbability: Double = physic.humanInformProbability,
-                   aggressive: Boolean = true) extends RedCrossOption
+    size: Int,
+    exhaustionProbability: Double = physic.humanExhaustionProbability,
+    followProbability: Double = 0.0,
+    informProbability: Double = physic.humanInformProbability,
+    aggressive: Boolean = true) extends RedCrossOption
 
   object Simulation {
 
@@ -134,7 +134,29 @@ object simulation {
           case a: Army => Vector.fill(a.size)(generateSoldier(a))
         }
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers
+      def generateRedCrossVolunteers(redCross: RedCross) = {
+        val rescue = Rescue(informProbability = redCross.informProbability, noFollow = true)
+        Human.random(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = humanRunSpeed * cellSide,
+          exhaustionProbability = redCross.exhaustionProbability,
+          perception = humanPerception * cellSide,
+          maxRotation = humanMaxRotation,
+          followRunningProbability = redCross.followProbability,
+          fight = Fight(humanFightBackProbability, aggressive = redCross.aggressive),
+          rescue = rescue,
+          canLeave = false,
+          rng = random)
+      }
+
+      def redCrossVolunteers =
+        redCross match {
+          case NoRedCross => Vector.empty
+          case a: RedCross => Vector.fill(a.size)(generateRedCrossVolunteers(a))
+        }
+
+      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers ++ redCrossVolunteers
 
       Simulation(
         world = world,
