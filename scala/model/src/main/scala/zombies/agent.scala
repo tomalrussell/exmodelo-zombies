@@ -233,7 +233,7 @@ object agent {
       a match {
         case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
         case h: Human =>
-          val alertedNeighbors = neighbors.collect(Agent.human)
+          val alertedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.alerted)
           val transmit = alertedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
           if (transmit) h.copy(rescue = h.rescue.copy(alerted = true)) else h
         case a => a
