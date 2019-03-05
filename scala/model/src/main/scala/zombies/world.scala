@@ -263,6 +263,22 @@ object world {
         s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n"""
     }
 
+    def quarantineStadium(wallSize: Int, fieldSide: Int) = parse() {
+
+      def totalBleacherSide(wallSide: Int, fieldSide: Int) = (wallSize * 2 - 2 - fieldSide)
+
+      val adjustedFieldSize = if (totalBleacherSide(wallSize, fieldSide) % 2 == 0) fieldSide else fieldSide + 1
+
+      val side = wallSize * 2
+      val bleacherSize = (side - 2 - fieldSide) / 2
+
+      s"""${"+" * wallSize}${"R"}${"+" * (wallSize - 1)}\n""" +
+        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
+        s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
+        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
+        s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
+    }
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
