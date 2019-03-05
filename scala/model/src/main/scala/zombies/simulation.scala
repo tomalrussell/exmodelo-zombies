@@ -200,11 +200,11 @@ object simulation {
     (simulation.copy(agents = na2, world = w1), events)
   }
 
+ type SimulationResult = (List[Simulation], List[Vector[Event]])
 
 
-
-  def simulate(simulation: Simulation, rng: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
-    def result(s: Simulation, events: Vector[Event], acc: (List[Simulation], List[Vector[Event]])) = (s :: acc._1, events :: acc._2)
+  def simulate(simulation: Simulation, rng: Random, steps: Int): SimulationResult = {
+    def result(s: Simulation, events: Vector[Event], acc: SimulationResult) = (s :: acc._1, events :: acc._2)
     val (simulations, events) = simulate(simulation, rng, steps, result, (List(), List()))
     (simulations.reverse, events.reverse)
   }
