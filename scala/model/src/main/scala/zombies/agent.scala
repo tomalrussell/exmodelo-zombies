@@ -16,7 +16,7 @@ object agent {
   case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
-  case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0)
+  case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0, noFollow: Boolean = false)
   case class Fight(fightBackProbability: Double, aggressive: Boolean = false)
 
   sealed trait PheromoneMechanism
@@ -339,7 +339,7 @@ object agent {
       }
 
       def runningHumans(agents: Array[Agent]) =
-        agents.collect(Agent.human).filter { _.metabolism.run }
+        agents.collect(Agent.human).filter { h => h.metabolism.run && !h.rescue.noFollow }
 
       def towardsRescue(h: Human, rng: Random) = {
         val (x, y) = location(h, world.side)
@@ -354,7 +354,7 @@ object agent {
       }
 
       def followRunning(h: Human, rng: Random) =
-        if(h.followRunningProbability > 0.0) {
+        if (h.followRunningProbability > 0.0) {
           val runningNeighbors = runningHumans(neighbors)
           if (!runningNeighbors.isEmpty && rng.nextDouble() < h.followRunningProbability) Human.run(h.copy(velocity = average(runningNeighbors.map(_.velocity))))
           else h
