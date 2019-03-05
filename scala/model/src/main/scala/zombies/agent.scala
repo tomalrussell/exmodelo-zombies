@@ -31,7 +31,7 @@ object agent {
     def activated(antidote: Antidote) = antidote.activationDelay <= 0
   }
 
-  case class Antidote(activationDelay: Int, efficiencyProbability: Double, exhaustionProbability: Double, taken: Boolean = false) extends AntidoteMechanism
+  case class Antidote(activationDelay: Int, efficiencyProbability: Double, exhaustionProbability: Option[Double], taken: Boolean = false) extends AntidoteMechanism
 
   object Agent {
 
@@ -404,7 +404,7 @@ object agent {
 
     def exhaustionProbability(metabolism: Metabolism, antidote: AntidoteMechanism) =
       antidote match {
-        case antidote: Antidote if antidote.taken && !Antidote.activated(antidote) => antidote.exhaustionProbability
+        case antidote: Antidote if antidote.taken && !Antidote.activated(antidote) => antidote.exhaustionProbability.getOrElse(metabolism.exhaustionProbability)
         case _ => metabolism.exhaustionProbability
       }
 
@@ -419,10 +419,10 @@ object agent {
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, rng: Random, canLeave: Boolean) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = NoAntidote)
+      Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote)
     }
 
     def run(h: Human) =
