@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, trapZone:Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -32,6 +32,7 @@ object world {
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
+          case 'T' => Some(Floor(trapZone = true, pheromone = 100000))
           case _ => None
         }
 
@@ -190,7 +191,7 @@ object world {
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++00000000000000000
         |++++0000000000000++++++00000000000000000
-        |++++0000000000000++++++00000000000000000
+        |++++00000T0000000++++++00000000000000000
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++0000+++++++++++++
@@ -217,8 +218,8 @@ object world {
         |+++++0000000000000++++00000+++++++++++++
         |+++++0000000000000++++00000+++++++++++++
         |+++++0000000000000000000000+++++++++++++
-        |+++++0000000000000000000000+++++++++++++
-        |+++++0000000000000000000000+++++++++++++
+        |+++++00000000000000000TT000+++++++++++++
+        |+++++00000000000000000TT000+++++++++++++
         |+++++0000000000000000000000+++++++++++++
         |+++++0000000000000++++00000+++++++++++++
         |++++++++++++++++++++++00000+++++++++++++

@@ -294,7 +294,7 @@ object simulation {
 
     val simulation =
       Simulation.initialize(
-        world,
+       world,
         infectionRange = infectionRange,
         humanRunSpeed = walkSpeed,
         humanExhaustionProbability = 1.0,
