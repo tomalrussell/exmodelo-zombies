@@ -280,8 +280,8 @@ object agent {
       def attackers(index: Index[Agent], agent: Human, range: Double) =
         neighbors(index, agent, range).collect(Agent.zombie)
 
-      val hasDied = collection.mutable.Set[Zombie]()
-      val infected = collection.mutable.Map[Human, Zombie]()
+      val deadZombies = collection.mutable.Set[Zombie]()
+      val infectedHumans = collection.mutable.Map[Human, Zombie]()
 
       for {
         a <- agents
@@ -289,30 +289,32 @@ object agent {
         case h: Human =>
           val assailants = attackers(index, h, infectionRange)
           def humanWins() = rng.nextDouble() < h.fight.fightBackProbability
-          val lost = assailants.filter(a => !hasDied.contains(a)).filter(_ => !humanWins())
+          val (won, lost) = assailants.filter(a => !deadZombies.contains(a)).partition(_ => humanWins())
 
-          (rng.shuffle(lost), h.antidote) match {
-            case (z :: _, NoAntidote) => infected.put(h, z)
-            case (z :: _, a: Antidote) =>
-              def worked = rng.nextDouble() < a.efficiencyProbability
-              if(Antidote.activated(a) && !worked) infected.put(h, z)
-            case (Nil, _) => hasDied ++= assailants
-          }
+          if(!lost.isEmpty)
+            h.antidote match {
+              case NoAntidote => infectedHumans.put(h, rng.shuffle(lost).head)
+              case a: Antidote =>
+                def antidoteWorked = rng.nextDouble() < a.efficiencyProbability
+                if (!Antidote.activated(a) || !antidoteWorked) infectedHumans.put(h, rng.shuffle(lost).head)
+            }
+
+          deadZombies ++= won
         case _ =>
       }
 
       val newAgents =
         agents.flatMap {
           case h: Human =>
-            infected.get(h) match {
+            infectedHumans.get(h) match {
               case Some(z) => Some(zombify(z, h))
               case None => Some(h)
             }
           case z: Zombie =>
-            if(!hasDied.contains(z)) Some(z) else None
+            if (!deadZombies.contains(z)) Some(z) else None
         }
 
-      (newAgents, infected.keys.toVector, hasDied.toVector)
+      (newAgents, infectedHumans.keys.toVector, deadZombies.toVector)
     }
 
 
