@@ -6,10 +6,14 @@ val scalaJSdomVersion = "0.9.2"
 val scaladgetVersion = "1.2.3"
 name := "zombies"
 
-lazy val ode = Project("ode", file("ode")) settings (
+lazy val ode = Project("ode", file("ode")) enablePlugins(SbtOsgi) settings (
   scalaVersion := "2.12.8",
-  libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0"
-  )
+  libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0",
+  OsgiKeys.exportPackage := Seq("zombies.ode.*;-split-package:=merge-first"),
+  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
+  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
+  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
+)
 
 
 lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(

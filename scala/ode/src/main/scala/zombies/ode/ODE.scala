@@ -3,7 +3,7 @@ package zombies.ode
 import better.files._
 
 object ODE extends App {
-  println(
+  //println(
     Model.run(
       // Real data
       file = File("ode/realData.csv").toJava,
@@ -20,17 +20,16 @@ object ODE extends App {
       dt = 1,
       tMax = 100
     )
-    //.mkString("\n")
-  )
+      //.mkString("\n")
+  //)
 }
 
 object Model {
 
-  def run(
-           file: java.io.File,
-           panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
-           statesInit: Vector[Double],
-           t0: Int, dt: Int, tMax: Int) = {
+  def run(file: java.io.File,
+          panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
+          statesInit: Vector[Double],
+          t0: Int, dt: Int, tMax: Int) = {
     val exhaustH = 1.0 / staminaH
     val exhaustZ = 1.0 / staminaZ
     val nbIntervals = (tMax - t0) / dt
@@ -41,7 +40,7 @@ object Model {
     val Vector(humansWalking, humansRunning, zombiesWalking, zombiesRunning) = simul.toVector.transpose
 
     val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
-    val zombies = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b }
+    val zombified = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b - statesInit(2) }
 
     // Zombieland data
     val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
@@ -53,7 +52,7 @@ object Model {
     val likelihoodHumans =
       (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
     val likelihoodZombies =
-      (realZombies zip zombies).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+      (realZombies zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
     likelihoodHumans + likelihoodZombies
   }
