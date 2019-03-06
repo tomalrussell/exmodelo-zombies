@@ -50,6 +50,20 @@ object world {
       World.computeRescueSlope(World.computeWallSlope(world, altitudeLambdaDecay, slopeIntensity))
     }
 
+    def coordinates(world:World):Vector[(Location,Cell)] = {
+      val lc = for {
+        x <- 0 until world.side
+        y <- 0 until world.side
+      } yield (x,y) -> world.cells(x)(y)
+
+      lc.toVector
+    }
+
+    def floorsCoordinate(world:World,includeRescueZone:Boolean = false):Seq[(Int,Int)] = {
+      val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> floor }
+      val filteredFloors = floors.filter{ case(loc,cell:Floor) => cell.rescueZone == includeRescueZone}
+      filteredFloors.map{ case(loc,cell) => loc}
+    }
 
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
       x >= 0 && y >= 0 && x < world.side && y < world.side
