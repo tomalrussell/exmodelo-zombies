@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, trapZone:Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -32,6 +32,7 @@ object world {
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
+          case 'T' => Some(Floor(trapZone = true, pheromone = 100000))
           case _ => None
         }
 
@@ -49,6 +50,20 @@ object world {
       World.computeRescueSlope(World.computeWallSlope(world, altitudeLambdaDecay, slopeIntensity))
     }
 
+    def coordinates(world:World):Vector[(Location,Cell)] = {
+      val lc = for {
+        x <- 0 until world.side
+        y <- 0 until world.side
+      } yield (x,y) -> world.cells(x)(y)
+
+      lc.toVector
+    }
+
+    def floorsCoordinate(world:World,includeRescueZone:Boolean = false):Seq[(Int,Int)] = {
+      val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> cell }
+      val filteredFloors = floors.filter{ _._2.rescueZone == includeRescueZone}
+      filteredFloors.map{ case(loc,cell) => loc}
+    }
 
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
       x >= 0 && y >= 0 && x < world.side && y < world.side
@@ -190,7 +205,7 @@ object world {
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++00000000000000000
         |++++0000000000000++++++00000000000000000
-        |++++0000000000000++++++00000000000000000
+        |++++00000T0000000++++++00000000000000000
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++0000+++++++++++++
         |++++0000000000000++++++0000+++++++++++++
@@ -217,8 +232,8 @@ object world {
         |+++++0000000000000++++00000+++++++++++++
         |+++++0000000000000++++00000+++++++++++++
         |+++++0000000000000000000000+++++++++++++
-        |+++++0000000000000000000000+++++++++++++
-        |+++++0000000000000000000000+++++++++++++
+        |+++++00000000000000000TT000+++++++++++++
+        |+++++00000000000000000TT000+++++++++++++
         |+++++0000000000000000000000+++++++++++++
         |+++++0000000000000++++00000+++++++++++++
         |++++++++++++++++++++++00000+++++++++++++

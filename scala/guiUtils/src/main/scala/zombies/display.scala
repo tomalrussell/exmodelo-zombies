@@ -44,6 +44,8 @@ object display {
     val coldColor = (255, 238, 170)
     val hotColor = (255, 100, 0)
     val rescueColor = (55, 170, 200)
+    val trapColor = (0, 0, 0)
+
 
     val baseR = (hotColor._1 - coldColor._1)
     val baseG = (hotColor._2 - coldColor._2)
@@ -51,6 +53,7 @@ object display {
 
     def color(value: Double) = value match {
       case 10.0 => rescueColor
+      case 55.0 => trapColor
       case _ => (
         (baseR * value + coldColor._1).toInt,
         (baseG * value + coldColor._2).toInt,
@@ -107,8 +110,8 @@ object display {
       world.cells(lineIndex).map { cell =>
         cell match {
           case Wall => 1
-          case f: Floor => if (f.rescueZone) 10 else 0
-        }
+          case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55   else 0)
+          }
       }
     }
 
