@@ -88,7 +88,6 @@ object simulation {
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       redCross: RedCrossOption = NoRedCross,
-      trapLocation : Option[(Int, Int)] = None ,
 
       random: Random) = {
 

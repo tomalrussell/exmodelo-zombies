@@ -294,28 +294,6 @@ object world {
         s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
         s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
     }
-
-    def setTrap (myworld: World, myTrapLocation:Location : World ={
-
-      val mycells = copyCells(myworld.cells)
-
-      for {
-        x <- 0 until myworld.side
-        y <- 0 until myworld.side
-        if x != myTrapLocation._1 && y!= myTrapLocation._2
-      } mycells(x)(y) =
-
-        mycells()() =
-
-      world.copy(cells = cells)
-
-
-
-
-    }
-
-
-
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
