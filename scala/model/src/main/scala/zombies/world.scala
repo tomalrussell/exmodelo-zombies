@@ -60,8 +60,8 @@ object world {
     }
 
     def floorsCoordinate(world:World,includeRescueZone:Boolean = false):Seq[(Int,Int)] = {
-      val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> floor }
-      val filteredFloors = floors.filter{ case(loc,cell:Floor) => cell.rescueZone == includeRescueZone}
+      val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> cell }
+      val filteredFloors = floors.filter{ _._2.rescueZone == includeRescueZone}
       filteredFloors.map{ case(loc,cell) => loc}
     }
 
