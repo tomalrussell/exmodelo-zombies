@@ -88,7 +88,6 @@ object simulation {
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       redCross: RedCrossOption = NoRedCross,
-
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)

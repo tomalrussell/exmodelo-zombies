@@ -294,6 +294,18 @@ object world {
         s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
         s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
     }
+
+    def setTrap (myworld: World, myTrapLocation: Location): World ={
+      val mycells = copyCells(myworld.cells)
+      val (x, y) = myTrapLocation
+
+      mycells(x)(y) match {
+        case f:Floor => mycells(x)(y) = Floor(f.wallSlope,f.rescueSlope,f.rescueZone,true,f.information,f.pheromone)
+        case _ =>
+      }
+
+      myworld.copy(cells = mycells)
+    }
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
