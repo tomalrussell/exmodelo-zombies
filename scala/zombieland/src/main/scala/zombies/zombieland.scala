@@ -7,7 +7,7 @@ object zombieland {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
     simulate.buildGUI(
-      () => simulation.environment.jaude,
+      () => simulation.environment.stadium,
       infectionRange,
       walkSpeed,
 
