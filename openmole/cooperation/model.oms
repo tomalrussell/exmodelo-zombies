@@ -1,0 +1,98 @@
+import _root_.zombies.simulation._
+
+val seed = Val[Long]
+
+val infectionRange = Val[Double]
+
+val humanRunSpeed = Val[Double]
+val humanExhaustionProbability = Val[Double]
+val humanFollowProbability = Val[Double]
+val humanInformedRatio = Val[Double]
+val humanInformProbability = Val[Double]
+val humanFightBackProbability = Val[Double]
+val humanPerception = Val[Double]
+val humanMaxRotation = Val[Double]
+val humans = Val[Int]
+
+val zombieRunSpeed = Val[Double]
+val zombiePheromoneEvaporation = Val[Double]
+val zombiePerception = Val[Double]
+val zombieMaxRotation = Val[Double]
+val zombies = Val[Int]
+
+val walkSpeed = Val[Double]
+
+val rescuedAtTheEnd = Val[Int]
+val timeForHalfRescued = Val[Int]
+
+val model =
+  ScalaTask("""
+    import _root_.zombies._
+    import _root_.zombies.world._
+    import _root_.zombies.simulation._
+    import _root_.zombies.agent._
+    
+    val rng = new util.Random(seed)
+  
+    val simulation = Simulation.initialize(
+      world = environment.quarantine,
+      infectionRange = infectionRange,
+      humanRunSpeed = humanRunSpeed,
+      humanExhaustionProbability = humanExhaustionProbability,
+      humanPerception = humanPerception,
+      humanMaxRotation = humanMaxRotation,
+      humanFollowProbability = humanFollowProbability,
+      humanInformedRatio = humanInformedRatio,
+      humanInformProbability = humanInformProbability,
+      humanFightBackProbability = humanFightBackProbability,
+      humans = humans,
+      zombieRunSpeed = zombieRunSpeed,
+      zombiePerception = zombiePerception,
+      zombieMaxRotation = zombieMaxRotation,
+      zombiePheromone = Pheromone(zombiePheromoneEvaporation),
+      zombies = zombies,
+      walkSpeed = walkSpeed,
+      random = rng)
+      
+    val steps = 500
+
+    val (simulations, events) = simulate(simulation, rng, steps)
+    
+    val rescued = events.map(_.collect(Event.rescued).size)
+    val rescuedAtTheEnd = rescued.sum
+    val timeForHalfRescued = rescued.tail.foldLeft(Seq(0))((acc, el)=> acc :+ (el + acc.last)).zipWithIndex.find(_._1 > rescuedAtTheEnd/2).map{_._2}.get
+
+  """) set (
+    inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
+    outputs += (rescuedAtTheEnd, timeForHalfRescued),
+    
+    plugins += pluginsOf[_root_.zombies.simulation.Simulation],
+    
+    seed := 42L,
+
+    walkSpeed := physic.walkSpeed,
+    infectionRange := physic.infectionRange,
+
+    humanInformedRatio := 0.2,
+    humanInformProbability := physic.humanInformProbability,
+    humanFollowProbability := physic.humanFollowProbability,
+    humanFightBackProbability := physic.humanFightBackProbability,
+
+    humanPerception := physic.humanPerception,
+    zombiePerception := physic.zombiePerception,
+    
+    humanRunSpeed := physic.humanRunSpeed,
+    zombieRunSpeed := physic.zombieRunSpeed,
+    
+    humanExhaustionProbability := physic.humanExhaustionProbability,
+    zombieMaxRotation := physic.zombieMaxRotation,
+    humanMaxRotation := physic.humanMaxRotation,
+
+    zombiePheromoneEvaporation := physic.zombiePheromone.evaporation,
+
+    humans := 250,
+    zombies := 4,
+  )
+  
+model hook ToStringHook()
+

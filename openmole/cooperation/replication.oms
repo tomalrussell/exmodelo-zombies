@@ -1,0 +1,22 @@
+import _file_.model._
+
+val rescuedAtTheEndAvg = Val[Double]
+val timeForHalfRescuedAvg = Val[Double]
+
+val average =
+  ScalaTask("""
+  val rescuedAtTheEndAvg = rescuedAtTheEnd.sum.toDouble / rescuedAtTheEnd.size
+  val timeForHalfRescuedAvg = timeForHalfRescued.sum.toDouble / timeForHalfRescued.size
+  """) set (
+    inputs += (rescuedAtTheEnd.toArray, timeForHalfRescued.toArray),
+    outputs += (rescuedAtTheEndAvg, timeForHalfRescuedAvg)
+  )
+
+val replication = Replication(
+    evaluation = model,
+    seed = seed,
+    replications = 100,
+    aggregation = average hook ToStringHook()
+) 
+
+replication
