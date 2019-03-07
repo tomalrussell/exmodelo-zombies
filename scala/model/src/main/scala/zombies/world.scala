@@ -19,7 +19,12 @@ object world {
       case floor: Floor => floor
     }
 
-    def get(world: World, x: Int, y: Int) =
+    def get(world: World, l: Location): Option[Cell] = {
+      val (x, y) = l
+      get(world, x, y)
+    }
+
+    def get(world: World, x: Int, y: Int): Option[Cell] =
       if(outsideOfTheWorld(world, (x, y))) None
       else Some(world.cells(x)(y))
 
@@ -32,7 +37,7 @@ object world {
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
-          case 'T' => Some(Floor(trapZone = true, pheromone = 100000))
+          case 'T' => Some(Floor(trapZone = true))
           case _ => None
         }
 

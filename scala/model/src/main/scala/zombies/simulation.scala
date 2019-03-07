@@ -40,6 +40,7 @@ object simulation {
   case class Gone(agent: Agent) extends Event
   case class FleeZombie(human: Human) extends Event
   case class PursueHuman(zombie: Zombie) extends Event
+  case class Trapped(zombie: Zombie) extends Event
 
   sealed trait ArmyOption
   case object NoArmy extends ArmyOption

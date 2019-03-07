@@ -320,24 +320,36 @@ object agent {
 
     def changeDirection(world: World, granularity: Int, neighbors: Array[Agent], rng: Random)(agent: Agent) = {
 
+      def possibleVelocities(position: Position, velocity: Velocity, maxRotation: Double, speed: Double, canLeave: Boolean, rng: Random) = {
+        val pv = projectedVelocities(granularity, maxRotation, velocity, speed)
+         rng.shuffle(pv.filter(pv => !towardsWall(world, position, pv, outsideWall = canLeave)))
+      }
+
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {
-        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Human.speed(h)).filter(pv => !towardsWall(world, h.position, pv, outsideWall = !Agent.canLeave(h)))
-        if (!pv.isEmpty) {
-          val nv = rng.shuffle(pv)
-          h.copy(velocity = nv.maxBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
-        } else h
+        val pv = possibleVelocities(h.position, h.velocity, h.maxRotation, Human.speed(h), !Agent.canLeave(h), rng)
+        if (!pv.isEmpty) h.copy(velocity = pv.maxBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min }) else h
       }
 
       def pursueHuman(z: Zombie, nh: Array[Human], rng: Random) = {
-        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Zombie.speed(z))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv, outsideWall = !Agent.canLeave(z))))
-        if (nv.isEmpty) z else z.copy(velocity = nv.minBy { v => nh.map(n => distance(position(n), sum(z.position, v))).min })
+        val pv = possibleVelocities(z.position, z.velocity, z.maxRotation, Zombie.speed(z), !Agent.canLeave(z), rng)
+        if (pv.isEmpty) z else z.copy(velocity = pv.minBy { v => nh.map(n => distance(position(n), sum(z.position, v))).min })
+      }
+
+      def getTrapped(z: Zombie, rng: Random) = {
+        val pv = possibleVelocities(z.position, z.velocity, z.maxRotation, Zombie.speed(z), !Agent.canLeave(z), rng)
+        val toNearByTraps = pv.flatMap { v =>
+          World.get(world, positionToLocation(sum(z.position, v), world.side)) match {
+            case Some(f: Floor) if f.trapZone => Some(v)
+            case _ => None
+          }
+        }
+
+        rng.shuffle(toNearByTraps).headOption.map(v => z.copy(velocity = v))
       }
 
       def pursueZombie(h: Human, nz: Array[Zombie], rng: Random) = {
-        val pv = projectedVelocities(granularity, h.maxRotation, h.velocity, Human.speed(h))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, h.position, pv, outsideWall = !Agent.canLeave(h))))
-        if (nv.isEmpty) h else h.copy(velocity = nv.minBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
+        val pv = possibleVelocities(h.position, h.velocity, h.maxRotation, Human.speed(h), !Agent.canLeave(h), rng)
+        if (pv.isEmpty) h else h.copy(velocity = pv.minBy { v => nz.map(n => distance(position(n), sum(h.position, v))).min })
       }
 
       def runningHumans(agents: Array[Agent]) =
@@ -363,20 +375,19 @@ object agent {
         } else h
 
       def followPheromone(z: Zombie, world: World, rng: Random) = {
-        val pv = projectedVelocities(granularity, z.maxRotation, z.velocity, Zombie.speed(z))
-        val nv = rng.shuffle(pv.filter(pv => !towardsWall(world, z.position, pv, outsideWall = !Agent.canLeave(z))))
+        val pv = possibleVelocities(z.position, z.velocity, z.maxRotation, Zombie.speed(z), !Agent.canLeave(z), rng)
 
-        if (!nv.isEmpty) {
+        if (!pv.isEmpty) {
           val currentPheromone = World.pheromone(world, positionToLocation(z.position, world.side))
 
           val reachablePheromones =
-            nv.map { v =>
+            pv.map { v =>
               val projectedPheromone = World.pheromone(world, positionToLocation(sum(z.position, v), world.side))
               projectedPheromone - currentPheromone
             }
 
           if(reachablePheromones.exists(_ > 0.0)) {
-            val newVelocity = (nv zip reachablePheromones).maxBy(_._2)._1
+            val newVelocity = (pv zip reachablePheromones).maxBy(_._2)._1
             z.copy(velocity = newVelocity)
           } else z
         } else z
@@ -391,9 +402,13 @@ object agent {
             case _ => (followRunning(h, rng), None)
           }
         case z: Zombie =>
-          neighbors.collect(Agent.human) match {
-            case nh if !nh.isEmpty => (pursueHuman(z, nh, rng), Some(PursueHuman(z)))
-            case _ => (followPheromone(z, world, rng), None)
+          getTrapped(z, rng) match {
+            case Some(trapped) => (trapped, Some(Trapped(z)))
+            case None =>
+              neighbors.collect (Agent.human) match {
+                case nh if ! nh.isEmpty => (pursueHuman (z, nh, rng), Some (PursueHuman (z) ) )
+                case _ => (followPheromone (z, world, rng), None)
+              }
           }
       }
     }
