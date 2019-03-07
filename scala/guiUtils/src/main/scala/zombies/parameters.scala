@@ -45,7 +45,7 @@ object parameters {
     def from(aParameter: Range[T]) = aParameter.value
   }
 
-  val numberZombies = Range("numberZombies", RangeValue(0, 1500, 1, 4, 0), Variable)
+  val numberZombies = Range("numberZombies", RangeValue(0, 100, 1, 4, 0), Variable)
   val numberHumans = Range("numberHumans", RangeValue(0, 1500, 1, 250, 0), Variable)
 
   val infectionRange = Range("infectionRange", RangeValue(0.0, 1.0, 0.01, physic.infectionRange, 0.0), Variable)
@@ -54,7 +54,7 @@ object parameters {
   val zombieRunSpeed = Range("zombieRunSpeed", RangeValue(0.0, 1.0, 0.01, physic.zombieRunSpeed, 0.0), Variable)
   val zombiePerception = Range("zombiePerception", RangeValue(0.0, 5.0, 0.01, physic.zombiePerception, 0.0), Variable)
   val zombieMaxRotation = Range("zombieMaxRotation", RangeValue(0.0, 180.0, 1.0, physic.zombieMaxRotation, 0.0), Variable)
-  val zombiePheromoneEvaporation = Range("zombiePheromoneEvaporation", RangeValue(0.0, 10.0, 0.01, physic.zombiePheromone.evaporation, 0.0), Variable)
+  val zombiePheromoneEvaporation = Range("zombiePheromoneEvaporation", RangeValue(0.0, 5.0, 0.01, physic.zombiePheromone.evaporation, 0.0), Variable)
 
   val humanRunSpeed = Range("humanRunSpeed", RangeValue(0.0, 1.0, 0.01, physic.humanRunSpeed, 0.0), Variable)
   val humanPerception = Range("humanPerception", RangeValue(0.0, 5.0, 0.01, physic.humanPerception, 0.0), Variable)
@@ -65,7 +65,7 @@ object parameters {
   val humanInformProbability = Range("humanInformProbability", RangeValue(0.0, 1.0, 0.01, physic.humanInformProbability, 0.05), Variable)
   val humanInformedRatio = Range("humanInformedRatio", RangeValue(0.0, 1.0, 0.01, physic.humanInformedRatio, 0.0), Variable)
 
-  val armySize = Range("armySize", RangeValue(0, 1500, 1, 0, 0), Variable)
+  val armySize = Range("armySize", RangeValue(0, 50, 1, 0, 0), Variable)
   val armyFightBackProbability = Range("armyFightBackProbability", RangeValue(0.0, 1.0,  0.01, 1.0, 0.0), Variable)
   val armyExhaustionProbability = Range("armyExhaustionProbability", RangeValue(0.0, 1.0, 0.01, physic.humanExhaustionProbability, 0.0), Variable)
   val armyPerception = Range("armyPerception", RangeValue(0.0, 5.0, 0.01, physic.humanPerception, 0.0), Variable)

@@ -11,7 +11,7 @@ object world {
 
   sealed trait Cell
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
+  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, trapZone:Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -19,7 +19,12 @@ object world {
       case floor: Floor => floor
     }
 
-    def get(world: World, x: Int, y: Int) =
+    def get(world: World, l: Location): Option[Cell] = {
+      val (x, y) = l
+      get(world, x, y)
+    }
+
+    def get(world: World, x: Int, y: Int): Option[Cell] =
       if(outsideOfTheWorld(world, (x, y))) None
       else Some(world.cells(x)(y))
 
@@ -32,6 +37,7 @@ object world {
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
+          case 'T' => Some(Floor(trapZone = true))
           case _ => None
         }
 
@@ -49,6 +55,20 @@ object world {
       World.computeRescueSlope(World.computeWallSlope(world, altitudeLambdaDecay, slopeIntensity))
     }
 
+    def coordinates(world:World):Vector[(Location,Cell)] = {
+      val lc = for {
+        x <- 0 until world.side
+        y <- 0 until world.side
+      } yield (x,y) -> world.cells(x)(y)
+
+      lc.toVector
+    }
+
+    def floorsCoordinate(world:World,includeRescueZone:Boolean = false):Seq[(Int,Int)] = {
+      val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> cell }
+      val filteredFloors = floors.filter{ _._2.rescueZone == includeRescueZone}
+      filteredFloors.map{ case(loc,cell) => loc}
+    }
 
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
       x >= 0 && y >= 0 && x < world.side && y < world.side
@@ -278,6 +298,18 @@ object world {
         s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
         s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
         s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
+    }
+
+    def setTrap (myworld: World, myTrapLocation: Location): World ={
+      val mycells = copyCells(myworld.cells)
+      val (x, y) = myTrapLocation
+
+      mycells(x)(y) match {
+        case f:Floor => mycells(x)(y) = Floor(f.wallSlope,f.rescueSlope,f.rescueZone,true,f.information,f.pheromone)
+        case _ =>
+      }
+
+      myworld.copy(cells = mycells)
     }
   }
 
