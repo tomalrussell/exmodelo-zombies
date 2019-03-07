@@ -403,7 +403,13 @@ object agent {
           }
         case z: Zombie =>
           getTrapped(z, rng) match {
-            case Some(trapped) => (trapped, Some(Trapped(z)))
+            case Some(trapped) =>
+              val justTrapped =
+                World.get(world, positionToLocation(z.position, world.side)) match {
+                  case Some(floor: Floor) if floor.trapZone => None
+                  case _ => Some(Trapped(z))
+                }
+              (trapped, justTrapped)
             case None =>
               neighbors.collect (Agent.human) match {
                 case nh if ! nh.isEmpty => (pursueHuman (z, nh, rng), Some (PursueHuman (z) ) )
