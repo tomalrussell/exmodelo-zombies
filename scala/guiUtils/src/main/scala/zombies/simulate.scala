@@ -15,7 +15,9 @@ object simulate {
 
     val rng = new Random(42)
 
-    val controlList = parameters.collect(Parameter.range).filter { p => p.activation == Variable }.map { p => build(p) }.toSeq
+//    val controlList = parameters.collect(Parameter.range).filter { p => p.activation == Variable }.map { p => build(p) }.toSeq
+
+    val controlList = parameters.filter { p => p.activation == Variable }.map { p => build(p) }
 
     def initialize(rng: Random) = {
 

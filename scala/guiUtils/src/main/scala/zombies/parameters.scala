@@ -1,6 +1,5 @@
 package zombies.guitutils
 
-import zombies.agent._
 import zombies.simulation._
 import zombies.guitutils.controls.Mecanism
 import shapeless._
@@ -15,7 +14,7 @@ object parameters {
     }
   }
 
-  sealed trait Parameter
+  sealed trait Parameter {def activation: Activation}
 
   case class Options(name: ParameterName, mecanisms: Seq[controls.Mecanism], default: Mecanism, off: Mecanism, activation: Activation) extends Parameter
 

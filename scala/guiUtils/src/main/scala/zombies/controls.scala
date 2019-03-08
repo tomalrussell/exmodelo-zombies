@@ -86,23 +86,29 @@ object controls {
       (for {
         m <- mecanisms
       } yield {
-        bsn.selectableButton(m)
+        bsn.selectableButton(m, onclick = () => valueTag.update(m))
       }): _*
     )
 
     val element = span(radios.render).render
 
-    val valueElement = span.render
+    lazy val valueTag: Var[Mecanism] = Var(radios.active.head.text)
+
+    val valueElement = span(Rx{valueTag()}).render
 
     def value = radios.active.head.text
 
   }
 
   def build(parameter: Parameter): Controller = {
+    println(s"build ${parameter}")
     parameter match {
       case Range.caseDouble(d) => DoubleSlider(d.name, d.value)
       case Range.caseInt(i) => IntSlider(i.name, i.value)
-      case o: Options=> OptionController(o.name, o.mecanisms: _*)
+      case o: Options=> {
+        println(s"Option ${o.name} => ${o.mecanisms.mkString(",")}")
+        OptionController(o.name, o.mecanisms: _*)
+      }
       case _ => throw new RuntimeException(s"Unsupported parameter type ${parameter}")
     }
   }

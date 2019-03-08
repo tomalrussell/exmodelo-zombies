@@ -75,7 +75,11 @@ object display {
     informed: Int = 0,
     zombified: Int = 0)
 
+  val controllerSeq = Var(Seq[Controller]())
+
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
+
+    controllerList.foreach(c=>println(c.name))
 
     val simulation = initFunction()
     val side = simulation.world.side
@@ -100,18 +104,16 @@ object display {
     val cellDimension = gridSize.toDouble / side
 
     val agentSize = cellDimension / 3
-    val thirdAgentSize = (agentSize / 3)
+    val thirdAgentSize = agentSize / 3
     val offsetY = agentSize / 2
     val offsetX = agentSize / 3
 
     val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
-      world.cells(lineIndex).map { cell =>
-        cell match {
-          case Wall => 1
-          case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55   else 0)
-          }
+      world.cells(lineIndex).map {
+        case Wall => 1
+        case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55 else 0)
       }
     }
 
@@ -120,7 +122,7 @@ object display {
 
       for {
         col <- (0 to nbCellsByDimension - 1).toArray
-        val colCoord = (col * cellDimension) + 1
+        colCoord = (col * cellDimension) + 1
         row <- (0 to nbCellsByDimension - 1).toArray
       } yield {
         scene.appendChild(
@@ -174,6 +176,7 @@ object display {
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
+      println("Setup")
       val simulation = initFunction()
       val stepNumber = 0
       val neighborhoodCache =  World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
@@ -218,6 +221,6 @@ object display {
     )
 
     org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene, stats))
-
+    controllerSeq() = controllerList
   }
 }
