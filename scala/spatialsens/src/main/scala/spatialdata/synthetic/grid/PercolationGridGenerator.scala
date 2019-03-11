@@ -18,7 +18,9 @@ case class PercolationGridGenerator(
 
   override def generateGrid(implicit rng: Random): RasterLayerData[Double] = {
     println("Percolation grid of size "+size+" ; "+percolationProba+" ; "+bordPoints+" ; "+linkwidth)
-    Network.networkToGrid(PercolationNetworkGenerator(size,percolationProba,bordPoints,linkwidth).generateNetwork(rng),linkwidth=linkwidth)
+    Network.networkToGrid(PercolationNetworkGenerator(size,percolationProba,bordPoints,linkwidth).generateNetwork(rng),linkwidth=linkwidth).map{
+      _.map{1.0 - _}
+    }
   }
 
 }
