@@ -75,4 +75,38 @@ object parameters {
 
   //val army = Army(4, fightBackProbability = 0.99, exhaustionProbability = 0.1, perception = 4.0, runSpeed = 0.9, followRunning = 0.05, maxRotation = 180)
 
+  /**
+    * Spatial generator parameters
+    */
+
+  val generationMethod = Options("generationMethod", Seq("random","expMixture","blocks","percolation"), "blocks", "Jaude", Variable)
+  //    val gridSize = Range("gridSize", RangeValue(10, 100, 1, 40, 40), Variable)
+  /**
+    * Random
+    */
+  val randomDensity = Range("randomDensity", RangeValue(0.0, 1.0, 0.01, 0.5, 0.5), Variable)
+
+  /**
+    * ExpMixture
+    */
+  val expMixtureCenters = Range("expMixtureCenters", RangeValue(1, 100, 1, 5, 5), Variable)
+  val expMixtureRadius = Range("expMixtureRadius", RangeValue(0.0, 10.0, 0.1, 5.0, 5.0), Variable)
+  val expMixtureThreshold = Range("expMixtureThreshold", RangeValue(0.0, 1.0, 0.01, 0.5, 0.5), Variable)
+  /**
+    * blocks
+    */
+  val blocksNumber = Range("blocksNumber", RangeValue(1, 10, 1, 5, 5), Variable)
+  val blocksMinSize = Range("blocksMinSize", RangeValue(1, 10, 1, 5, 5), Variable)
+  val blocksMaxSize = Range("blocksMaxSize", RangeValue(1, 20, 1, 15, 15), Variable)
+  /**
+    * percolation
+    */
+  val percolationProba = Range("percolationProba", RangeValue(0.0, 1.0, 0.01, 0.2, 0.2), Variable)
+  val percolationBordPoints = Range("percolationBordPoints", RangeValue(1, 100, 1, 20, 20), Variable)
+  val percolationLinkWidth = Range("percolationLinkWidth", RangeValue(1.0, 5.0, 0.1, 3.0, 3.0), Variable)
+
+
+
+
+
 }

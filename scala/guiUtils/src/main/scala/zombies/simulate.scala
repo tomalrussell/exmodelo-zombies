@@ -5,6 +5,7 @@ import zombies.guitutils.controls._
 import zombies.guitutils.parameters._
 import zombies.simulation._
 import zombies.world.World
+import zombies.worldgen._
 
 import scala.util.Random
 
@@ -38,8 +39,28 @@ object simulate {
         value(armyMaxRotation),
         value(armyInformProbability))
 
+      val worldsize = 40
+
+      val genworld = world() match {
+        case World.dummyWorld => World(GridGeneratorLauncher(
+          //getMecanismValue(generationMethod),
+          generationMethod.name,
+          worldsize,
+          value(randomDensity),
+          value(expMixtureCenters),
+          value(expMixtureRadius),
+          value(expMixtureThreshold),
+          value(blocksNumber),
+          value(blocksMinSize),
+          value(blocksMaxSize),
+          value(percolationProba),
+          value(percolationBordPoints),
+          value(percolationLinkWidth)).getGrid(rng),worldsize)
+        case w => w
+      }
+
       Simulation.initialize(
-        world(),
+        genworld,
         infectionRange = value(infectionRange),
         walkSpeed = value(walkSpeed),
         humanRunSpeed = value(humanRunSpeed),

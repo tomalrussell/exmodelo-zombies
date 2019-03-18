@@ -245,6 +245,7 @@ object world {
         |""".stripMargin
     }
 
+    val dummyWorld = World(Array.empty,0)
 
     def square(side: Int) = parse() {
       s"""${"+" * side}\n""" +
