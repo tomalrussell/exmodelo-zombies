@@ -300,17 +300,24 @@ object world {
         s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
     }
 
-    def setTrap (myworld: World, myTrapLocation: Location): World ={
-      val mycells = copyCells(myworld.cells)
-      val (x, y) = myTrapLocation
 
-      mycells(x)(y) match {
-        case f:Floor => mycells(x)(y) = Floor(f.wallSlope,f.rescueSlope,f.rescueZone,true,f.information,f.pheromone)
-        case _ =>
+    /* ------------- Traps ------------- */
+    def setTrap(world: World, trapLocation: Location*): World = {
+      val cells = copyCells(world.cells)
+
+      for {
+        (x, y) <- trapLocation
+      } {
+        cells(x)(y) match {
+          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, true, f.information, f.pheromone)
+          case _ =>
+        }
       }
 
-      myworld.copy(cells = mycells)
+      world.copy(cells = cells)
     }
+
+    def withTrap(trapLocation: Location*)(world: World) = setTrap(world, trapLocation: _*)
   }
 
   case class World(cells: Array[Array[Cell]], side: Int)
