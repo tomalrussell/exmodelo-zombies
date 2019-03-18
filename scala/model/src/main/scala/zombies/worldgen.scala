@@ -15,7 +15,7 @@ object worldgen {
     */
 
   implicit def rasterToWorld(array: Array[Array[Double]]): Array[Array[Cell]] = {
-    array.map{_.map{case v => (if (v> 0) Floor() else Wall).asInstanceOf[Cell]}}
+    array.map{_.map{case v => (if (v == 0) Floor() else Wall).asInstanceOf[Cell]}}
   }
 
 

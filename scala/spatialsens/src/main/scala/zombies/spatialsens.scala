@@ -10,17 +10,12 @@ import zombies.guitutils.controls.Mecanism
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object spatialsens {
+
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
-    implicit val rng = new Random
-
-
-
-
     simulate.buildGUI(
       ()=> World.dummyWorld,
       generationMethod,
-      //gridSize, // trop de choses à modifier dans le code de display
       randomDensity,
       expMixtureCenters,
       expMixtureRadius,

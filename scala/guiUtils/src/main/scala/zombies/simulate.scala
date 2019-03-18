@@ -28,6 +28,8 @@ object simulate {
         }.toMap
 
       def value[T](p: Range[T]) = controlValues.getOrElse(p.name, defaultOrOff(p)).asInstanceOf[T]
+      def optionValue(o: Options) = controlValues.getOrElse(o.name, defaultOrOff(o)).toString
+
 
       val army = Army(
         size = value(armySize),
@@ -41,10 +43,24 @@ object simulate {
 
       val worldsize = 40
 
+      /*
+      implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+
+      def getController(name: String) = Rx{display.controllerSeq().find(_.name == name)}.now
+
+      def getMecanismValue(name: String) = {
+        getController(name).map(_.value.asInstanceOf[Mecanism]) match {
+          case Some(v) => v
+          case None =>
+            println(s"$name not found")
+            "random"
+        }
+      }
+      */
+
       val genworld = world() match {
         case World.dummyWorld => World(GridGeneratorLauncher(
-          //getMecanismValue(generationMethod),
-          generationMethod.name,
+          optionValue(generationMethod),
           worldsize,
           value(randomDensity),
           value(expMixtureCenters),

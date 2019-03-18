@@ -23,6 +23,11 @@ object parameters {
     else parameter.value.default
   }
 
+  def defaultOrOff(parameter: Options): Mecanism = {
+    if (parameter.activation == Off) parameter.off
+    else parameter.default
+  }
+
   trait Activation
 
   object Variable extends Activation
