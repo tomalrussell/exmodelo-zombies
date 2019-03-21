@@ -95,13 +95,15 @@ object controls {
       (for {
         m <- mecanisms
       } yield {
-        bsn.selectableButton(m)
+        bsn.selectableButton(m, onclick = () => valueTag.update(m))
       }): _*
     )
 
     val element = span(radios.render).render
 
-    val valueElement = span.render
+    lazy val valueTag: Var[Mecanism] = Var(radios.active.head.text)
+
+    val valueElement = span(Rx{valueTag()}).render
 
     def value = radios.active.head.text
 
@@ -119,7 +121,6 @@ object controls {
   }
 
   def build(parameter: Parameter): Controller = {
-
     parameter match {
       case Range.caseDouble(d) => DoubleSlider(d.name, d.value)
       case Range.caseInt(i) => IntSlider(i.name, i.value)
