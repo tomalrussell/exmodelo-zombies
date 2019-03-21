@@ -8,12 +8,14 @@ import scalatags.JsDom.all._
 import scalajs.js.|
 import rx._
 import scaladget.bootstrapnative.bsn
+import scaladget.bootstrapnative.bsn.buttonGroup
+import scalatags.JsDom.styles
 import zombies.guitutils.parameters._
 
 object controls {
 
   type Mecanism = String
-  type ControllerType = Double | Int | Mecanism
+  type ControllerType = Double | Int | Boolean | Mecanism
 
   trait Controller {
 
@@ -24,8 +26,14 @@ object controls {
     def valueElement: HTMLElement
 
     def value: ControllerType
+  }
 
-    //def reset: Unit
+  def onOffControllers: PartialFunction[Controller, OnOffController] = {
+    case ooc: OnOffController => ooc
+  }
+
+  def optionalParameters: PartialFunction[Controller, Seq[ParameterName]] = {
+    case ooc: OnOffController => ooc.name +: ooc.childs
   }
 
   object Slider {
@@ -78,9 +86,10 @@ object controls {
     def value = slider.getValue.asInstanceOf[Int]
 
     def reset = slider.setValue(ints.default)
+
   }
 
-  case class OptionController(name: String, mecanisms: Mecanism*) extends Controller {
+  case class OptionController(name: String, mecanisms: Seq[Mecanism]) extends Controller {
 
     val radios = bsn.radios()(
       (for {
@@ -98,12 +107,26 @@ object controls {
 
   }
 
+  case class OnOffController(name: ParameterName, childs: Seq[ParameterName] = Seq()) extends Controller {
+
+    val button = scaladget.bootstrapnative.bsn.toggle(true, "Yes", "No")
+
+    val element = button.render.render
+
+    val valueElement = span.render
+
+    def value = button.position.now
+  }
+
   def build(parameter: Parameter): Controller = {
+
     parameter match {
       case Range.caseDouble(d) => DoubleSlider(d.name, d.value)
       case Range.caseInt(i) => IntSlider(i.name, i.value)
-      case o: Options=> OptionController(o.name, o.mecanisms: _*)
+      case o: Options => OptionController(o.name, o.mecanisms)
+      case OnOff(name, activeInSimulation, activation, childs) => OnOffController(name, childs)
       case _ => throw new RuntimeException(s"Unsupported parameter type ${parameter}")
     }
   }
+
 }

@@ -244,6 +244,9 @@ object simulation {
   def simulate(simulation: Simulation, rng: Random, steps: Int): SimulationResult = {
     def result(s: Simulation, events: Vector[Event], acc: SimulationResult) = (s :: acc._1, events :: acc._2)
     val (simulations, events) = simulate(simulation, rng, steps, result, (List(), List()))
+
+    events.map(_.collect(Event.rescued).size).sum
+    val timeForHalfRescued = events.map(_.collect(Event.rescued).size).tail.foldLeft(Seq(0))((acc, el)=> acc :+ (el + acc.last))
     (simulations.reverse, events.reverse)
   }
 

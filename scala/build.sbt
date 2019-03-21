@@ -44,10 +44,11 @@ lazy val guiDependencies = Seq(
   libraryDependencies += "com.chuusai" %%% "shapeless" % "2.3.2",
 )
 
-def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS: File, depsCSS: File) = {
+def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS: File, depsCSS: File, globalCSS: File) = {
 
   IO.copyFile(jsBuild, demoTarget / "js/demo.js")
   IO.copyFile(dependencyJS, demoTarget / "js/deps.js")
+  IO.copyDirectory(globalCSS, demoTarget / "css")
   IO.copyDirectory(depsCSS, demoTarget / "css")
   IO.copyDirectory(demoResource, demoTarget)
 }
@@ -57,7 +58,7 @@ lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enab
   )
 
 lazy val zombieland = Project("zombieland", file("zombieland")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings (
-  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
   )
 
 lazy val vigilence = Project("vigilence", file("vigilence")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
@@ -67,7 +68,7 @@ lazy val vigilence = Project("vigilence", file("vigilence")) dependsOn (guiUtils
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
   osgiSettings,
-  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
 )
 
 
@@ -78,6 +79,6 @@ lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (gu
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
   osgiSettings,
-  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value)
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
 )
 

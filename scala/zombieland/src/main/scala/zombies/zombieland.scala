@@ -27,6 +27,7 @@ object zombieland {
       zombiePheromoneEvaporation,
       numberZombies,
 
+      armyOnOff,
       armySize,
       armyFightBackProbability,
       armyExhaustionProbability,
