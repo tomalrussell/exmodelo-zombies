@@ -18,6 +18,7 @@ import rx._
 import scaladget.svg.path._
 import scaladget.tools._
 import zombies.guitutils.controls._
+import zombies.guitutils.parameters.ParameterName
 
 import scala.scalajs.js.timers
 
@@ -67,15 +68,19 @@ object display {
   val rng = new Random(42)
 
   case class People(
-    humans: Int = 0,
-    zombies: Int = 0,
-    rescued: Int = 0,
-    alerted: Int = 0,
-    killed: Int = 0,
-    informed: Int = 0,
-    zombified: Int = 0)
+                     humans: Int = 0,
+                     zombies: Int = 0,
+                     rescued: Int = 0,
+                     alerted: Int = 0,
+                     killed: Int = 0,
+                     informed: Int = 0,
+                     zombified: Int = 0)
+
+  val controllerSeq = Var(Seq[Controller]())
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
+
+    controllerList.foreach(c=>println(c.name))
 
     val simulation = initFunction()
     val side = simulation.world.side
@@ -89,6 +94,22 @@ object display {
     val timeOut: Var[Option[Int]] = Var(None)
     val people: Var[People] = Var(People())
 
+    val onOffControllerPositions = controllerList.collect(onOffControllers).map { ooc => ooc -> ooc.button.position }.toMap
+    val invisibleControllers: Var[Seq[ParameterName]] = Var(Seq())
+
+    onOffControllerPositions.foreach { case (ooc, position) =>
+      position.trigger {
+        invisibleControllers.update({
+          if (position.now) invisibleControllers.now ++ ooc.childs
+          else invisibleControllers.now.filterNot(ic => ooc.childs.contains(ic)).distinct
+        }
+        )
+      }
+      println("Trigged " + invisibleControllers.now)
+    }
+
+    val optionalControllers = controllerList.collect(optionalParameters).flatten
+
 
     val gridSize = 800
 
@@ -97,43 +118,51 @@ object display {
       height := gridSize
     ).render
 
+
     val cellDimension = gridSize.toDouble / side
 
     val agentSize = cellDimension / 3
-    val thirdAgentSize = (agentSize / 3)
+    val thirdAgentSize = agentSize / 3
     val offsetY = agentSize / 2
     val offsetX = agentSize / 3
 
     val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
     def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
-      world.cells(lineIndex).map { cell =>
-        cell match {
-          case Wall => 1
-          case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55   else 0)
-          }
+
+      world.cells(lineIndex).map {
+        case Wall => 1
+        case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55 else 0)
       }
     }
 
     def buildWorld(nbCellsByDimension: Int, world: World) = {
       val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
-
+      scene.appendChild(
+        svgTags.rect(x := 0, y := 0, width := gridSize * cellDimension, height := gridSize * cellDimension,
+          style := s"fill:rgb${Color.color(0)};").render
+      )
       for {
         col <- (0 to nbCellsByDimension - 1).toArray
-        val colCoord = (col * cellDimension) + 1
+        colCoord = (col * cellDimension) + 1
         row <- (0 to nbCellsByDimension - 1).toArray
       } yield {
-        scene.appendChild(
-          svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
-            style := s"fill:rgb${Color.color(values(row)(col))};").render
-        )
+        val v = values(row)(col)
+        if (v != 0) {
+          scene.appendChild(
+            svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
+              style := s"fill:rgb${Color.color(v)};").render
+          )
+        }
       }
     }
 
     def buildAgents = {
       val element: SVGElement = tools.rxSVGMod(Rx {
         svgTags.g((for {
-          a <- stepState().map { _._1.agents }.getOrElse(Vector())
+          a <- stepState().map {
+            _._1.agents
+          }.getOrElse(Vector())
         } yield {
           val ax = "%1.2f".format((Agent.position(a)._2 * gridSize) + 1 - offsetX)
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
@@ -166,17 +195,22 @@ object display {
         )
 
         people.update(p)
-        timeOut.now.foreach(to => timers.setTimeout(to) { step })
+        timeOut.now.foreach(to => timers.setTimeout(to) {
+          step
+        })
 
         val (ns, ev) = _root_.zombies.simulation.step(stateNumberBuffer + 1, simulationBuffer, neighborhoodCache, rng)
         stepBuffer.update(Some(ns, eventBuffer ++ ev, stateNumberBuffer + 1, neighborhoodCache))
-      case None => timeOut.now.foreach(to => timers.setTimeout(to) { step })
+      case None => timeOut.now.foreach(to => timers.setTimeout(to) {
+        step
+      })
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
+      println("Setup")
       val simulation = initFunction()
       val stepNumber = 0
-      val neighborhoodCache =  World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
+      val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
       stepBuffer.update(Some(simulation, List(), stepNumber, neighborhoodCache))
       stepState.update(Some(simulation, List(), stepNumber, neighborhoodCache))
@@ -199,25 +233,64 @@ object display {
       timeOut.now.foreach { _ => step }
     })
 
-    val stats = span(marginLeft := 20, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
-      span(Rx { s"# step: ${stepState().map(_._3).getOrElse(0)}" }),
-      span(Rx { s"# humans: ${people().humans}" }),
-      span(Rx { s"# rescued: ${people().rescued}" }),
-      span(Rx { s"# informed: ${people().informed}" }),
-      span(Rx { s"# alerted: ${people().alerted}" }),
-      span(Rx { s"# zombified:  ${people().zombified}" }),
-      span(Rx { s"# zombies: ${people().zombies}" }),
-      span(Rx { s"# killed zombies: ${people().killed}" }),
+    val stats = span(styles.display.flex, flexDirection.row, justifyContent.spaceBetween)(
+      span(`class` := "stat")(Rx {
+        s"# step: ${stepState().map(_._3).getOrElse(0)}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# humans: ${people().humans}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# rescued: ${people().rescued}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# informed: ${people().informed}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# alerted: ${people().alerted}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# zombified:  ${people().zombified}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# zombies: ${people().zombies}"
+      }),
+      span(`class` := "stat")(Rx {
+        s"# killed zombies: ${people().killed}"
+      }),
     )
 
-    val controllers = div(marginTop := 50, marginLeft := 40, marginRight := 30, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
-      controllerList.map { p =>
-        span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
-      },
+    val controllers = div(marginTop := 50, marginLeft := 10, marginRight := 10, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      div(
+        Rx {
+          controllerList.map { p =>
+            if (!optionalControllers.contains(p.name))
+              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
+            else span().render
+          }
+        }),
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row)(controllers, scene, stats))
+    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 30, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
+      div(
+        Rx {
+          controllerList.map { p =>
+            if (optionalControllers.contains(p.name) && !invisibleControllers().contains(p.name))
+              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
+            else span.render
+          }
+        }
+      )
+    )
 
+
+    val sceneAndStats = div(marginTop := 50, marginLeft := 10, marginRight := 10, maxWidth := 500, styles.display.flex, flexDirection.column, styles.justifyContent.center)(
+      scene,
+      stats
+    )
+
+    org.scalajs.dom.document.body.appendChild(div(styles.display.flex, flexDirection.row, alignItems.flexStart, justifyContent.spaceAround)(controllers, sceneAndStats, optional))
   }
+
 }
