@@ -46,13 +46,13 @@ object Model {
     val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
 
     val realHumans = columns.map(_(0).toDouble)
-    val realZombies = columns.map(_(1).toDouble)
+    val realZombified = columns.map(_(1).toDouble)
 
     // Likelihood calculation
     val likelihoodHumans =
       (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
     val likelihoodZombies =
-      (realZombies zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+      (realZombified zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
     likelihoodHumans + likelihoodZombies
   }
