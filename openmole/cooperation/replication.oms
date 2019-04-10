@@ -2,21 +2,32 @@ import _file_.model._
 
 val rescuedAtTheEndAvg = Val[Double]
 val timeForHalfRescuedAvg = Val[Double]
+val rescuedSerieAvg = Val[Array[Double]]
 
-val average =
+// val averageExp1 =
+//   ScalaTask("""
+//   val rescuedAtTheEndAvg = rescuedAtTheEnd.sum.toDouble / rescuedAtTheEnd.size
+//   val timeForHalfRescuedAvg = timeForHalfRescued.sum.toDouble / timeForHalfRescued.size
+//   """) set (
+//     inputs += (rescuedAtTheEnd.toArray, timeForHalfRescued.toArray),
+//     outputs += (rescuedAtTheEndAvg, timeForHalfRescuedAvg)
+//   )
+  
+val averageExp2 =
   ScalaTask("""
-  val rescuedAtTheEndAvg = rescuedAtTheEnd.sum.toDouble / rescuedAtTheEnd.size
-  val timeForHalfRescuedAvg = timeForHalfRescued.sum.toDouble / timeForHalfRescued.size
+  val rescuedSerieAvg = rescuedDynamic.foldLeft(Array.fill(25)(0.0)) { case (x, y) =>
+    (y zip x).map { x => x._1 + x._2 }
+  }.map{_ / rescuedDynamic.size}
   """) set (
-    inputs += (rescuedAtTheEnd.toArray, timeForHalfRescued.toArray),
-    outputs += (rescuedAtTheEndAvg, timeForHalfRescuedAvg)
-  )
+    inputs += (rescuedDynamic.toArray),
+    outputs += (rescuedSerieAvg)
+  ) 
 
 val replication = Replication(
-    evaluation = model,
+    evaluation = model hook CSVHook(workDirectory / "results/meanSquare/calibration.csv", arrayOnRow = true),
     seed = seed,
     replications = 100,
-    aggregation = average hook ToStringHook()
+    aggregation = averageExp2 hook ToStringHook()
 ) 
 
 replication
