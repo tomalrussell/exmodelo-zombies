@@ -269,6 +269,7 @@ object simulation {
     def stadium = world.World.stadium(15, 15, 5)
     def jaude = world.World.jaude
     def quarantine = world.World.quarantineStadium(15, 15)
+    def square = world.World.square(15)
   }
 
   object physic {
