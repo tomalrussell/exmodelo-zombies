@@ -76,9 +76,6 @@ val model =
     //mono-objective
     val distance = distance1 + distance2
     
-    //mean-square
-    //val meanSquare = 
-
   """) set (
     inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
     
@@ -99,7 +96,8 @@ val model =
     walkSpeed := physic.walkSpeed,
     infectionRange := physic.infectionRange,
 
-    humanInformedRatio := 0.2,
+    humanInformedRatio := 0.2 
+   
     humanInformProbability := physic.humanInformProbability,
     humanFollowProbability := physic.humanFollowProbability,
     humanFightBackProbability := physic.humanFightBackProbability,
