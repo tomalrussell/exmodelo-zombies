@@ -43,16 +43,16 @@ object Model {
     val zombified = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b - statesInit(2) }
 
     // Zombieland data
-    val columns = File(file.getAbsolutePath).lines.map(_.split(",")).toVector
+    val columns = File(file.getAbsolutePath).lines.drop(1).map(_.split(",")).toVector
 
     val realHumans = columns.map(_(0).toDouble)
-    val realZombies = columns.map(_(1).toDouble)
+    val realZombified = columns.map(_(3).toDouble)
 
     // Likelihood calculation
     val likelihoodHumans =
       (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
     val likelihoodZombies =
-      (realZombies zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+      (realZombified zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
     likelihoodHumans + likelihoodZombies
   }

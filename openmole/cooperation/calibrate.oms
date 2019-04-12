@@ -1,0 +1,33 @@
+import _file_.model._
+
+ def meanSquare(vs: Vector[Array[Int]]) = {
+   val data = Array(22.26, 55.47, 43.53, 24.39, 11.15, 4.19, 2.0, 0.8, 0.54, 0.24, 0.09, 0.01, 0.01, 0.01, 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+     
+  data.zip(vs.transpose.map{_.median}).map{
+    case(rep, dy)=> (rep - dy) * (rep - dy)
+  }.sum
+}
+
+val evolution = 
+  NSGA2Evolution(
+    evaluation = model,
+    genome = Seq(
+        humanInformedRatio in (0.0, 1.0),
+        humanInformProbability in (0.0, 1.0),
+        humanFollowProbability in (0.0, 1.0)
+    ),
+    objectives = Seq(rescuedDynamic aggregate meanSquare),
+    termination = 100000,
+    parallelism = 200,
+    distribution = Island(5 minutes),
+    stochastic = Stochastic(seed = seed)
+  )
+  
+  
+  
+val save = SavePopulationHook(evolution, workDirectory / "results/meanSquare/calibration/", frequency = 100)
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+evolution hook save on env
+

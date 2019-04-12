@@ -24,6 +24,10 @@ val walkSpeed = Val[Double]
 
 val rescuedAtTheEnd = Val[Int]
 val timeForHalfRescued = Val[Int]
+val rescuedDynamic = Val[Array[Int]]
+
+val distance1 = Val[Double]
+val distance2 = Val[Double]
 
 val model =
   ScalaTask("""
@@ -60,11 +64,30 @@ val model =
     
     val rescued = events.map(_.collect(Event.rescued).size)
     val rescuedAtTheEnd = rescued.sum
-    val timeForHalfRescued = rescued.tail.foldLeft(Seq(0))((acc, el)=> acc :+ (el + acc.last)).zipWithIndex.find(_._1 > rescuedAtTheEnd/2).map{_._2}.get
-
+    val timeForHalfRescued = rescued.tail.foldLeft(Seq(0))((acc, el)=> acc :+ (el + acc.last)).zipWithIndex.find(_._1 > rescuedAtTheEnd/2).map{_._2}.getOrElse(0)
+    
+    val rescuedDynamic = events.map(_.collect(Event.rescued).size).grouped(20).map(_.sum).toArray
+    
+    //For calibration
+    //multi-objectives
+    val distance1 = math.abs(rescuedAtTheEnd - 165.65)
+    val distance2 = math.abs(timeForHalfRescued - 40.69)
+    
+    //mono-objective
+    val distance = distance1 + distance2
+    
   """) set (
     inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
-    outputs += (rescuedAtTheEnd, timeForHalfRescued),
+    
+    
+    //NSGA2 mono-objective
+    //outputs += (rescuedAtTheEnd, timeForHalfRescued, distance),
+    
+    //NSGA2 multi-objectives
+    //outputs += (rescuedAtTheEnd, timeForHalfRescued, distance1, distance2),
+    
+    //NSGA2 multi-objectives rescuedDynamic
+    outputs += (rescuedDynamic),
     
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
     
@@ -73,7 +96,8 @@ val model =
     walkSpeed := physic.walkSpeed,
     infectionRange := physic.infectionRange,
 
-    humanInformedRatio := 0.2,
+    humanInformedRatio := 0.2 
+   
     humanInformProbability := physic.humanInformProbability,
     humanFollowProbability := physic.humanFollowProbability,
     humanFightBackProbability := physic.humanFightBackProbability,

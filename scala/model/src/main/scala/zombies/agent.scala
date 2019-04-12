@@ -322,7 +322,7 @@ object agent {
 
       def possibleVelocities(position: Position, velocity: Velocity, maxRotation: Double, speed: Double, canLeave: Boolean, rng: Random) = {
         val pv = projectedVelocities(granularity, maxRotation, velocity, speed)
-         rng.shuffle(pv.filter(pv => !towardsWall(world, position, pv, outsideWall = canLeave)))
+        rng.shuffle(pv.filter(pv => !towardsWall(world, position, pv, outsideWall = canLeave)))
       }
 
       def fleeZombies(h: Human, nz: Array[Zombie], rng: Random) = {

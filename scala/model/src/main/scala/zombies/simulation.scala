@@ -244,6 +244,9 @@ object simulation {
   def simulate(simulation: Simulation, rng: Random, steps: Int): SimulationResult = {
     def result(s: Simulation, events: Vector[Event], acc: SimulationResult) = (s :: acc._1, events :: acc._2)
     val (simulations, events) = simulate(simulation, rng, steps, result, (List(), List()))
+
+    events.map(_.collect(Event.rescued).size).sum
+    val timeForHalfRescued = events.map(_.collect(Event.rescued).size).tail.foldLeft(Seq(0))((acc, el)=> acc :+ (el + acc.last))
     (simulations.reverse, events.reverse)
   }
 
@@ -266,6 +269,7 @@ object simulation {
     def stadium = world.World.stadium(15, 15, 5)
     def jaude = world.World.jaude
     def quarantine = world.World.quarantineStadium(15, 15)
+    def square = world.World.square(15)
   }
 
   object physic {
