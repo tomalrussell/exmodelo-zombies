@@ -180,9 +180,7 @@ object worldgen {
       * @return
       */
     def allPairsShortestPath(network: Network): Map[(Node,Node),Seq[Link]] = {
-      println("computing shortest paths between "+network.nodes.toSeq.size+" vertices")
       val nodenames = network.nodes.toSeq.map{_.id}
-      println("unique nodes id = "+nodenames.size)
       val nodeids: Map[Int,Int] = nodenames.toSeq.zipWithIndex.toMap
       //val revnodeids: Map[Int,Int] = nodenames.zipWithIndex.map{case(oid,ind)=>(ind,oid)}.toMap
       val revnodes: Map[Int,Node] = network.nodes.toSeq.zipWithIndex.map{case(n,i)=>(i,n)}.toMap
@@ -218,8 +216,6 @@ object worldgen {
         }
       }
 
-      println(ds.flatten.filter(_!=inf).size)
-      println(2*network.links.size+network.nodes.size)
 
       // Initialize next vertex matrix
       // O(N^3)
@@ -229,11 +225,6 @@ object worldgen {
           ds(i)(j) = ds(i)(k) + ds(k)(j)
           ns(i)(j) = k
         }
-
-      // FIX for unconnected networks ? should also work as ds(i)(j) = inf ?
-      println(ns.flatten.filter(_==(-1)).size)
-      println(network.links.size)
-
 
       // Helper function to carve out paths from the next vertex matrix.
       def extractPath(path: ArrayBuffer[Node],pathLinks: ArrayBuffer[Link], i: Int, j: Int) {
@@ -646,21 +637,41 @@ object worldgen {
 
                                   ) {
 
-    /**
-      *
-      * @param rng
-      * @return
-      */
-    def getGrid(implicit rng: Random): RasterLayerData[Double] = {
-      generatorType match {
-        case "random" => RandomGridGenerator(gridSize).generateGrid(rng).map{_.map{case d => if(d < randomDensity) 1.0 else 0.0}}
-        case "expMixture" => ExpMixtureGenerator(gridSize,expMixtureCenters,1.0,expMixtureRadius).generateGrid(rng).map{_.map{case d => if(d> expMixtureThreshold) 1.0 else 0.0}}
-        case "blocks" => BlocksGridGenerator(gridSize,blocksNumber,blocksMinSize,blocksMaxSize).generateGrid(rng).map{_.map{case d => if(d> 0.0) 1.0 else 0.0}}
-        case "percolation" => PercolationGridGenerator(gridSize,percolationProba,percolationBordPoints,percolationLinkWidth).generateGrid(rng)
-        case _ => {assert(false,"Error : the requested generator does not exist");Array.empty}
+    def jaudeWorld: Array[Array[Double]] = {
+      World.jaude.cells.map {
+        _.map { c =>
+          c match {
+            case world.Wall => 1.0;
+            case _ => 0.0
+          }
+        }
       }
     }
-  }
+
+
+    def density(world: Array[Array[Double]]): Double = world.flatten.map{x => if(x>0.0)1.0 else 0.0}.sum / world.flatten.size
+
+
+
+        /**
+          *
+          * @param rng
+          * @return
+          */
+        def getGrid(implicit rng: Random): RasterLayerData[Double] = {
+          val world: Array[Array[Double]] = generatorType match {
+            case "random" => RandomGridGenerator(gridSize).generateGrid(rng).map{_.map{case d => if(d < randomDensity) 1.0 else 0.0}}
+            case "expMixture" => ExpMixtureGenerator(gridSize,expMixtureCenters,1.0,expMixtureRadius).generateGrid(rng).map{_.map{case d => if(d> expMixtureThreshold) 1.0 else 0.0}}
+            case "blocks" => BlocksGridGenerator(gridSize,blocksNumber,blocksMinSize,blocksMaxSize).generateGrid(rng).map{_.map{case d => if(d> 0.0) 1.0 else 0.0}}
+            case "percolation" => PercolationGridGenerator(gridSize,percolationProba,percolationBordPoints,percolationLinkWidth).generateGrid(rng)
+            case _ => {assert(false,"Error : the requested generator does not exist");Array.empty}
+          }
+
+          if(density(world) > 0.8) jaudeWorld else world
+        }
+
+
+    }
 
 
 

@@ -6,7 +6,8 @@ setwd(paste0(Sys.getenv('CS_HOME'),'/OpenMole/zombies/openmole/spatialsens'))
 
 res1 <- as.tbl(read.csv('exploration/20190330_174556_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
 res2 <- as.tbl(read.csv('exploration/20190408_163218_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
-res=rbind(res1,res2)
+res3 <- as.tbl(read.csv('exploration/20190411_090002_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
+res=rbind(res1,res2,res3)
 resdir='results/20190330-20190408_LHS_SPATIALSENS_REPLICATIONS_GRID';dir.create(resdir)
 
 finalTime = 50
@@ -28,7 +29,8 @@ params=c("generatorType","blocksMaxSize","blocksMinSize","blocksNumber",
 
 # -> just dist to average jaude traj
 
-reference = colMeans(res[res$generatorType=="jaude",indics])
+reference1 = colMeans(res[res$generatorType=="jaude",indic1])
+reference2 = colMeans(res[res$generatorType=="jaude",indic2])
 
 #sample = sample(1:nrow(res),10000)
 sample = 1:nrow(res)
@@ -52,18 +54,30 @@ stres = tres %>%group_by(generatorType,blocksMaxSize,blocksMinSize,blocksNumber,
 # count=stres %>% group_by(generatorType,blocksMaxSize,blocksMinSize,blocksNumber,expMixtureCenters,expMixtureRadius,expMixtureThreshold,percolationBordPoints,percolationLinkWidth,percolationProba,randomDensity,time,indic) %>% summarize(count=n())
 
 #g=ggplot(stres,aes(x=time,y=value,colour=generatorType,linetype=indic,group=interaction(generatorType,indic)))
-g=ggplot(stres[stres$indic=='humans',],aes(x=time,y=value,colour=generatorType,group=id))
-g+geom_line(alpha=0.2)
+#g=ggplot(stres[stres$indic=='humans',],aes(x=time,y=value,colour=generatorType,group=id))
+#g+geom_line(alpha=0.5)
 #g+geom_smooth()
 #g+geom_point()
 
 sstres = stres %>% group_by(generatorType,time,indic)%>% summarize(sdValue=sd(value),value=mean(value))
+
 g=ggplot(sstres[sstres$indic=='humans'&sstres$generatorType!='random',],aes(x=time,y=value,ymin=value-sdValue,ymax=value+sdValue,colour=generatorType))
 g+geom_line()+geom_point()+geom_errorbar()+
   ylab('humans')+stdtheme
 ggsave(paste0(resdir,'spatialsens_generators_humans.png'),width=20,height=15,units='cm')
 
+g=ggplot(sstres[sstres$indic=='zombies'&sstres$generatorType!='random',],aes(x=time,y=value,ymin=value-sdValue,ymax=value+sdValue,colour=generatorType))
+g+geom_line()+geom_point()+geom_errorbar()+
+  ylab('zombies')+stdtheme
+ggsave(paste0(resdir,'spatialsens_generators_zombies.png'),width=20,height=15,units='cm')
+
 
   
-  
+# summary statistics on distance to reference
+distances_humans = colSums(apply(res[,indic1],1,function(r){(r-reference1)^2}))
+dres=cbind(res[,params],distances_humans)
+mdistref = mean(distances_humans[res$generatorType=='jaude'])
+
+g=ggplot(dres[dres$generatorType!='random',],aes(x=generatorType,y=distances_humans/mdistref))
+g+geom_boxplot(outlier.size = NULL)+scale_y_log10()
 
