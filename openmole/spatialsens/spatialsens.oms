@@ -1,27 +1,30 @@
 import _root_.zombies.simulation._
 
-val seed = Val[Long]
+val replication = Val[Int]
+val id = Val[Int]
 
-val infectionRange = Val[Double]
-
-val humanRunSpeed = Val[Double]
-val humanExhaustionProbability = Val[Double]
-val humanFollowProbability = Val[Double]
-val humanInformedRatio = Val[Double]
-val humanInformProbability = Val[Double]
-val humanFightBackProbability = Val[Double]
-val humanPerception = Val[Double]
-val humanMaxRotation = Val[Double]
+// model parameters
+// all at default except humans and zombies
 val humans = Val[Int]
-
-val zombieRunSpeed = Val[Double]
-val zombiePheromoneEvaporation = Val[Double]
-val zombiePerception = Val[Double]
-val zombieMaxRotation = Val[Double]
 val zombies = Val[Int]
 
-val walkSpeed = Val[Double]
+// generator parameters
+// all are Double for LHS
+val generatorType = Val[String]
+val worldSize = Val[Int]
+val randomDensity = Val[Double]
+val expMixtureCenters = Val[Double]
+val expMixtureRadius = Val[Double]
+val expMixtureThreshold = Val[Double]
+val blocksNumber = Val[Double]
+val blocksMinSize = Val[Double]
+val blocksMaxSize = Val[Double]
+val percolationProba = Val[Double]
+val percolationBordPoints = Val[Double]
+val percolationLinkWidth = Val[Double]
 
+
+// outputs
 val humansDynamic = Val[Array[Int]]
 val zombiesDynamic = Val[Array[Int]]
 val killedDynamic = Val[Array[Int]]
@@ -31,50 +34,43 @@ val fleeDynamic = Val[Array[Int]]
 val pursueDynamic = Val[Array[Int]]
 val rescuedDynamic = Val[Array[Int]]
 
+
+
+
 val model =
   ScalaTask("""
     import _root_.zombies._
     import _root_.zombies.world._
     import _root_.zombies.simulation._
     import _root_.zombies.agent._
+    import _root_.zombies.worldgen._
 
-    val rng = new util.Random(seed)
+    val rng = new util.Random(replication)
 
-    val worldsize = 40
-
-    val world = World(GridGeneratorLauncher(
-          optionValue(generationMethod),
-          worldsize,
-          value(randomDensity),
-          value(expMixtureCenters),
-          value(expMixtureRadius),
-          value(expMixtureThreshold),
-          value(blocksNumber),
-          value(blocksMinSize),
-          value(blocksMaxSize),
-          value(percolationProba),
-          value(percolationBordPoints),
-          value(percolationLinkWidth)).getGrid(rng),worldsize)
+    val world = generatorType match {
+      case "jaude" => World.jaude
+      case g => World(GridGeneratorLauncher(
+          g,
+          worldSize,
+          randomDensity,
+          expMixtureCenters.toInt,
+          expMixtureRadius,
+          expMixtureThreshold,
+          blocksNumber.toInt,
+          blocksMinSize.toInt,
+          blocksMaxSize.toInt,
+          percolationProba,
+          percolationBordPoints.toInt,
+          percolationLinkWidth
+        ).getGrid(rng),worldSize)
+    }
 
     val simulation = Simulation.initialize(
-      world = World.jaude,
-      infectionRange = infectionRange,
-      humanRunSpeed = humanRunSpeed,
-      humanExhaustionProbability = humanExhaustionProbability,
-      humanPerception = humanPerception,
-      humanMaxRotation = humanMaxRotation,
-      humanFollowProbability = humanFollowProbability,
-      humanInformedRatio = humanInformedRatio,
-      humanInformProbability = humanInformProbability,
-      humanFightBackProbability = humanFightBackProbability,
+      world = world,
       humans = humans,
-      zombieRunSpeed = zombieRunSpeed,
-      zombiePerception = zombiePerception,
-      zombieMaxRotation = zombieMaxRotation,
-      zombiePheromone = Pheromone(zombiePheromoneEvaporation),
       zombies = zombies,
-      walkSpeed = walkSpeed,
-      random = rng)
+      random = rng
+    )
 
     val steps = 500
 
@@ -90,33 +86,51 @@ val model =
     val pursueDynamic = events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum).toArray
     val goneDynamic = events.map(_.collect(Event.gone).size).grouped(10).map(_.sum).toArray
   """) set (
-    inputs += (seed, infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies, walkSpeed),
-    outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic, humans, zombies, walkSpeed),
-
+    (inputs,outputs) += (replication,humans,zombies,id),
+    (inputs,outputs) += (generatorType,worldSize,randomDensity,expMixtureCenters,expMixtureRadius,expMixtureThreshold,
+      blocksNumber,blocksMinSize,blocksMaxSize,percolationProba,percolationBordPoints,percolationLinkWidth),
+    outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic),
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
-
-    seed := 42L,
-
-    walkSpeed := physic.walkSpeed,
-    infectionRange := physic.infectionRange,
-
-    humanInformedRatio := physic.humanInformedRatio,
-    humanInformProbability := physic.humanInformProbability,
-    humanFollowProbability := physic.humanFollowProbability,
-    humanFightBackProbability := physic.humanFightBackProbability,
-
-    humanPerception := physic.humanPerception,
-    zombiePerception := physic.zombiePerception,
-
-    humanRunSpeed := physic.humanRunSpeed,
-    zombieRunSpeed := physic.zombieRunSpeed,
-
-    humanExhaustionProbability := physic.humanExhaustionProbability,
-    zombieMaxRotation := physic.zombieMaxRotation,
-    humanMaxRotation := physic.humanMaxRotation,
-
-    zombiePheromoneEvaporation := physic.zombiePheromone.evaporation,
-
     humans := 250,
-    zombies := 4,
+    zombies := 4
   )
+
+
+val purpose = "LHS_SPATIALSENS_REPLICATIONS_GRID"
+//val purpose = "TEST"
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+//val env = LocalEnvironment(50)
+
+val indics_hook = AppendToCSVFileHook(workDirectory / "exploration" / ((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose+".csv") set (arraysOnSingleRow := true)
+
+
+val exploration = DirectSampling(
+    evaluation = (model on env by 500 hook indics_hook),
+    sampling = ((((LHS(100,
+          randomDensity in Range(0.0,1.0),
+          expMixtureCenters in Range(1.0,10.0),
+          expMixtureRadius in Range(1.0,20.0),
+          expMixtureThreshold in Range(0.0,1.0),
+          blocksNumber in Range(1.0,20.0),
+          blocksMinSize in Range(1.0,10.0),
+          blocksMaxSize in Range(2.0,30.0),
+          percolationProba in Range(0.1,1.0),
+          percolationBordPoints in Range(1.0,30.0),
+          percolationLinkWidth in Range(1.0,5.0)
+        )
+        withIndex id)
+      x (generatorType in Seq("random","expMixture","blocks","percolation"))
+    ) :: (
+      (randomDensity is 0.0)x(expMixtureCenters is 0.0)x(expMixtureRadius is 0.0)x(expMixtureThreshold is 0.0)x(blocksNumber is 0.0)x
+    (blocksMinSize is 0.0)x(blocksMaxSize is 0.0)x(percolationProba is 0.0)x(percolationBordPoints is 0.0)x
+    (percolationLinkWidth is 0.0)x(id is 0)x(generatorType is "jaude")
+         )
+     )
+      x (worldSize is 40)
+      x (replication in (UniformDistribution[Int](10000) take 100))
+   )
+)
+
+
+  exploration

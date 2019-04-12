@@ -572,12 +572,13 @@ object worldgen {
       * @param percolationProba
       * @return
       */
-    def bondPercolatedNetwork(worldSize: Int,percolationProba: Double,bordPoints: Int,linkwidth: Double)(implicit rng: Random): Network = {
+    def bondPercolatedNetwork(worldSize: Int,percolationProba: Double,bordPoints: Int,linkwidth: Double,maxIterations: Int = 10000)(implicit rng: Random): Network = {
       var network = GridNetworkGenerator(worldSize).generateNetwork//.gridNetwork(worldSize/10,worldSize/10,worldSize)
       var bordConnected = 0
       val xmin = network.nodes.map{_.x}.min;val xmax = network.nodes.map{_.x}.max
       val ymin = network.nodes.map{_.y}.min;val ymax = network.nodes.map{_.y}.max
-      while(bordConnected<bordPoints){
+      var iteration = 0
+      while(bordConnected<bordPoints||iteration<maxIterations){
         network = Network.percolate(network,percolationProba,linkFilter={
           l: Link => l.weight==0.0&&(
             (((l.e1.x!=xmin)&&(l.e2.x!=xmin))||((l.e1.x==xmin)&&(l.e2.x!=xmin))||((l.e2.x==xmin)&&(l.e1.x!=xmin)))&&
@@ -596,6 +597,7 @@ object worldgen {
         //println("Percolated links prop : "+(network.links.toSeq.map{_.weight}.sum/network.links.toSeq.size))
         //println("bordConnected = "+bordConnected)
         //println("nodesOnBord="+nodesOnBord)
+        iteration = iteration + 1
       }
       network
     }
