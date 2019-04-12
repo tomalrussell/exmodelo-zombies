@@ -158,7 +158,7 @@ object display {
     }
 
     def buildAgents = {
-      val element: SVGElement = tools.rxSVGMod(Rx {
+      val element: SVGElement = scaladget.tools.rxSVGMod(Rx {
         svgTags.g((for {
           a <- stepState().map {
             _._1.agents
