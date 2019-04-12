@@ -18,6 +18,15 @@ object worldgen {
     array.map{_.map{case v => (if (v == 0) Floor() else Wall).asInstanceOf[Cell]}}
   }
 
+  implicit def worldToRaster(world: World): Array[Array[Double]] = world.cells.map {
+    _.map { c =>
+      c match {
+        case Wall => 1.0;
+        case _ => 0.0
+      }
+    }
+  }
+
 
 
   /**
@@ -51,21 +60,14 @@ object worldgen {
       * @param network
       * @return
       */
-    def percolate(network: Network,percolationProba: Double,linkFilter: Link=>Boolean//={_.weight==0.0}
+    def percolate(network: Network,percolationProba: Double,linkFilter: Link=>Boolean
                  )(implicit rng: Random): Network = {
-      //println("percolate : "+network.links.toSeq.map(_.weight).sum)
       val emptyLinks = network.links.toSeq.filter(linkFilter)
       val fullLinks = network.links.toSeq.filter{l => !linkFilter(l)}
-
-      //println("percolating nw with "+emptyLinks.size+" empty links ; "+fullLinks.size+" full links")
-
       val percolated = emptyLinks.map{case l => if(rng.nextDouble()<percolationProba){Link(l.e1,l.e2,1.0)}else{Link(l.e1,l.e2,0.0)}}
-      //println("rem empty links : "+percolated.filter((_.weight==0.0)).size)
       val newlinks=fullLinks++percolated
-      //println("percolated : "+(network.links.toSeq.map(_.weight).sum+newlinks.map(_.weight).sum))
       val newLinksSet = newlinks.toSet
-      //println("perc nw links = "+newLinksSet.size)
-      //println("perc nw unique links = "+newLinksSet.map{case e => e.e1.id+"-"+e.e2.id+"-"+e.weight}.size)
+
       Network(network.nodes,newLinksSet)
     }
 
@@ -86,13 +88,9 @@ object worldgen {
         val i2 = l.e2.x - xmin;val j2 = l.e2.y - ymin
         val istep = (i1 - i2) match {case x if math.abs(x) < 1e-10 => 0.0 ;case _ => math.cos(math.atan((j2 - j1)/(i2 - i1)))*footPrintResolution}
         val jstep = (j1 - j2) match {case x if math.abs(x) < 1e-10 => 0.0 ;case _ => math.sin(math.atan((j2 - j1)/(i2 - i1)))*footPrintResolution}
-        //println("istep,jstep = "+istep+","+jstep)
-        //println(l)
         val nsteps = (i1 - i2) match {case x if math.abs(x) < 1e-10 => (j2 - j1)/jstep;case _ => (i2 - i1)/istep}
-        //println(nsteps)
         var x = l.e1.x;var y = l.e1.y
         (0.0 to nsteps by 1.0).foreach{_ =>
-          //println("x = "+x+"; y = "+y)
           for {
             k1 <- - (linkwidth-1)/2 to (linkwidth-1)/2 by 1.0
             k2 <-  - (linkwidth-1)/2 to (linkwidth-1)/2 by 1.0
@@ -163,9 +161,7 @@ object worldgen {
 
     def largestConnectedComponent(network: Network): Network = {
       val components = connectedComponents(network)
-      //val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>=n2.nodes.size}(0)
       val largestComp = components.sortWith{case(n1,n2)=>n1.nodes.size>n2.nodes.size}(0)
-      //println("largest comp size : "+largestComp.nodes.size)
       largestComp
     }
 
@@ -182,9 +178,8 @@ object worldgen {
     def allPairsShortestPath(network: Network): Map[(Node,Node),Seq[Link]] = {
       val nodenames = network.nodes.toSeq.map{_.id}
       val nodeids: Map[Int,Int] = nodenames.toSeq.zipWithIndex.toMap
-      //val revnodeids: Map[Int,Int] = nodenames.zipWithIndex.map{case(oid,ind)=>(ind,oid)}.toMap
       val revnodes: Map[Int,Node] = network.nodes.toSeq.zipWithIndex.map{case(n,i)=>(i,n)}.toMap
-      val nodes = nodeids.keySet //not necessary, for clarity
+      val nodes = nodeids.keySet
       val mlinks = mutable.Map[Int, Set[Int]]()
       val mlinkweights = mutable.Map[(Int,Int),Double]()
       val linksMap = mutable.Map[(Int,Int),Link]()
@@ -236,9 +231,6 @@ object worldgen {
           path.append(revnodes(k))
           extractPath(path,pathLinks, k, j)
         }else {
-          // otherwise k is the next node, can add the link
-          //assert(revnodes.contains(i),"error : "+i)
-          //assert(revnodes.contains(j),"error : "+j)
           assert(linksMap.contains(revnodes(i).id,revnodes(j).id),"error : "+network.links.filter{case l => l.e1.id==revnodes(i).id&&l.e2.id==revnodes(j).id}+" - "+network.links.filter{case l => l.e2.id==revnodes(i).id&&l.e1.id==revnodes(j).id})
           pathLinks.append(linksMap(revnodes(i).id,revnodes(j).id))
         }
@@ -321,7 +313,6 @@ object worldgen {
       * @return
       */
     def blocksGrid(size: RasterDim,blocks: Int,blockMinSize: Int, blockMaxSize: Int,rng: Random): RasterLayerData[Double] = {
-      println("Blocks grid of size "+size+" ; "+blocks+" ; "+blockMinSize+" ; "+blockMaxSize)
       val maxsize = math.max(blockMinSize,blockMaxSize)
       val minsize = math.min(blockMinSize,blockMaxSize)
       val w = size match {case Left(l) => l; case Right((w,_)) => w}
@@ -371,7 +362,6 @@ object worldgen {
                                 ) extends GridGenerator {
 
     override def generateGrid(implicit rng: Random): RasterLayerData[Double] = {
-      println("Exp mixture grid of size "+size+" ; "+centers+" ; "+maxValue+" ; "+kernelRadius)
       def expKernel(x: Double, y: Double): Double = maxValue*exp(-sqrt(pow(x,2.0)+pow(y,2.0))/kernelRadius)
       KernelMixture.kernelMixture(size,Left(centers),expKernel,rng)
     }
@@ -419,7 +409,6 @@ object worldgen {
                                      ) extends GridGenerator {
 
     override def generateGrid(implicit rng: Random): RasterLayerData[Double] = {
-      println("Percolation grid of size "+size+" ; "+percolationProba+" ; "+bordPoints+" ; "+linkwidth)
       Network.networkToGrid(PercolationNetworkGenerator(size,percolationProba,bordPoints,linkwidth).generateNetwork(rng),linkwidth=linkwidth).map{
         _.map{1.0 - _}
       }
@@ -462,7 +451,6 @@ object worldgen {
       * @return
       */
     def randomGrid(size: RasterDim, rng: Random) : RasterLayerData[Double] = {
-      println("Random grid")
       size match {
         case Left(size)=>Array.fill(size, size){ rng.nextDouble() }
         case Right((w,h))=>Array.fill(w, h){ rng.nextDouble() }
@@ -580,14 +568,9 @@ object worldgen {
         })
         val giantcomp =  Network.largestConnectedComponent(Network(network.nodes,network.links.filter{_.weight>0}))
 
-        //println("giantcomp size = "+giantcomp.links.size)
-
         val nodesOnBord = giantcomp.nodes.filter{case n => n.x==xmin||n.x==xmax||n.y==ymin||n.y==ymax}
         bordConnected =nodesOnBord.size
 
-        //println("Percolated links prop : "+(network.links.toSeq.map{_.weight}.sum/network.links.toSeq.size))
-        //println("bordConnected = "+bordConnected)
-        //println("nodesOnBord="+nodesOnBord)
         iteration = iteration + 1
       }
       network
@@ -637,17 +620,6 @@ object worldgen {
 
                                   ) {
 
-    def jaudeWorld: Array[Array[Double]] = {
-      World.jaude.cells.map {
-        _.map { c =>
-          c match {
-            case world.Wall => 1.0;
-            case _ => 0.0
-          }
-        }
-      }
-    }
-
 
     def density(world: Array[Array[Double]]): Double = world.flatten.map{x => if(x>0.0)1.0 else 0.0}.sum / world.flatten.size
 
@@ -667,7 +639,7 @@ object worldgen {
             case _ => {assert(false,"Error : the requested generator does not exist");Array.empty}
           }
 
-          if(density(world) > 0.8) jaudeWorld else world
+          if(density(world) > 0.8) World.jaude else world
         }
 
 
