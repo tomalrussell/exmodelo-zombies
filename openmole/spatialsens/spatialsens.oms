@@ -34,6 +34,17 @@ val fleeDynamic = Val[Array[Int]]
 val pursueDynamic = Val[Array[Int]]
 val rescuedDynamic = Val[Array[Int]]
 
+// morphological indicators
+val moran = Val[Double]
+val avgDistance = Val[Double]
+val density = Val[Double]
+val components = Val[Double]
+//val avgDetour = Val[Double] // not computed - no graph lib
+val avgBlockArea = Val[Double]
+val avgComponentArea = Val[Double]
+val fullDilationSteps = Val[Double]
+val fullErosionSteps = Val[Double]
+
 
 
 
@@ -65,6 +76,8 @@ val model =
         ).getGrid(rng),worldSize)
     }
 
+    val (_,_,_,moran,avgDistance,density,components,_,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps) = Morphology(world).toTuple
+
     val simulation = Simulation.initialize(
       world = world,
       humans = humans,
@@ -90,6 +103,7 @@ val model =
     (inputs,outputs) += (generatorType,worldSize,randomDensity,expMixtureCenters,expMixtureRadius,expMixtureThreshold,
       blocksNumber,blocksMinSize,blocksMaxSize,percolationProba,percolationBordPoints,percolationLinkWidth),
     outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic),
+    outputs += (moran,avgDistance,density,components,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps),
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
     humans := 250,
     zombies := 4

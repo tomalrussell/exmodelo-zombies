@@ -1,0 +1,136 @@
+import _root_.zombies.simulation._
+
+val replication = Val[Int]
+val id = Val[Int]
+val worldid = Val[Int]
+
+// model parameters
+val infectionRange = Val[Double]
+val humanRunSpeed = Val[Double]
+val humanExhaustionProbability = Val[Double]
+val humanFollowProbability = Val[Double]
+val humanInformedRatio = Val[Double]
+val humanInformProbability = Val[Double]
+val humanFightBackProbability = Val[Double]
+val humanPerception = Val[Double]
+val humanMaxRotation = Val[Double]
+val zombieRunSpeed = Val[Double]
+val zombiePheromoneEvaporation = Val[Double]
+val zombiePerception = Val[Double]
+val zombieMaxRotation = Val[Double]
+val humans = Val[Int]
+val zombies = Val[Int]
+
+// generator parameters
+val generatorType = Val[String]
+val worldSize = Val[Int]
+val randomDensity = Val[Double]
+val expMixtureCenters = Val[Double]
+val expMixtureRadius = Val[Double]
+val expMixtureThreshold = Val[Double]
+val blocksNumber = Val[Double]
+val blocksMinSize = Val[Double]
+val blocksMaxSize = Val[Double]
+val percolationProba = Val[Double]
+val percolationBordPoints = Val[Double]
+val percolationLinkWidth = Val[Double]
+
+val worlds = Val[Array[Array[Array[Double]]]]
+
+// first expo to generate world (local)
+// -> could be a spatialsampling
+
+val generateWorlds =
+  ScalaTask("""
+    import _root_.zombies.worldgen._
+    val rng = new util.Random(replication)
+    worlds = GridGeneratorLauncher(
+        generatorType,
+        worldSize,
+        randomDensity,
+        expMixtureCenters.toInt,
+        expMixtureRadius,
+        expMixtureThreshold,
+        blocksNumber.toInt,
+        blocksMinSize.toInt,
+        blocksMaxSize.toInt,
+        percolationProba,
+        percolationBordPoints.toInt,
+        percolationLinkWidth
+      ).getGrid(rng)
+    """) set (
+      (inputs,outputs) += (worldid,generatorType,worldSize,randomDensity,expMixtureCenters,expMixtureRadius,expMixtureThreshold,
+        blocksNumber,blocksMinSize,blocksMaxSize,percolationProba,percolationBordPoints,percolationLinkWidth),
+      outputs += (moran,avgDistance,density,components,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps),
+      outputs += (worlds),
+      plugins += pluginsOf[_root_.zombies.simulation.Simulation]
+    )
+
+val worldSampling = DirectSampling(
+
+)
+
+
+//worldSampling -< generateWorlds
+
+
+
+val model =
+  ScalaTask("""
+    import _root_.zombies._
+    import _root_.zombies.world._
+    import _root_.zombies.simulation._
+    import _root_.zombies.agent._
+
+    val rng = new util.Random(replication)
+
+    val simulation = Simulation.initialize(
+      world = world,
+      humans = humans,
+      zombies = zombies,
+      random = rng
+    )
+
+    val steps = 500
+
+    val (simulations, events) = simulate(simulation, rng, steps)
+
+    val humansDynamic = simulations.map(_.agents.collect(Agent.human).size).grouped(10).map(_.head).toArray
+    val zombiesDynamic = simulations.map(_.agents.collect(Agent.zombie).size).grouped(10).map(_.head).toArray
+
+    val rescuedDynamic = events.map(_.collect(Event.rescued).size).grouped(10).map(_.sum).toArray
+    val killedDynamic = events.map(_.collect(Event.killed).size).grouped(10).map(_.sum).toArray
+    val zombifiedDynamic = events.map(_.collect(Event.zombified).size).grouped(10).map(_.sum).toArray
+    val fleeDynamic = events.map(_.collect(Event.flee).size).grouped(10).map(_.sum).toArray
+    val pursueDynamic = events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum).toArray
+    val goneDynamic = events.map(_.collect(Event.gone).size).grouped(10).map(_.sum).toArray
+  """) set (
+    (inputs,outputs) += (replication,humans,zombies,id),
+    (inputs) += (world),
+    outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic),
+    outputs += (moran,avgDistance,density,components,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps),
+    plugins += pluginsOf[_root_.zombies.simulation.Simulation],
+    humans := 250,
+    zombies := 4
+  )
+
+
+val modelSampling = DirectSampling(
+  sampling = OneFactorSampling(
+    2000,
+    infectionRange in (0.0, 0.5) nominal ,
+    humanRunSpeed in (0.1, 0.9),
+    humanExhaustionProbability in (0.1, 0.9),
+    humanAwarenessProbability in (0.1, 0.9),
+    humanFightBackProbability in (0.1, 0.9),
+    humanInformedRatio in (0.1, 0.9),
+    humanFollowProbability in (0.1, 0.9),
+    humanPerception in (0.1, 3.0),
+    humanMaxRotation in (5.0, 90.0),
+
+    zombieRunSpeed in (0.1, 0.9),
+    zombiePheromoneEvaporation in (0.0, 1.0),
+    zombiePerception in (0.1, 3.0),
+    zombieMaxRotation in (5.0, 90.0)
+  )
+)

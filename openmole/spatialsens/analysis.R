@@ -4,11 +4,14 @@ library(reshape2)
 
 setwd(paste0(Sys.getenv('CS_HOME'),'/OpenMole/zombies/openmole/spatialsens'))
 
-res1 <- as.tbl(read.csv('exploration/20190330_174556_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
-res2 <- as.tbl(read.csv('exploration/20190408_163218_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
-res3 <- as.tbl(read.csv('exploration/20190411_090002_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
-res=rbind(res1,res2,res3)
-resdir='results/20190330-20190408_LHS_SPATIALSENS_REPLICATIONS_GRID';dir.create(resdir)
+#res1 <- as.tbl(read.csv('exploration/20190330_174556_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
+#res2 <- as.tbl(read.csv('exploration/20190408_163218_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
+#res3 <- as.tbl(read.csv('exploration/20190411_090002_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
+res <- as.tbl(read.csv('exploration/20190412_152247_LHS_SPATIALSENS_REPLICATIONS_GRID.csv'))
+#res=rbind(res1,res2,res3,res4)
+#resdir='results/20190330-20190411_LHS_SPATIALSENS_REPLICATIONS_GRID';dir.create(resdir)
+resdir='results/20190412_LHS_SPATIALSENS_REPLICATIONS_GRID';dir.create(resdir)
+
 
 finalTime = 50
 
