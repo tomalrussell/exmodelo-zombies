@@ -67,12 +67,12 @@ sstres = stres %>% group_by(generatorType,time,indic)%>% summarize(sdValue=sd(va
 g=ggplot(sstres[sstres$indic=='humans'&sstres$generatorType!='random',],aes(x=time,y=value,ymin=value-sdValue,ymax=value+sdValue,colour=generatorType))
 g+geom_line()+geom_point()+geom_errorbar()+
   ylab('humans')+stdtheme
-ggsave(paste0(resdir,'spatialsens_generators_humans.png'),width=20,height=15,units='cm')
+ggsave(paste0(resdir,'/spatialsens_generators_humans.png'),width=20,height=15,units='cm')
 
 g=ggplot(sstres[sstres$indic=='zombies'&sstres$generatorType!='random',],aes(x=time,y=value,ymin=value-sdValue,ymax=value+sdValue,colour=generatorType))
 g+geom_line()+geom_point()+geom_errorbar()+
   ylab('zombies')+stdtheme
-ggsave(paste0(resdir,'spatialsens_generators_zombies.png'),width=20,height=15,units='cm')
+ggsave(paste0(resdir,'/spatialsens_generators_zombies.png'),width=20,height=15,units='cm')
 
 
   
@@ -82,5 +82,6 @@ dres=cbind(res[,params],distances_humans)
 mdistref = mean(distances_humans[res$generatorType=='jaude'])
 
 g=ggplot(dres[dres$generatorType!='random',],aes(x=generatorType,y=distances_humans/mdistref))
-g+geom_boxplot(outlier.size = NULL)+scale_y_log10()
+g+geom_boxplot(outlier.size = NULL)+scale_y_log10()+xlab("Generator")+ylab("Relative distance to reference")+stdtheme
+ggsave(paste0(resdir,'/reldistance.png'),width=20,height=15,units='cm')
 
