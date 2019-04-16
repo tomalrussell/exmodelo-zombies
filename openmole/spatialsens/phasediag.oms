@@ -22,9 +22,8 @@ val humans = Val[Int]
 val zombies = Val[Int]
 
 // generator parameters
-val generatorType = Val[String]
-val worldSize = Val[Int]
-val randomDensity = Val[Double]
+val worldSize = 40
+
 val expMixtureCenters = Val[Double]
 val expMixtureRadius = Val[Double]
 val expMixtureThreshold = Val[Double]
@@ -35,8 +34,7 @@ val percolationProba = Val[Double]
 val percolationBordPoints = Val[Double]
 val percolationLinkWidth = Val[Double]
 
-val worlds = Val[Array[Array[Array[Double]]]]
-val world = Val[Array[Array[Double]]]
+val genworld = Val[Array[Array[Double]]]
 
 // outputs
 val humansDynamic = Val[Array[Int]]
@@ -50,35 +48,7 @@ val rescuedDynamic = Val[Array[Int]]
 
 
 
-// first expo to generate world (local)
-// -> could be a spatialsampling
-
-val generateWorlds =
-  ScalaTask("""
-    import _root_.zombies.worldgen._
-    val rng = new util.Random(replication)
-    val worlds = GridGeneratorLauncher(
-        generatorType,
-        worldSize,
-        randomDensity,
-        expMixtureCenters.toInt,
-        expMixtureRadius,
-        expMixtureThreshold,
-        blocksNumber.toInt,
-        blocksMinSize.toInt,
-        blocksMaxSize.toInt,
-        percolationProba,
-        percolationBordPoints.toInt,
-        percolationLinkWidth
-      ).getGrid(rng)
-    """) set (
-      inputs += (worldid,generatorType,worldSize,randomDensity,expMixtureCenters,expMixtureRadius,expMixtureThreshold,
-        blocksNumber,blocksMinSize,blocksMaxSize,percolationProba,percolationBordPoints,percolationLinkWidth),
-      //outputs += (moran,avgDistance,density,components,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps),
-      outputs += (worlds),
-      plugins += pluginsOf[_root_.zombies.simulation.Simulation]
-    )
-
+/*
 val worldSampling = DirectSampling(
   evaluation = generateWorlds,
   sampling = LHS(100,
@@ -95,7 +65,7 @@ val worldSampling = DirectSampling(
       )
     x (generatorType in Seq("random","expMixture","blocks","percolation"))
 )
-
+*/
 
 //worldSampling -< generateWorlds
 
@@ -104,14 +74,14 @@ val worldSampling = DirectSampling(
 val model =
   ScalaTask("""
     import _root_.zombies._
-    import _root_.zombies.world._
+    import _root_.zombies.worldgen._
     import _root_.zombies.simulation._
     import _root_.zombies.agent._
 
     val rng = new util.Random(replication)
 
     val simulation = Simulation.initialize(
-      world = world,
+      world = genworld,
       humans = humans,
       zombies = zombies,
       random = rng
@@ -133,7 +103,7 @@ val model =
   """) set (
     (inputs,outputs) += (replication,humans,zombies,id),
     inputs += (infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies),
-    inputs += (world),
+    inputs += (genworld),
     outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic),
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
     humans := 250,
@@ -144,15 +114,15 @@ val model =
   //val purpose = "ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID"
   val purpose = "TEST"
 
-  //val env = EGIEnvironment("vo.complex-systems.eu")
-  val env = LocalEnvironment(10)
+  val env = EGIEnvironment("vo.complex-systems.eu")
+  //val env = LocalEnvironment(10)
 
   val indics_hook = AppendToCSVFileHook(workDirectory / "exploration" / ((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose+".csv") set (arraysOnSingleRow := true)
 
 
 // onefactor with 3 steps -> 3^13 = 1594323 (too much) ; 2 steps : 8192 -> can do repetitions and more spatial sampling
-val modelExploration = DirectSampling(
-  evaluation = (model on env by 10000 hook indics_hook),
+val exploration = DirectSampling(
+  evaluation = (model on env by 100 hook indics_hook),
   sampling =
     (
     (OneFactorSampling(
@@ -171,10 +141,13 @@ val modelExploration = DirectSampling(
     (zombieMaxRotation in (5.0 to 90.0 by 85.0)) nominal 45.0
     )
   ) withIndex id ) x
-  (replication in (UniformDistribution[Int](10000) take 100)) x
-  (world in worlds.array)
-) set (inputs += (worlds))
+  (replication in (UniformDistribution[Int](10000) take 1)) x
+  BlocksGridSpatialSampling(2,worldSize,
+    blocksNumber in Range(1.0,20.0),
+    blocksMinSize in Range(1.0,10.0),
+    blocksMaxSize in Range(2.0,30.0),
+    genworld
+  )
+)
 
-
-
-worldSampling -< generateWorlds -- modelExploration
+exploration

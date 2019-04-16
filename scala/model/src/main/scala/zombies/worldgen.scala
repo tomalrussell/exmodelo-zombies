@@ -14,9 +14,15 @@ object worldgen {
     * zombie specific
     */
 
-  implicit def rasterToWorld(array: Array[Array[Double]]): Array[Array[Cell]] = {
+  implicit def rasterToCellMatrix(array: Array[Array[Double]]): Array[Array[Cell]] = {
     array.map{_.map{case v => (if (v == 0) Floor() else Wall).asInstanceOf[Cell]}}
   }
+
+  implicit def rasterToWorld(array: Array[Array[Double]]): World =
+    Morphology.density(array) match {
+      case x if x > 0.8 => World.jaude
+      case _ => World(array,array.length)
+    }
 
   implicit def worldToRaster(world: World): Array[Array[Double]] = world.cells.map {
     _.map { c =>
