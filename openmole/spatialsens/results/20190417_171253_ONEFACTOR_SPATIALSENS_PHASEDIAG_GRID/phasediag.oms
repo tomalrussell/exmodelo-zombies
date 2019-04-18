@@ -24,8 +24,6 @@ val zombies = Val[Int]
 // generator parameters
 val worldSize = 40
 
-val generatorType = Val[String]
-
 val expMixtureCenters = Val[Double]
 val expMixtureRadius = Val[Double]
 val expMixtureThreshold = Val[Double]
@@ -79,7 +77,7 @@ val model =
     val pursueDynamic = events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum).toArray
     val goneDynamic = events.map(_.collect(Event.gone).size).grouped(10).map(_.sum).toArray
   """) set (
-    (inputs,outputs) += (replication,humans,zombies,id,worldid,generatorType),
+    (inputs,outputs) += (replication,humans,zombies,id),
     inputs += (infectionRange, humanRunSpeed, humanExhaustionProbability, humanFollowProbability, humanInformedRatio, humanInformProbability, humanFightBackProbability, humanPerception, humanMaxRotation, humans, zombieRunSpeed, zombiePheromoneEvaporation, zombiePerception, zombieMaxRotation, zombies),
     inputs += (genworld),
     outputs += (humansDynamic, zombiesDynamic, killedDynamic, zombifiedDynamic, goneDynamic, fleeDynamic, pursueDynamic, rescuedDynamic),
@@ -105,16 +103,16 @@ val exploration = DirectSampling(
   sampling =
     (
     (OneFactorSampling(
-    (infectionRange in (0.0 to 0.5 by 0.25)) nominal 0.25,
-    (humanRunSpeed in (0.1 to 0.9 by 0.4)) nominal 0.5,
-    (humanExhaustionProbability in (0.1 to 0.9 by 0.4)) nominal 0.5,
-    (humanInformProbability in (0.1 to 0.9 by 0.4)) nominal 0.5,
+    (infectionRange in (0.0 to 0.5 by 0.5)) nominal 0.25,
+    (humanRunSpeed in (0.1 to 0.9 by 0.8)) nominal 0.5,
+    (humanExhaustionProbability in (0.1 to 0.9 by 0.8)) nominal 0.5,
+    (humanInformProbability in (0.1 to 0.9 by 0.8)) nominal 0.5,
     (humanFightBackProbability in (0.1 to 0.9 by 0.8)) nominal 0.5,
     (humanInformedRatio in (0.1 to 0.9 by 0.8)) nominal 0.5,
     (humanFollowProbability in (0.1 to 0.9 by 0.8)) nominal 0.5,
     (humanPerception in (0.1 to 3.0 by 2.9)) nominal 1.5,
     (humanMaxRotation in (5.0 to 90.0 by 85.0)) nominal 45.0,
-    (zombieRunSpeed in (0.1 to 0.9 by 0.4)) nominal 0.5,
+    (zombieRunSpeed in (0.1 to 0.9 by 0.8)) nominal 0.5,
     (zombiePheromoneEvaporation in (0.0 to 1.0 by 1.0)) nominal 0.5,
     (zombiePerception in (0.1 to 3.0 by 2.9)) nominal 1.5,
     (zombieMaxRotation in (5.0 to 90.0 by 85.0)) nominal 45.0
@@ -122,24 +120,21 @@ val exploration = DirectSampling(
   ) withIndex id ) x
   (replication in (UniformDistribution[Int](10000) take 100))x//50)) x
   (
-  ((BlocksGridSpatialSampling(20,worldSize,
+  (BlocksGridSpatialSampling(20,worldSize,
     blocksNumber in Range(1.0,20.0),
     blocksMinSize in Range(1.0,10.0),
     blocksMaxSize in Range(2.0,30.0),
     genworld
-  )x (generatorType is "blocks")) ::
-   (ExpMixtureThresholdSpatialSampling(20,worldSize,
+  ) ::
+   ExpMixtureThresholdSpatialSampling(20,worldSize,
     expMixtureCenters in Range(1.0,10.0),
     expMixtureRadius in Range(1.0,20.0),
     expMixtureThreshold in Range(0.0,1.0),
     genworld
-  )x (generatorType is "expMixture")) ::
-   ((genworld is Array.fill(worldSize)(Array.fill(worldSize)(0.0)))x (generatorType is "jaude")) // world set to jaude in zombies when array is empty
+  ) ::
+   (genworld is Array.fill(worldSize)(Array.fill(worldSize)(0.0))) // world set to jaude in zombies when array is empty
  ) withIndex worldid)
 )
-
-// !!! same prototypes for a use in output like this + add generator name (can be done by hand here)
-// TODO update to have gen prototypes output + rename variables
 
 
 /*

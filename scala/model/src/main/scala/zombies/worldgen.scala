@@ -21,6 +21,7 @@ object worldgen {
   implicit def rasterToWorld(array: Array[Array[Double]]): World =
     Morphology.density(array) match {
       case x if x > 0.8 => World.jaude
+      case x if x == 0.0 => World.jaude
       case _ => World(array,array.length)
     }
 
