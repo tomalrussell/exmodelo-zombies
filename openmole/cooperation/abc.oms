@@ -1,0 +1,31 @@
+import _file_.model._
+
+val priors = Seq(
+  ABC.Prior(humanInformedRatio, 0.0, 1.0),
+  ABC.Prior(humanInformProbability, 0.0, 1.0),
+  ABC.Prior(humanFollowProbability, 0.0, 1.0)
+)  
+
+val observed = Seq(
+  ABC.Observed(rescuedAtTheEndAvg, 165.65),
+  ABC.Observed(timeForHalfRescuedAvg, 40.69)
+)
+
+val step = Val[Int]
+
+val abc =
+  IslandABC(
+    evaluation = model,
+    prior = priors,
+    observed =  observed,
+    sample = 500,
+    generated = 500,
+    minAcceptedRatio = 0.01,
+    parallelism = 200
+  )
+
+val save = ABCHook(abc, workDirectory / "results/abc/")
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+abc hook save on env
