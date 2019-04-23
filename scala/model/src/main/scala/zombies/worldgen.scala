@@ -34,6 +34,17 @@ object worldgen {
     }
   }
 
+  /**
+    * add walls all around the world
+    * @param world
+    * @return
+    */
+  def closeWorld(world: World): World = World(
+    Array(Array.fill(world.side)(Wall.asInstanceOf[Cell]))++world.cells.tail.take(world.side-2).map{
+      r => Array(Wall)++r.tail.take(world.side-2)++Array(Wall)
+    }++Array(Array.fill(world.side)(Wall.asInstanceOf[Cell]))
+  ,world.side)
+
 
 
   /**
