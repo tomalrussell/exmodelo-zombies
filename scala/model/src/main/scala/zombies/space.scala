@@ -35,10 +35,10 @@ object space {
 
   def opposite(v: (Double, Double)) = (-v._1, -v._2)
 
-  def rotate(v: (Double, Double), teta: Double) = {
+  def rotate(v: (Double, Double), theta: Double) = {
     import math._
     val (x, y) = v
-    (x * cos(teta) - y * sin(teta), x * sin(teta) + y * cos(teta))
+    (x * cos(theta) - y * sin(theta), x * sin(theta) + y * cos(theta))
   }
 
   def get[T](a: Array[Array[T]], x: Int, y: Int) =

@@ -5,10 +5,12 @@ library(reshape2)
 setwd(paste0(Sys.getenv('CS_HOME'),'/OpenMole/zombies/openmole/spatialsens'))
 
 source(paste0(Sys.getenv('CS_HOME'),'/Organisation/Models/Utils/R/plots.R'))
+source('functions.R')
 
 # ! this experiment was no world id
 #res <- as.tbl(read.csv('exploration/20190417_171253_ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID.csv'))
-res <- as.tbl(read.csv('exploration/20190419_085711_ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID.csv'))
+# ! this experiment has no model params
+#res <- as.tbl(read.csv('exploration/20190419_085711_ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID.csv'))
 
 #resdir='results/20190417_171253_ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID';dir.create(resdir)
 resdir='results/20190419_085711_ONEFACTOR_SPATIALSENS_PHASEDIAG_GRID';dir.create(resdir)
@@ -52,6 +54,18 @@ sresgroupped = res %>% group_by(id,replication) %>% summarize(count=n(),finalHum
 sres = res %>% group_by(worldid) %>% summarise(count=n())
 
 # d(phasediag,refphasediag) = f(worldid,generatorType)
+
+# model parameters
+params = c("infectionRange","humanRunSpeed","humanExhaustionProbability","humanInformProbability","humanFightBackProbability",
+           "humanInformedRatio","humanFollowProbability","humanPerception","humanMaxRotation","zombieRunSpeed",
+           "zombiePheromoneEvaporation","zombiePerception","zombieMaxRotation"
+           )
+
+distances = distancesToRef(
+  simresults = res,reference=res[res$generatorType=='jaude',],parameters=params
+  ,indicators=c("humansDynamic50","zombiesDynamic50"),
+  idcol='worldid'
+)
 
 
 

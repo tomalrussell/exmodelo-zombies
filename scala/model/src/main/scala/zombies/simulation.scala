@@ -31,6 +31,10 @@ object simulation {
     def pursue: PartialFunction[Event, PursueHuman] = {
       case e: PursueHuman => e
     }
+
+    def trapped: PartialFunction[Event, Trapped] = {
+      case e: Trapped => e
+    }
   }
 
   sealed trait Event
