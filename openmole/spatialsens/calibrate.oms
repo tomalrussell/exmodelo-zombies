@@ -29,7 +29,7 @@ val finalZombies = Val[Int]
 
 
 
-val model =
+def model(generator: String) =
   ScalaTask("""
     import _root_.zombies._
     import _root_.zombies.world._
@@ -39,7 +39,7 @@ val model =
 
     val rng = new util.Random(seed)
 
-    val world = generatorType match {
+    val world = closeWorld(generatorType match {
       case "jaude" => World.jaude
       case g => World(GridGeneratorLauncher(
           g,
@@ -55,7 +55,7 @@ val model =
           percolationBordPoints.toInt,
           percolationLinkWidth
         ).getGrid(rng),worldSize)
-    }
+    })
 
     val (_,_,_,moran,avgDistance,density,components,_,avgBlockArea,avgComponentArea,fullDilationSteps,fullErosionSteps) = Morphology(world).toTuple
 
@@ -70,8 +70,9 @@ val model =
 
     val (simulations, events) = simulate(simulation, rng, steps)
 
-    val oppFinalHumans = simulations.map(_.agents.collect(Agent.human).size).grouped(10).map(_.head).toArray.takeRight(1)(0)* -1.0
+    val oppFinalHumans = simulations.map(_.agents.collect(Agent.human).size).grouped(10).map(_.head).toArray.takeRight(1)(0)* -1
     val finalZombies = simulations.map(_.agents.collect(Agent.zombie).size).grouped(10).map(_.head).toArray.takeRight(1)(0)
+    //val zombiesTimeSerie = simulations.map(_.agents.collect(Agent.zombie).size)
   """) set (
     (inputs,outputs) += (seed,humans,zombies),
     (inputs,outputs) += (generatorType,worldSize,randomDensity,expMixtureCenters,expMixtureRadius,expMixtureThreshold,
@@ -80,14 +81,18 @@ val model =
     plugins += pluginsOf[_root_.zombies.simulation.Simulation],
     humans := 250,
     zombies := 4,
-    worldSize := 40
+    worldSize := 40,
+    generatorType := generator
   )
 
-  val evolution =
+def calibrate(generator: String): DSL = {
+
+  val evolution = 
     NSGA2Evolution(
-      evaluation = model,
+      evaluation = model(generator),
       genome = Seq(
-        generatorType in Seq("jaude","random","expMixture","blocks","percolation"),
+        //generatorType in Seq(generator),
+        //generatorType in Seq("jaude","random","expMixture","blocks","percolation"),
         randomDensity in Range(0.0,1.0),
         expMixtureCenters in Range(1.0,10.0),
         expMixtureRadius in Range(1.0,20.0),
@@ -99,17 +104,24 @@ val model =
         percolationBordPoints in Range(1.0,20.0),
         percolationLinkWidth in Range(1.0,5.0)),
       objectives = Seq(oppFinalHumans,finalZombies),
-      termination = 100000,
-      parallelism = 200,
-      distribution = Island(15 minutes),
+      //termination = 10,
+      termination = 5000,
+      parallelism = 100,
+      distribution = Island(10 minutes),
       stochastic = Stochastic(seed = seed)
     )
 
-val purpose = "CALIB_GENERATORS_GRID"
-//val purpose = "TEST"
+  val purpose = "CALIB_GENERATORS_GRID"
+  //val purpose = "TEST"
 
-val save = SavePopulationHook(evolution, workDirectory / "calibration/"+((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose, frequency = 100)
+  val save = SavePopulationHook(evolution, workDirectory / "calibration" / ((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose+s"/${generator}", frequency = 100)
 
-val env = EGIEnvironment("vo.complex-systems.eu")
+  val env = EGIEnvironment("vo.complex-systems.eu")
+  //val env = LocalEnvironment(10)
 
-evolution hook save on env
+  (evolution hook save on env)
+}
+
+EmptyTask() -- Seq("jaude","random","expMixture","blocks","percolation").map(calibrate)
+
+
