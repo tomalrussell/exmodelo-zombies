@@ -16,15 +16,19 @@ lazy val ode = Project("ode", file("ode")) enablePlugins(SbtOsgi) settings (
 )
 
 
-lazy val model = Project("model", file("model")) enablePlugins(SbtOsgi, ScalaJSPlugin) settings(
+lazy val model = Project("model", file("model")) enablePlugins(ScalaJSPlugin) settings(
+  scalaVersion := "2.12.8",
+)
+
+
+lazy val bundle = Project("zombies-bundle", file("bundle")) enablePlugins(SbtOsgi) settings(
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
   OsgiKeys.importPackage := Seq("*;resolution:=optional"),
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
   osgiSettings
-)
-
+) dependsOn(model)
 
 
 lazy val console = Project("console", file("console")) dependsOn (model) settings (

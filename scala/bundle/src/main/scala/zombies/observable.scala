@@ -1,6 +1,6 @@
 package zombies
 
-import simulation._
+import zombies.simulation.{Event, SimulationResult}
 import zombies.space.Position
 
 object observable {
