@@ -21,7 +21,6 @@ lazy val model = Project("model", file("model")) enablePlugins(ScalaJSPlugin) se
   scalaVersion := "2.12.8",
 )
 
-
 lazy val bundle = Project("zombies-bundle", file("bundle")) enablePlugins(SbtOsgi) settings(
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),

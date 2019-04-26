@@ -57,11 +57,11 @@ scala/spatialsens/target/zombies.html
 ```sh
 > cd scala
 > sbt
-sbt> project model
+sbt> project zombies-bundle
 sbt> osgiBundle
 ```
 
 The OpenMOLE jar plugin is in:
 ```sh
-scala/model/target/scala-2.12/model_sjs0.6_2.12-0.1.0-SNAPSHOT.jar
+scala/bundle/target/scala-2.12/zombies-bundle_2.12-0.1.0-SNAPSHOT.jar
 ```
