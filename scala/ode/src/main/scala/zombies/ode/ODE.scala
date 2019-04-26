@@ -3,8 +3,8 @@ package zombies.ode
 import better.files._
 
 object ODE extends App {
-  //println(
-    Model.run(
+
+    val simures = Model.run(
       // Real data
       file = File("ode/realData.csv").toJava,
       // ODE parameters
@@ -17,26 +17,41 @@ object ODE extends App {
       statesInit = Vector(250.0, 0.0, 4.0, 0.0),
       // Time steps
       t0 = 1,
-      dt = 1,
-      tMax = 100,
-      tWarp = 500
+      dt = 0.01,
+      tMax = 500,
+      tWarp = 200
     )//.mkString("\n")
-  //)
+
+  println(simures)
+  println(simures._1.size)
+
 }
 
 object Model {
 
   def interpolate(x: Vector[Double], doubleind: Double) = {
-
+    if (doubleind.toInt==doubleind) x(doubleind.toInt)
+    else {
+      assert(doubleind > 0 && doubleind < x.size, s"Double index out of bounds : ${doubleind} for size ${x.size}")
+      val ileft = math.floor(doubleind).toInt
+      if (ileft == x.size-1) x(ileft)
+      else {
+        val (left, right) = (x(ileft), x(ileft + 1))
+        val w = doubleind - math.floor(doubleind)
+        left + w * (right - left)
+      }
+    }
   }
 
   def run(file: java.io.File,
           panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
           statesInit: Vector[Double],
-          t0: Int, dt: Int, tMax: Int, tWarp: Int) = {
+          t0: Int, dt: Double, tMax: Int, tWarp: Int,
+          ABMTimeSerieSteps: Int = 500
+         ) = {
     val exhaustH = 1.0 / staminaH
     val exhaustZ = 1.0 / staminaZ
-    val nbIntervals = (tMax - t0) / dt
+    val nbIntervals = ((tMax - t0) / dt).toInt
 
     // Simulation data
     val simul = integrate(dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(t0, dt, nbIntervals, List(statesInit))
@@ -55,17 +70,26 @@ object Model {
     // Sampling over simulation data
     val maxIndSampling = (tWarp - t0) / dt
     //val samplingStep = math.floor(maxIndSampling / realHumans.size)
-    val samplingStep = math.floor(maxIndSampling / 500)
+    //val samplingStep = math.floor(maxIndSampling / 500)
+    val samplingStep = maxIndSampling / ABMTimeSerieSteps
+    val samplingSteps = (0.0 to maxIndSampling by samplingStep)
+    val humansSampled = samplingSteps.dropRight(1).map(interpolate(humans,_))
+
+    val zombiesSampled = samplingSteps.dropRight(1).map(interpolate(zombified,_))
+
+    /*
     val humansSampled =
       humans.zipWithIndex.flatMap {
         case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
         case _ => None
       } // < ou <= à réfléchir
-    val zombifiedSampled =
+      */
+    /*val zombifiedSampled =
       zombified.zipWithIndex.flatMap {
         case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
         case _ => None
       }
+    */
 
     // Likelihood calculation
     //val likelihoodHumans =
@@ -74,7 +98,7 @@ object Model {
       //(realZombified zip zombifiedSampled).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
     //likelihoodHumans + likelihoodZombies
-    humans
+    (humansSampled,zombiesSampled)
   }
 
 
