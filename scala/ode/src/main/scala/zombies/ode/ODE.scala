@@ -18,18 +18,22 @@ object ODE extends App {
       // Time steps
       t0 = 1,
       dt = 1,
-      tMax = 100
-    )
-      //.mkString("\n")
+      tMax = 100,
+      tWarp = 500
+    )//.mkString("\n")
   //)
 }
 
 object Model {
 
+  def interpolate(x: Vector[Double], doubleind: Double) = {
+
+  }
+
   def run(file: java.io.File,
           panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
           statesInit: Vector[Double],
-          t0: Int, dt: Int, tMax: Int) = {
+          t0: Int, dt: Int, tMax: Int, tWarp: Int) = {
     val exhaustH = 1.0 / staminaH
     val exhaustZ = 1.0 / staminaZ
     val nbIntervals = (tMax - t0) / dt
@@ -43,18 +47,34 @@ object Model {
     val zombified = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b - statesInit(2) }
 
     // Zombieland data
-    val columns = File(file.getAbsolutePath).lines.drop(1).map(_.split(",")).toVector
+    //val columns = File(file.getAbsolutePath).lines.drop(1).map(_.split(",")).toVector
 
-    val realHumans = columns.map(_(0).toDouble)
-    val realZombified = columns.map(_(3).toDouble)
+    //val realHumans = columns.map(_(0).toDouble)
+    //val realZombified = columns.map(_(3).toDouble)
+
+    // Sampling over simulation data
+    val maxIndSampling = (tWarp - t0) / dt
+    //val samplingStep = math.floor(maxIndSampling / realHumans.size)
+    val samplingStep = math.floor(maxIndSampling / 500)
+    val humansSampled =
+      humans.zipWithIndex.flatMap {
+        case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
+        case _ => None
+      } // < ou <= à réfléchir
+    val zombifiedSampled =
+      zombified.zipWithIndex.flatMap {
+        case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
+        case _ => None
+      }
 
     // Likelihood calculation
-    val likelihoodHumans =
-      (realHumans zip humans).map { case(real, simu) => (real - simu) * (real - simu) }.sum
-    val likelihoodZombies =
-      (realZombified zip zombified).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+    //val likelihoodHumans =
+      //(realHumans zip humansSampled).map { case(real, simu) => (real - simu) * (real - simu) }.sum
+    //val likelihoodZombies =
+      //(realZombified zip zombifiedSampled).map { case(real, simu) => (real - simu) * (real - simu) }.sum
 
-    likelihoodHumans + likelihoodZombies
+    //likelihoodHumans + likelihoodZombies
+    humans
   }
 
 
