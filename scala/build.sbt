@@ -13,6 +13,7 @@ lazy val ode = Project("ode", file("ode")) enablePlugins(SbtOsgi) settings (
   OsgiKeys.importPackage := Seq("*;resolution:=optional"),
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
+  mainClass in (Compile,run) := Some("zombies.ode.ODE")
 )
 
 
