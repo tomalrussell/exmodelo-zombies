@@ -41,7 +41,7 @@ object worldgen {
     Morphology.density(world) match {
       case x if x > maxDensity => defaultWorld
       case x if x == 0.0 => defaultWorld
-      case _ => _
+      case _ => ???
     }
 
 
