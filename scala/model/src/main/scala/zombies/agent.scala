@@ -13,7 +13,7 @@ object agent {
 
   sealed trait Agent
   case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism) extends Agent
-  case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false) extends Agent
+  case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false, canLeave: Boolean) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
   case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0, noFollow: Boolean = false)
@@ -76,7 +76,7 @@ object agent {
 
     def canLeave(agent: Agent) = agent match {
       case h: Human => h.canLeave
-      case z: Zombie => true
+      case z: Zombie => z.canLeave
     }
 
     def location(agent: Agent, side: Int): Location = positionToLocation(position(agent), side)
@@ -464,10 +464,10 @@ object agent {
   }
 
   object Zombie {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, vision: Double, maxRotation: Double, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, vision: Double, maxRotation: Double, canLeave: Boolean, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
-      Zombie(p, v, walkSpeed, runSpeed, vision, maxRotation, false)
+      Zombie(p, v, walkSpeed, runSpeed, vision, maxRotation, canLeave, false)
     }
 
     def pursue(z: Zombie) = z.copy(pursuing = true)
