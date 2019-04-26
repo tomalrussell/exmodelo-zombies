@@ -6,7 +6,7 @@ object ODE extends App {
 
     val simures = Model.run(
       // Real data
-      file = File("ode/realData.csv").toJava,
+      //file = File("ode/realData.csv").toJava,
       // ODE parameters
       panic0 = 1,
       staminaH = 10,
@@ -22,8 +22,8 @@ object ODE extends App {
       tWarp = 200
     )//.mkString("\n")
 
-  println(simures)
-  println(simures._1.size)
+  //println(simures)
+  //println(simures._1.size)
 
 }
 
@@ -43,8 +43,7 @@ object Model {
     }
   }
 
-  def run(file: java.io.File,
-          panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
+  def run(panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
           statesInit: Vector[Double],
           t0: Int, dt: Double, tMax: Int, tWarp: Int,
           ABMTimeSerieSteps: Int = 500
@@ -61,44 +60,15 @@ object Model {
     val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
     val zombified = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b - statesInit(2) }
 
-    // Zombieland data
-    //val columns = File(file.getAbsolutePath).lines.drop(1).map(_.split(",")).toVector
-
-    //val realHumans = columns.map(_(0).toDouble)
-    //val realZombified = columns.map(_(3).toDouble)
-
     // Sampling over simulation data
     val maxIndSampling = (tWarp - t0) / dt
-    //val samplingStep = math.floor(maxIndSampling / realHumans.size)
-    //val samplingStep = math.floor(maxIndSampling / 500)
     val samplingStep = maxIndSampling / ABMTimeSerieSteps
     val samplingSteps = (0.0 to maxIndSampling by samplingStep)
+
     val humansSampled = samplingSteps.dropRight(1).map(interpolate(humans,_))
+    val zombifiedSampled = samplingSteps.dropRight(1).map(interpolate(zombified,_))
 
-    val zombiesSampled = samplingSteps.dropRight(1).map(interpolate(zombified,_))
-
-    /*
-    val humansSampled =
-      humans.zipWithIndex.flatMap {
-        case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
-        case _ => None
-      } // < ou <= à réfléchir
-      */
-    /*val zombifiedSampled =
-      zombified.zipWithIndex.flatMap {
-        case (x, i) if (i % samplingStep == 0 && i < maxIndSampling) => Some(x)
-        case _ => None
-      }
-    */
-
-    // Likelihood calculation
-    //val likelihoodHumans =
-      //(realHumans zip humansSampled).map { case(real, simu) => (real - simu) * (real - simu) }.sum
-    //val likelihoodZombies =
-      //(realZombified zip zombifiedSampled).map { case(real, simu) => (real - simu) * (real - simu) }.sum
-
-    //likelihoodHumans + likelihoodZombies
-    (humansSampled,zombiesSampled)
+    (humansSampled,zombifiedSampled)
   }
 
 
