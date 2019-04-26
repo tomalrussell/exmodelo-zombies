@@ -18,12 +18,7 @@ object worldgen {
     array.map{_.map{case v => (if (v == 0) Floor() else Wall).asInstanceOf[Cell]}}
   }
 
-  implicit def rasterToWorld(array: Array[Array[Double]]): World =
-    Morphology.density(array) match {
-      case x if x > 0.8 => World.jaude
-      case x if x == 0.0 => World.jaude
-      case _ => World(array,array.length)
-    }
+  implicit def rasterToWorld(array: Array[Array[Double]]): World = World(array,array.length)
 
   implicit def worldToRaster(world: World): Array[Array[Double]] = world.cells.map {
     _.map { c =>
@@ -33,6 +28,23 @@ object worldgen {
       }
     }
   }
+
+
+  /**
+    * change too dense worlds to jaude
+    * @param world
+    * @param maxDensity
+    * @param defaultWorld
+    * @return
+    */
+  def jaudifyDenseWorlds(world: World,maxDensity: Double = 0.8,defaultWorld: World = World.jaude): World =
+    Morphology.density(world) match {
+      case x if x > maxDensity => defaultWorld
+      case x if x == 0.0 => defaultWorld
+      case _ => ???
+    }
+
+
 
   /**
     * add walls all around the world

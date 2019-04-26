@@ -16,54 +16,58 @@ object observable {
 
     Array.tabulate[Int](world.side, world.side) { (x, y) => worldIntPos.getOrElse((x, y), 0) }
   }
-  
-  def humansDynamic(results : SimulationResult) = {
+
+
+  val defaultGroupSize = 20
+
+  def humansDynamic(results : SimulationResult, by: Int = defaultGroupSize) = {
     val (simulations, _) = results
-    simulations.take(1).map(_.agents.collect(Agent.human).size).toArray ++ simulations.map(_.agents.collect(Agent.human).size).grouped(10).map(_.last)
+    simulations.take(1).map(_.agents.collect(Agent.human).size).toArray ++ simulations.map(_.agents.collect(Agent.human).size).grouped(by).map(_.last)
   }
 
 
-  def zombiesDynamic(results: SimulationResult) = {
+  def zombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (simulations, _) = results
-    simulations.take(1).map(_.agents.collect(Agent.zombie).size).toArray ++  simulations.map(_.agents.collect(Agent.zombie).size).grouped(10).map(_.last)
+    simulations.take(1).map(_.agents.collect(Agent.zombie).size).toArray ++  simulations.map(_.agents.collect(Agent.zombie).size).grouped(by).map(_.last)
   }
 
 
-  def rescuedDynamic(results: SimulationResult) = {
+  def rescuedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.rescued).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.rescued).size).grouped(by).map(_.sum)
   }
 
-  def killedDynamic(results: SimulationResult) = {
+  def killedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.killed).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.killed).size).grouped(by).map(_.sum)
   }
 
 
-  def zombifiedDynamic(results: SimulationResult) = {
+  def zombifiedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.zombified).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.zombified).size).grouped(by).map(_.sum)
   }
 
-  def fleeDynamic(results: SimulationResult) = {
+  def fleeDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.flee).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.flee).size).grouped(by).map(_.sum)
   }
 
-  def pursueDynamic(results: SimulationResult) = {
+  def pursueDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.pursue).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.pursue).size).grouped(by).map(_.sum)
   }
 
-  def humansGoneDynamic(results: SimulationResult) = {
+  def humansGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.humanGone).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.humanGone).size).grouped(by).map(_.sum)
   }
 
-  def zombiesGoneDynamic(results: SimulationResult) = {
+  def zombiesGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.zombieGone).size).grouped(10).map(_.sum)
+    Array(0) ++ events.map(_.collect(Event.zombieGone).size).grouped(by).map(_.sum)
   }
+
 
 
 }

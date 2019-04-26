@@ -3,7 +3,7 @@ package zombies
 import world._
 import space._
 import simulation._
-import zombies.world.World.copyCells
+import tools._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
