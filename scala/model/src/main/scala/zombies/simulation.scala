@@ -96,6 +96,7 @@ object simulation {
       zombiePerception: Double = physic.zombiePerception,
       zombieMaxRotation: Double = physic.zombieMaxRotation,
       zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
+      zombieCanLeave: Boolean = physic.zombieCanLeave,
       zombies: Int,
       walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
@@ -123,7 +124,7 @@ object simulation {
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, true, random)
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, zombieCanLeave, random)
 
 
       def generateSoldier(army: Army) = {
@@ -186,6 +187,7 @@ object simulation {
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
+        zombieCanLeave = zombieCanLeave,
         walkSpeed = walkSpeed * cellSide,
         zombiePheromone = zombiePheromone,
         rotationGranularity = rotationGranularity
@@ -207,6 +209,7 @@ object simulation {
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
+    zombieCanLeave: Boolean,
     walkSpeed: Double,
     zombiePheromone: PheromoneMechanism,
     rotationGranularity: Int)
@@ -304,6 +307,7 @@ object simulation {
     val zombieRunSpeed = 0.28
     val zombiePheromone = Pheromone(evaporation = 0.38)
     val zombieMaxRotation = 30
+    val zombieCanLeave = true
   }
 
   def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Double, humanPerception: Double, humanInformedRatio: Double, humanAwarenessProbability: Double, zombiePerception: Double, random: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
