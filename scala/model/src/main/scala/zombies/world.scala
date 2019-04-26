@@ -293,12 +293,14 @@ object world {
       val side = wallSize * 2
       val bleacherSize = (side - 2 - fieldSide) / 2
 
-      s"""${"+" * wallSize}${"R"}${"+" * (wallSize - 1)}\n""" +
-        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
+      s"""${"+" * side}\n""" +
+        s"""+${"0" * (wallSize - 1)}${"R"}${"0" * (wallSize - 2)}+\n""" +
+        s"""+${"0" * (side - 2)}+\n""" * (bleacherSize - 1) +
         s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
         s"""+${"0" * bleacherSize}${"+" * adjustedFieldSize}${"0" * bleacherSize}+\n""" * (wallSize - bleacherSize - 1) +
-        s"""+${"0" * (side - 2)}+\n""" * bleacherSize +
-        s"""${"+" * (wallSize - 1)}${"R"}${"+" * wallSize}\n"""
+        s"""+${"0" * (side - 2)}+\n""" * (bleacherSize - 1) +
+        s"""+${"0" * (wallSize - 1)}${"R"}${"0" * (wallSize - 2)}+\n""" +
+        s"""${"+" * side}\n"""
     }
 
 
