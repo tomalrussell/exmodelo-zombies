@@ -439,6 +439,8 @@ object agent {
       }
 
     def canRun(speed: Metabolism) = !speed.exhausted
+
+    def isRunning(metabolism: Metabolism) = metabolism.run
   }
 
   object Human {

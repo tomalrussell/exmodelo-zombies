@@ -1,6 +1,6 @@
 package zombies
 
-import zombies.agent.Agent
+import zombies.agent.{Agent, Metabolism}
 import zombies.simulation.{Event, SimulationResult}
 import zombies.space.Position
 
@@ -29,12 +29,34 @@ object observable {
     simulations.take(1).map(_.agents.collect(Agent.human).size).toArray ++ simulations.map(_.agents.collect(Agent.human).size).grouped(by).map(_.last)
   }
 
+  def walkingHumansDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (simulations, _) = results
+    val walkingHumans = simulations.map(_.agents.collect(Agent.human).count { h => !Metabolism.isRunning(h.metabolism) })
+    walkingHumans.take(1).toArray ++ walkingHumans.grouped(by).map(_.last)
+  }
+
+  def runningHumansDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (simulations, _) = results
+    val runningHumans = simulations.map(_.agents.collect(Agent.human).count { h => Metabolism.isRunning(h.metabolism) })
+    runningHumans.take(1).toArray ++ runningHumans.grouped(by).map(_.last)
+  }
 
   def zombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (simulations, _) = results
-    simulations.take(1).map(_.agents.collect(Agent.zombie).size).toArray ++  simulations.map(_.agents.collect(Agent.zombie).size).grouped(by).map(_.last)
+    simulations.take(1).map(_.agents.collect(Agent.zombie).size).toArray ++ simulations.map(_.agents.collect(Agent.zombie).size).grouped(by).map(_.last)
   }
 
+  def walkingZombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (simulations, _) = results
+    val walkingZombies = simulations.map(_.agents.collect(Agent.zombie).count { z => !z.pursuing })
+    walkingZombies.take(1).toArray ++ walkingZombies.grouped(by).map(_.last)
+  }
+
+  def runningZombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (simulations, _) = results
+    val runningZombies = simulations.map(_.agents.collect(Agent.zombie).count { z => z.pursuing })
+    runningZombies.take(1).toArray ++ runningZombies.grouped(by).map(_.last)
+  }
 
   def rescuedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
     val (_, events) = results
