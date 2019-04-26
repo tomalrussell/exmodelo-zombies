@@ -6,8 +6,12 @@ import zombies.space.Position
 
 object observable {
 
+  def cumSum(v: Seq[Int]) =
+    v.foldLeft(List(0)) { (acc, el)=> (el + acc.head) :: acc  }.reverse.toVector
+
+
   def zombified (results : SimulationResult): Vector[Position] = {
-      results._2.flatten.collect(Event.zombified).map{ case s => s.human.position }.toVector
+    results._2.flatten.collect(Event.zombified).map{ case s => s.human.position }.toVector
   }
 
   def hitmap(results : SimulationResult, eventLocation: SimulationResult => Vector[Position]) = {
@@ -68,6 +72,18 @@ object observable {
     Array(0) ++ events.map(_.collect(Event.zombieGone).size).grouped(by).map(_.sum)
   }
 
+  def totalRescued(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (_, events) = results
+    events.map(_.collect(Event.rescued).size).sum
+  }
+
+  def halfRescued(results: SimulationResult, by: Int = defaultGroupSize) = {
+    val (_, events) = results
+    val rescuedCum = cumSum(events.map(_.collect(Event.rescued)).map(_.size))
+    val rescued = rescuedCum.last
+    val half = rescued / 2
+    rescuedCum.indexWhere(c => c >= half)
+  }
 
 
 }
