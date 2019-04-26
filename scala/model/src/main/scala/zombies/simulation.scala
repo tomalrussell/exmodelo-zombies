@@ -24,6 +24,14 @@ object simulation {
       case e: Gone => e
     }
 
+    def humanGone: PartialFunction[Event, Gone] = {
+      case g@Gone(_: Human) => g
+    }
+
+    def zombieGone: PartialFunction[Event, Gone] = {
+      case g@Gone(_: Zombie) => g
+    }
+
     def flee: PartialFunction[Event, FleeZombie] = {
       case e: FleeZombie => e
     }
