@@ -123,7 +123,7 @@ object simulation {
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, random)
+      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, true, random)
 
 
       def generateSoldier(army: Army) = {
