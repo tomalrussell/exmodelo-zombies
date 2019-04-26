@@ -12,5 +12,7 @@ package object zombies {
     def pursueDynamic(by: Int = defaultGroupSize) = observable.pursueDynamic(results, by = by)
     def humansGoneDynamic(by: Int = defaultGroupSize) = observable.humansGoneDynamic(results, by = by)
     def zombiesGoneDynamic(by: Int = defaultGroupSize) = observable.zombiesGoneDynamic(results, by = by)
+    def totalRescued = observable.totalRescued(results)
+    def halfRescued = observable.halfRescued(results)
   }
 }
