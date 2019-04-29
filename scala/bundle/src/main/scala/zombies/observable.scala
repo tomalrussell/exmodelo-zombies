@@ -99,12 +99,19 @@ object observable {
     events.map(_.collect(Event.rescued).size).sum
   }
 
-  def halfRescued(results: SimulationResult, by: Int = defaultGroupSize) = {
+  def halfRescued(results: SimulationResult) = {
     val (_, events) = results
     val rescuedCum = cumSum(events.map(_.collect(Event.rescued)).map(_.size))
     val rescued = rescuedCum.last
     val half = rescued / 2
     rescuedCum.indexWhere(c => c >= half)
+  }
+
+  /** Return the step where number rescued is maximum over @window simulation steps */
+  def peakRescued(results: SimulationResult, window: Int = defaultGroupSize) = {
+    val dyn = rescuedDynamic(results, 1).sliding(window).map(_.sum)
+    val maxRescued = dyn.max
+    dyn.indexWhere(_ == maxRescued) + window / 2
   }
 
 
