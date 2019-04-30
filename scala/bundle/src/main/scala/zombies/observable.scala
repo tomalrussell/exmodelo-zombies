@@ -26,24 +26,24 @@ object observable {
   def humansDynamic(results : SimulationResult, by: Int = defaultGroupSize) = agentsDynamic(results, by, Agent.human)
 
   def walkingHumansDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    def walking = Agent.human.andThen { case h if !Metabolism.isRunning(h.metabolism) => h }
+    def walking = Agent.human.andThenPartial { case h if !Metabolism.isRunning(h.metabolism) => h }
     agentsDynamic(results, by, walking)
   }
 
   def runningHumansDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    def running = Agent.human.andThen { case h if Metabolism.isRunning(h.metabolism) => h }
+    def running = Agent.human.andThenPartial { case h if Metabolism.isRunning(h.metabolism) => h }
     agentsDynamic(results, by, running)
   }
 
   def zombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = agentsDynamic(results, by, Agent.zombie)
 
   def walkingZombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    def walking = Agent.zombie.andThen { case z if !z.pursuing => z }
+    def walking = Agent.zombie.andThenPartial { case z if !z.pursuing => z }
     agentsDynamic(results, by, walking)
   }
 
   def runningZombiesDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    def running = Agent.zombie.andThen { case z if z.pursuing => z }
+    def running = Agent.zombie.andThenPartial { case z if z.pursuing => z }
     agentsDynamic(results, by, running)
   }
 
@@ -94,5 +94,10 @@ object observable {
     dyn.indexWhere(_ == maxRescued) + window / 2
   }
 
+
+  implicit class ComposePartial[A, B](pf: PartialFunction[A, B]) {
+    def andThenPartial[C](that: PartialFunction[B, C]): PartialFunction[A, C] =
+      Function.unlift(pf.lift(_) flatMap that.lift)
+  }
 
 }
