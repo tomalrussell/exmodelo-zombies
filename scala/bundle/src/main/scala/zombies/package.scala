@@ -36,7 +36,7 @@ package object zombies {
   def quarantine = simulation.environment.quarantine
   def square = simulation.environment.square
 
-  def simulate(
+  def zombieInvasion(
     world: World = quarantine,
     infectionRange: Double = physic.infectionRange,
     humanRunSpeed: Double = physic.humanRunSpeed,
