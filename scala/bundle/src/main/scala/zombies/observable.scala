@@ -21,7 +21,6 @@ object observable {
     Array.tabulate[Int](world.side, world.side) { (x, y) => worldIntPos.getOrElse((x, y), 0) }
   }
 
-
   val defaultGroupSize = 20
 
   def humansDynamic(results : SimulationResult, by: Int = defaultGroupSize) = agentsDynamic(results, by, Agent.human)
@@ -55,7 +54,6 @@ object observable {
   def pursueDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.pursue)
   def humansGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.humanGone)
   def zombiesGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.zombieGone)
-
 
   def totalRescued(results: SimulationResult) = totalEvents(results, Event.rescued)
   def halfRescued(results: SimulationResult) = halfEvents(results, Event.rescued)
