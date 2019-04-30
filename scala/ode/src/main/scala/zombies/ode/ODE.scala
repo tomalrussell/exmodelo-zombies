@@ -55,20 +55,22 @@ object Model {
     // Simulation data
     val simul = integrate(dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(t0, dt, nbIntervals, List(statesInit))
 
-    val Vector(humansWalking, humansRunning, zombiesWalking, zombiesRunning) = simul.toVector.transpose
+    val Vector(humansWalking, humansRunning, zombifiedWalking, zombifiedRunning) = simul.toVector.transpose
 
-    val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
-    val zombified = (zombiesWalking zip zombiesRunning).map { case (a, b) => a + b - statesInit(2) }
+//    val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
+//    val zombified = (zombifiedWalking zip zombifiedRunning).map { case (a, b) => a + b - statesInit(2) }
 
     // Sampling over simulation data
     val maxIndSampling = (tWarp - t0) / dt
     val samplingStep = maxIndSampling / ABMTimeSerieSteps
     val samplingSteps = (0.0 to maxIndSampling by samplingStep)
 
-    val humansSampled = samplingSteps.dropRight(1).map(interpolate(humans,_))
-    val zombifiedSampled = samplingSteps.dropRight(1).map(interpolate(zombified,_))
+    val humansWalkingSampled = samplingSteps.dropRight(1).map(interpolate(humansWalking,_))
+    val humansRunningSampled = samplingSteps.dropRight(1).map(interpolate(humansRunning,_))
+    val zombifiedWalkingSampled = samplingSteps.dropRight(1).map(interpolate(zombifiedWalking,_))
+    val zombifiedRunningSampled = samplingSteps.dropRight(1).map(interpolate(zombifiedRunning,_))
 
-    (humansSampled,zombifiedSampled)
+    (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
   }
 
 
