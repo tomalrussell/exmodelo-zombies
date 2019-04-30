@@ -258,6 +258,7 @@ object simulation {
 
   def simulate(simulation: Simulation, rng: Random, steps: Int): SimulationResult = {
     def result(s: Simulation, events: Vector[Event], acc: SimulationResult) = (s :: acc._1, events :: acc._2)
+
     val (simulations, events) = simulate(simulation, rng, steps, result, (List(), List()))
     (simulations.reverse, events.reverse)
   }
@@ -266,7 +267,7 @@ object simulation {
     val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
 
     def run0(s: Int, simulation: Simulation, events: Vector[Event], r: (Simulation, Vector[Event], ACC) => ACC, accumulator: ACC): ACC =
-      if(s == 0) r(simulation, events, accumulator)
+      if (s == 0) r(simulation, events, accumulator)
       else {
         val newAccumulator = r(simulation, events, accumulator)
         val (newSimulation, newEvents) = step(steps - s, simulation, neighborhoodCache, rng)

@@ -1,9 +1,8 @@
-package zombies
+package zombies.console
 
-import zombies.world._
-import zombies.agent._
-import zombies.simulation._
-
+import zombies.simulation.{Event, Simulation, environment, physic}
+import zombies.world.World
+import zombies._
 import scala.util.Random
 
 object Test extends App {
@@ -25,13 +24,16 @@ object Test extends App {
   )
 
   def display(simulation: Simulation, events: Vector[Event], allEvents: List[Event]) = {
-    print(console.display(simulation, allEvents))
+    print(Console.display(simulation, allEvents))
     Thread.sleep(100)
-    console.clear(simulation)
+    Console.clear(simulation)
     allEvents ++ events
   }
 
- // simulate(simulation, rng, 5000, display, List())
+  _root_.zombies.simulation.simulate(simulation, rng, 5000, display, List())
+
+  //println(_root_.zombies.simulation.simulate(simulation, rng, 500).humansDynamic(1).size)
+ // println(_root_.zombies.simulation.simulate(simulation, rng, 500).humansDynamic(1).size)
 
 //  def bench(steps: Int) = simulate[Unit](simulation, rng, steps, (_, _, _) => Unit, Unit)
 //

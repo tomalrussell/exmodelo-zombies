@@ -1,12 +1,12 @@
 package zombies
 
-import com.github.tomaslanger.chalk._
-import zombies.agent._
-import zombies.simulation._
-import zombies.world._
-import zombies.space._
+import com.github.tomaslanger.chalk.Ansi
+import zombies.agent.Agent
+import zombies.simulation.{Event, Simulation}
+import zombies.space.Index
+import zombies.world.{Cell, Floor, Wall}
 
-object console {
+object Console {
   def display(simulation: Simulation, events: Iterable[Event]) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     def toChar(c: Cell, x: Int, y: Int) = c match {
@@ -30,10 +30,8 @@ object console {
   }
 
   def clear(simulation: Simulation) = {
-
     print(Ansi.eraseLine())
     print(Ansi.cursorUp(simulation.world.side))
     print(Ansi.cursorLeft(simulation.world.side * 20))
-
   }
 }

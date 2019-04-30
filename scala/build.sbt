@@ -31,7 +31,7 @@ lazy val bundle = Project("zombies-bundle", file("bundle")) enablePlugins(SbtOsg
 ) dependsOn(model)
 
 
-lazy val console = Project("console", file("console")) dependsOn (model) settings (
+lazy val console = Project("console", file("console")) dependsOn (bundle) settings (
   libraryDependencies += "com.github.tomas-langer" % "chalk" % "1.0.2",
   )
 
