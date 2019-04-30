@@ -1,0 +1,26 @@
+import _file_.model._
+
+val deltaRescue = Val[Double]
+
+val delta = 
+  ScalaTask("""val deltaRescue = abs(totalRescued - 165.65)""") set (
+    inputs += totalRescued,
+    outputs += deltaRescue
+  )
+  
+NSGA2Evolution(
+  evaluation = model -- delta,
+  genome = Seq(
+    humanInformedRatio in (0.0, 1.0),
+    humanInformProbability in (0.0, 1.0),
+    humanFollowProbability in (0.0, 1.0)
+  ),
+  objectives = Seq(deltaRescue),
+  termination = 100000,
+  parallelism = 200,
+  distribution = Island(5 minutes),
+  stochastic = Stochastic(seed = seed)
+) hook (workDirectory / "results/calibration/delta/", frequency = 100)
+
+  
+
