@@ -1,0 +1,28 @@
+import _file_.model._
+import _file_.calibrate._
+
+val evolution = 
+  GenomeProfileEvolution(
+    evaluation = model,
+    x = humanFollowProbability,
+    genome = Seq(
+        humanInformedRatio in (0.0, 1.0),
+        humanInformProbability in (0.0, 1.0),
+        humanFollowProbability in (0.0, 1.0)
+    ),
+    nX = 100,
+    objective = rescuedDynamic aggregate meanSquare,
+    termination = 100000,
+    parallelism = 200,
+    distribution = Island(5 minutes, sample = 200),
+    stochastic = Stochastic(seed = seed)
+    )
+
+  
+  
+  
+val save = SavePopulationHook(evolution, workDirectory / "results/meanSquare/profile/", frequency = 100)
+
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+evolution hook save on env
