@@ -284,6 +284,8 @@ object world {
         s"""${"+" * wallSize}${"E" * doorSize}${"+" * wallSize}\n"""
     }
 
+
+
     def quarantineStadium(wallSize: Int, fieldSide: Int) = parse() {
 
       def totalBleacherSide(wallSide: Int, fieldSide: Int) = (wallSize * 2 - 2 - fieldSide)

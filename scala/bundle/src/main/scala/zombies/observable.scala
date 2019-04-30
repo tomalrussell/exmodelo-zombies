@@ -58,58 +58,44 @@ object observable {
     runningZombies.take(1).toArray ++ runningZombies.grouped(by).map(_.last)
   }
 
-  def rescuedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+  def rescuedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.rescued)
+  def killedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.killed)
+  def zombifiedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.zombified)
+  def fleeDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.flee)
+  def pursueDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.pursue)
+  def humansGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.humanGone)
+  def zombiesGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.zombieGone)
+
+
+  def totalRescued(results: SimulationResult) = totalEvents(results, Event.rescued)
+  def halfRescued(results: SimulationResult) = halfEvents(results, Event.rescued)
+  def peakRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakEvents(results, window, Event.rescued)
+
+  def totalZombified(results: SimulationResult) = totalEvents(results, Event.zombified)
+  def halfZombified(results: SimulationResult) = halfEvents(results, Event.zombified)
+  def peakZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakEvents(results, window, Event.zombified)
+
+  private def eventDynamic(results: SimulationResult, by: Int, e: PartialFunction[Event, Any]) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.rescued).size).grouped(by).map(_.sum)
+    Array(0) ++ events.map(_.collect(e).size).grouped(by).map(_.sum)
   }
 
-  def killedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+  private def totalEvents(results: SimulationResult, e: PartialFunction[Event, Any]) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.killed).size).grouped(by).map(_.sum)
+    events.map(_.collect(e).size).sum
   }
 
-
-  def zombifiedDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
+  private def halfEvents(results: SimulationResult, e: PartialFunction[Event, Any]) = {
     val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.zombified).size).grouped(by).map(_.sum)
-  }
-
-  def fleeDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.flee).size).grouped(by).map(_.sum)
-  }
-
-  def pursueDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.pursue).size).grouped(by).map(_.sum)
-  }
-
-  def humansGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.humanGone).size).grouped(by).map(_.sum)
-  }
-
-  def zombiesGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = {
-    val (_, events) = results
-    Array(0) ++ events.map(_.collect(Event.zombieGone).size).grouped(by).map(_.sum)
-  }
-
-  def totalRescued(results: SimulationResult, by: Int = defaultGroupSize) = {
-    val (_, events) = results
-    events.map(_.collect(Event.rescued).size).sum
-  }
-
-  def halfRescued(results: SimulationResult) = {
-    val (_, events) = results
-    val rescuedCum = cumSum(events.map(_.collect(Event.rescued)).map(_.size))
+    val rescuedCum = cumSum(events.map(_.collect(e)).map(_.size))
     val rescued = rescuedCum.last
     val half = rescued / 2
     rescuedCum.indexWhere(c => c >= half)
   }
 
   /** Return the step where number rescued is maximum over @window simulation steps */
-  def peakRescued(results: SimulationResult, window: Int = defaultGroupSize) = {
-    val dyn = rescuedDynamic(results, 1).sliding(window).map(_.sum)
+  private def peakEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]) = {
+    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum)
     val maxRescued = dyn.max
     dyn.indexWhere(_ == maxRescued) + window / 2
   }
