@@ -43,7 +43,7 @@ object Model {
     }
   }
 
-  def run(panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
+  def run(panic0: Double, staminaH: Int, inf: Double, hunt0: Double, staminaZ: Int,
           statesInit: Vector[Double],
           t0: Int, dt: Double, tMax: Int, tWarp: Int,
           ABMTimeSerieSteps: Int = 500

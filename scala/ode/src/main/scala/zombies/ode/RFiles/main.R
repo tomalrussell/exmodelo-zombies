@@ -21,7 +21,7 @@ Time = seq(t0, tMax, dt)
 
 
 ## Modele compartimental
-source("modeleLulla.R")
+source("modele.R")
 ## Simulation
 source("simulation.R")
 
@@ -59,7 +59,7 @@ plot_dynamics <- plot_data %>%
 plot_dynamics
 
 ## Log-Likelihood calculation for every combination
-source("logLik_poisson.R")
+source("fitness.R")
 LL <- logLik(simu$H_walk, file$walkingHumansAvg) +
     logLik(simu$H_run, file$runningHumansAvg) +
     logLik(simu$Z_walk, file$walkingZombiesAvg) +
