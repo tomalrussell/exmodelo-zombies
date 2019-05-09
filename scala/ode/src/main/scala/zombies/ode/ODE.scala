@@ -43,7 +43,7 @@ object Model {
     }
   }
 
-  def run(panic0: Double, staminaH: Int, inf: Double, hunt0: Double, staminaZ: Int,
+  def run(panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
           statesInit: Vector[Double],
           t0: Int, dt: Double, tMax: Int, tWarp: Int,
           ABMTimeSerieSteps: Int = 500
@@ -67,7 +67,7 @@ object Model {
 
     val humansWalkingSampled = samplingSteps.map(interpolate(humansWalking,_))
     val humansRunningSampled = samplingSteps.map(interpolate(humansRunning,_))
-    val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_) - statesInit(2))
+    val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_))
     val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_))
 
     (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
