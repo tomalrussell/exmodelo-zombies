@@ -14,6 +14,7 @@ raw_data <- bind_rows(dataList) %>%
     arrange(generation)
 
 
+
 simulOMS <- read_csv("simulODE.csv")
 
 plot_data <- simu %>%
@@ -40,3 +41,10 @@ plot_dynamics <- plot_data %>%
     facet_wrap(~ species, nrow = 2) +
     theme_bw()
 plot_dynamics
+
+LL <- logLik(simulOMS$humansWalking, file$walkingHumansAvg) +
+    logLik(simulOMS$humansRunning, file$runningHumansAvg) +
+    logLik(simulOMS$zombifiedWalking, file$walkingZombiesAvg) +
+    logLik(simulOMS$zombifiedRunning, file$runningZombiesAvg)
+
+print(LL)

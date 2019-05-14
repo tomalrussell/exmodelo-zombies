@@ -3,16 +3,16 @@ library(tidyverse)
 
 
 # Real data
-file = read_csv("ZombielandData_100repli.csv") %>%
+file = read_csv("ZombielandData_1000repli.csv") %>%
     select(contains("Avg"))
 # ODE parameters
-panic0 = 5
-staminaH = 10
-inf = 0.25
-hunt0 = 5
-staminaZ = 5
+panic0 = 7.252818
+staminaH = 0.9997521
+inf = 0.01977554
+hunt0 = 10.153002
+staminaZ = 1.280096
 # Initial conditions
-statesInit = c(250.0, 0.0, 4.0, 0.0)
+statesInit = c(250.0, 0.0, 0.0, 4.0)
 # Time steps
 t0 = 0
 dt = 1
