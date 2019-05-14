@@ -1,8 +1,7 @@
 logLik <- function(simul, real)
 {
     LL <- tibble(simul, real) %>%
-        transmute(loglik = (simul - real) * (simul - real)) %>%
-        summarise(sum(loglik))
+        mutate(loglik = (simul - real) * (simul - real))
 
-    return(LL)
+    return(sum(LL$loglik))
 }
