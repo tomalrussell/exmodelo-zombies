@@ -19,25 +19,19 @@ simulOMS <- read_csv("simulODE.csv")
 
 plot_data <- simu %>%
     bind_cols(simulOMS) %>%
-    gather(H_walk:zombifiedWalking, key = "category", value = "nb") %>%
+    bind_cols(file) %>%
+    gather(H_walk:walkingZombiesAvg, key = "category", value = "nb") %>%
     mutate(species = ifelse(grepl("H", category, ignore.case = T), "human", "zombified"),
-           originData = ifelse(grepl("ing", category), "ODE_OMS", "ODE_R"),
-           speed = ifelse(grepl("walk", category, ignore.case = T), "walking", "running"))
-
-plot_data <- filter(plot_data, originData == "ABM") %>%
-    full_join(test)
+           originData = ifelse(grepl("Avg", category), "ABM", ifelse(grepl("ing", category), "ODE_OMS", "ODE_R")),
+           speed = ifelse(grepl("walk", category, ignore.case = T), "walking", "running")) %>%
+    select(-category)
 
 plot_dynamics <- plot_data %>%
     filter(originData != "ODE_R") %>%
     ggplot(aes(x = time, y = nb, color = speed, linetype = originData)) +
     geom_line() +
     scale_linetype_manual(values = c("dashed", "solid", "dotted")) +
-    # geom_line(aes(y = humans), col = "green") +
-    # geom_line(aes(y = zombies), col = "red") +
-    # geom_line(aes(y = humansAvg), col = "green", linetype = "dashed") +
-    # geom_line(aes(y = zombifiedAvg), col = "red", linetype = "dashed") +
     xlab("time step") +
-    # ylab("# humans (green) or zombies (red)") +
     facet_wrap(~ species, nrow = 2) +
     theme_bw()
 plot_dynamics
@@ -48,3 +42,19 @@ LL <- logLik(simulOMS$humansWalking, file$walkingHumansAvg) +
     logLik(simulOMS$zombifiedRunning, file$runningZombiesAvg)
 
 print(LL)
+
+
+sommes <- plot_data %>%
+    spread(key = speed, value = nb) %>%
+    group_by(originData, species) %>%
+    mutate(total = walking + running)
+
+plot_dynamics_sum <- sommes %>%
+    filter(originData != "ODE_OMS") %>%
+    ggplot(aes(x = time, y = total, color = originData)) +
+    geom_line() +
+    # scale_linetype_manual(values = c("dashed", "solid", "dotted")) +
+    xlab("time step") +
+    facet_wrap(~ species, nrow = 2) +
+    theme_bw()
+plot_dynamics_sum
