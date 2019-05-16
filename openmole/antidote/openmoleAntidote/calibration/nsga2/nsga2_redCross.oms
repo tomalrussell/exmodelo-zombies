@@ -1,0 +1,96 @@
+import _parent_._file_._parent_._file_.redcross._
+import _parent_._file_.generatedata._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+/*
+Aim : Find antidote parameters
+
+We observe (some aspects of) a dynamic of zombies invasion with redCross. (one trajectory or a set of trajectory ? several could be from the fact we know that the same antidote was
+used in different places, with potentially different numbers of redCross/ humans)  
+not the full trajectory but values at final times ? or other measure like halfRescued ?
+The aim is to find the redCross parameters (on antidote) that lead to this/these dynamics
+
+first with one trajectory:
+We have the dynamics (data) in a csv file : known : 
+
+inputs: steps, humanSize, zombiesSize, redCrossSize,
+// final time
+outputs: (zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed),
+// dynamics ?
+outputs: humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic,
+    
+unknown (parameters for the calibration): redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability,  // redCrossInformProbability    
+*/
+
+// fitness (minimise distance between output and data): parmis
+// final time: zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed,
+// dynamics: humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic
+
+
+
+// puis faire un profil sur chaque param pour voir s'il sont vraiment utiles dans la situation (autres params fixés?) revoir ce que c'est un profi
+
+
+// variables for the fitness computation
+val zombiesRef = Val[Double]
+val rescuedRef = Val[Double]
+val humansDynamicRef = Val[Array[Double]]
+
+val fitness1 = Val[Double]
+val fitness2 = Val[Double]
+val fitness3 = Val[Double]
+
+// give a value to reference variables (compared with model outputs in nsga)
+// from a csv file or by hand (or both)
+val data =
+  ScalaTask("""
+               val zombiesRef = 0.28  
+               val rescuedRef = 183.22
+               val humansDynamicRef = (workDirectory / "meanHumansDynamicCalibration.csv").content.split(",").map( _.trim.toDouble).toArray
+  """) set (
+    resources += workDirectory / "meanHumansDynamicCalibration.csv",
+    outputs += (zombiesRef, rescuedRef, humansDynamicRef) 
+  )
+
+
+val objective = 
+  ScalaTask("""
+  val fitness1 =  math.abs(zombiesRef - zombies.toDouble) 
+  val fitness2 =  math.abs(rescuedRef - rescued.toDouble) 
+  val fitness3 =  humansDynamicRef.zip(humansDynamic).map( x => math.abs(x._1 - x._2) ).sum 
+    """) set (
+    inputs += (zombiesRef, zombies, rescuedRef, rescued, humansDynamicRef, humansDynamic),
+    outputs += (fitness1, fitness2, fitness3)
+    )
+
+// worklow technical
+val evalFirst = Strain(EmptyTask())
+val objSlot = Slot(objective)  
+
+
+val nsga = 
+  NSGA2Evolution(
+    //evaluation =  argumentsData_KNOWN -- model -- objective,   //  argumentsData_KNOWN, tache qui a servie a generer les data (en partoculier redCross size, human size,...
+    //evaluation = (evalFirst -- argumentsData_KNOWN -- model -- objSlot) & (evalFirst -- data -- objSlot),
+    evaluation = argumentsData_KNOWN -- model -- Strain(data) -- objective, //model -- Strain(data) -- (objective hook ToStringHook())
+    genome = Seq(
+      redCrossActivationDelay in (0, 10),
+      redCrossEfficiencyProbability in (0.7, 1.0),
+      redCrossExhaustionProbability in (0.45, 1.0) //,
+      //redCrossInformProbability in (0.1, 1.0)
+    ),
+    objectives = Seq(fitness1, fitness2, fitness3),
+    stochastic = Stochastic(seed = seed),
+    parallelism = 100,
+    termination = 4000,
+    distribution = Island(5 minutes)
+  )
+  
+val savePopulationHook = SavePopulationHook(nsga, workDirectory / "resultsNSGA", frequency = 100)
+
+nsga hook savePopulationHook on env
+
+

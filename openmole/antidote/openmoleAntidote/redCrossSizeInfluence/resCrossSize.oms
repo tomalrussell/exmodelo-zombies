@@ -1,0 +1,112 @@
+/*
+Aim: Given antidote features (delay, efficiency), study the influence of intial number of redCross on dynamics (time)
+(include the case of redCross Size = 0)
+3 cases for parameters values in arguments task (need to comment 2 of them to run)
+*/
+
+// question:
+// Study the effect of the initial number of antidoters on the number of zombified, all other antidote features being set arbitrarily. 
+// with constant human size (antidoters + NOantidoters), i.e vary the porportion of antidoters
+// si EfficiencyProbability<1, ca peut être piégeux de compter aussi les humains encore en vie dans l'arène: surtout des antidoters ? puisque leur comportement
+// les incite à se sacrifier (et qu'on s'intéresse à la porportion de redCross dans la pop) => est ce que c'est vraiment la porportion qu'il faut regarder ?
+// laisser le choix dans la tache arguments ? i.e. ne pas le mettre (le -) dans le model tel quel ?
+
+import _parent_._file_.redcross._
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+// Parameters choice 
+
+// Case 1: FULL EFFICIENCY, redCrossEfficiencyProbability = 1.0, redCrossActivationDelay = 4,
+/*
+val arguments = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    // val redCrossSize = 20  
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed, redCrossSize),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+  )
+*/  
+
+
+// Case 2: FULL EFFICIENCY, redCrossEfficiencyProbability = 1.0, redCrossActivationDelay = 1,
+/*
+val arguments = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    // val redCrossSize = 20  
+    val redCrossActivationDelay = 1
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed, redCrossSize),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+  )
+  */
+  
+  
+  // Case 3: LOWER EFFICIENCY, redCrossEfficiencyProbability = 0.95, redCrossActivationDelay = 1,
+
+val arguments = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    // val redCrossSize = 20  
+    val redCrossActivationDelay = 1
+    val redCrossEfficiencyProbability = 0.95
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed, redCrossSize),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+  )
+  
+  
+val replications = 
+  Replication(
+    evaluation = MoleTask(arguments -- model ) on env by 50,
+    seed = seed,
+    replications = 50
+  ) 
+  
+val exploration = 
+  DirectSampling(
+    evaluation = replications,
+    sampling = redCrossSize in (0 to 200 by 5)
+  ) 
+
+
+exploration hook CSVHook(workDirectory / "results/redCrossSize_eff_0.95_delay_1.csv" , values = Seq(    
+    // inputs (redCross parameters)
+    seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability,
+    // final time
+    zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed,
+    // dynamics
+    humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic)
+    )
+    
+
+
+
+
+
+
+
