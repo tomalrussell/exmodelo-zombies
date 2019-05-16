@@ -65,10 +65,10 @@ object Model {
     val samplingStep = maxIndSampling / ABMTimeSerieSteps
     val samplingSteps = (0.0 to maxIndSampling by samplingStep)
 
-    val humansWalkingSampled = samplingSteps.dropRight(1).map(interpolate(humansWalking,_))
-    val humansRunningSampled = samplingSteps.dropRight(1).map(interpolate(humansRunning,_))
-    val zombifiedWalkingSampled = samplingSteps.dropRight(1).map(interpolate(zombifiedWalking,_))
-    val zombifiedRunningSampled = samplingSteps.dropRight(1).map(interpolate(zombifiedRunning,_))
+    val humansWalkingSampled = samplingSteps.map(interpolate(humansWalking,_))
+    val humansRunningSampled = samplingSteps.map(interpolate(humansRunning,_))
+    val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_) - statesInit(2))
+    val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_))
 
     (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
   }

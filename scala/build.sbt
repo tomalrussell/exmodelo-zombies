@@ -28,7 +28,7 @@ lazy val bundle = Project("zombies-bundle", file("bundle")) enablePlugins(SbtOsg
   OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
   OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
   osgiSettings
-) dependsOn(model)
+) dependsOn(model,ode)
 
 
 lazy val console = Project("console", file("console")) dependsOn (bundle) settings (
