@@ -1,0 +1,128 @@
+import _parent_._file_.redcross._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+/*
+Analogue for the RedCross of a question raised in the Army cheatsheet
+Suppose we have an antidote with known features.
+Aim : Find on which parameters we should focus research effort to improve the antidote (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability) 
+for a given invasion (i.e set parameters of population size)
+Objective : maximized the number of rescued (+humans?) and minimize the "cost/ effort" 
+urgence of the situation: on which parameters should we act for the antidote to be more efficient?
+We consider a pourcentage of improvement compared to the current features of the antidote. 
+We aim at minimize the sum of pourcentage of improvement (we know from thre DirectSampling exploration that the best strategy is to have the highest values of efficiency 
+and the loest value on delay and exhaustion 
+Thus if we find a proportion value for one parameters significantly larger than the two others, wa can deduce that resharch should focus on the improvement 
+of the corresponding features of the antidote: an antidote that activates quicker, an antidote more efficient or a one that less weaken during the acivation period.
+
+The answer depends (a priori) on the current antidote features and the situation we consider (number of hmans, zombies)
+*/
+
+
+
+// variables to quantify the improvement on antidote features parameters 
+val redCrossActivationDelayBonus = Val[Double]
+val redCrossEfficiencyProbabilityBonus = Val[Double]
+val redCrossExhaustionProbabilityBonus = Val[Double]  
+
+// measure / objective to minimize
+val obj1 = Val[Double]
+val improvementBudget = Val[Double]
+
+
+val argumentsImprovement = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    val redCrossSize = 20 
+    
+    val currentRedCrossActivationDelay = 4
+    val currentRedCrossEfficiencyProbability = 0.98
+    val currentRedCrossExhaustionProbability = 0.6  
+    
+    val humanExhaustionProbability = 0.45  
+    
+    val redCrossActivationDelay = math.floor(currentRedCrossActivationDelay * (1- redCrossActivationDelayBonus)).toInt
+    val redCrossEfficiencyProbability = currentRedCrossEfficiencyProbability + (1-currentRedCrossEfficiencyProbability)* redCrossEfficiencyProbabilityBonus
+    val redCrossExhaustionProbability = humanExhaustionProbability + (currentRedCrossExhaustionProbability- humanExhaustionProbability)*(1- redCrossExhaustionProbabilityBonus)  
+    
+ 
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),
+  inputs += (redCrossActivationDelayBonus, redCrossEfficiencyProbabilityBonus, redCrossExhaustionProbabilityBonus),
+  outputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability),
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossInformProbability),
+  outputs += (redCrossActivationDelayBonus, redCrossEfficiencyProbabilityBonus, redCrossExhaustionProbabilityBonus)
+  /*
+  redCrossActivationDelayBonus := 0.5, 
+  redCrossEfficiencyProbabilityBonus := 0.5,
+  redCrossExhaustionProbabilityBonus := 0.5
+  */
+  )
+  
+
+
+val objective = 
+  ScalaTask("""
+  val obj1 = - rescued.toDouble 
+  val improvementBudget = redCrossActivationDelayBonus + redCrossEfficiencyProbabilityBonus + redCrossExhaustionProbabilityBonus
+  //math.abs( 1- (redCrossActivationDelayBonus + redCrossEfficiencyProbabilityBonus + redCrossExhaustionProbabilityBonus))
+    """) set (
+    inputs += (rescued, redCrossActivationDelayBonus, redCrossEfficiencyProbabilityBonus, redCrossExhaustionProbabilityBonus),
+    outputs += (obj1, improvementBudget)
+    )
+
+
+
+val nsga = 
+  NSGA2Evolution(
+    evaluation = (argumentsImprovement -- Strain(model) -- Strain(objective) ),
+    //evaluation = (argumentsImprovement -- model ),
+    genome = Seq(
+      redCrossActivationDelayBonus in (0.0, 1.0),
+      redCrossEfficiencyProbabilityBonus in (0.0, 1.0),
+      redCrossExhaustionProbabilityBonus in (0.0, 1.0) 
+    ),
+    objectives = Seq(obj1, improvementBudget),
+    //objectives = objective,
+    stochastic = Stochastic(seed = seed),
+    //parallelism = 1,
+    //termination = 40
+    parallelism = 100,
+    termination = 50000,
+    distribution = Island(5 minutes)
+  )
+  
+val savePopulationHook = SavePopulationHook(nsga, workDirectory / "resultsAntidoteImprovement2", frequency = 100)
+
+nsga hook savePopulationHook on env
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

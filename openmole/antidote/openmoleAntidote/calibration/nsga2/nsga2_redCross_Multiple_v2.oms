@@ -1,0 +1,162 @@
+import _parent_._file_._parent_._file_.redcross._
+import _parent_._file_.generateMultipleData._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+// variables for model outputs in array (result of sampling)
+val zombiesArray = Val[Array[Int]]
+val rescuedArray = Val[Array[Int]]
+val humansDynamicArray = Val[Array[Array[Int]]]
+
+// save the model outputs replication in arrays 
+val myAggregration =  ScalaTask("""
+    val zombiesArray = zombies
+    val rescuedArray = rescued
+    val humansDynamicArray = humansDynamic
+    
+    """) set (
+    inputs += (rescued.toArray, zombies.toArray, humansDynamic.toArray),    
+    outputs += (rescuedArray, zombiesArray, humansDynamicArray)
+    )
+
+// distance choice ?
+// if we want to best reproduce (i.e find parameters that bests reproduce) the data for each replications (not considering the median)
+
+// if the model output is an int and  no sampling, so no array[int])
+def distanceScalar(data: Int)(vs: Vector[Int]) = {
+  vs.map( x => math.abs( x- data) ).median  // il faut renvoyer un Double => la médiane des erreurs
+}
+
+def absoluteDistanceArray(d: Array[Int],v : Array[Int]) = {
+      d.zip(v).map{ case(a,b) => math.abs(a-b) }.sum 
+     // comparaison entre la data sacalar en array[Int] (sampling) et le resultat des simus Array[int] (sampling)
+     // on peut éventuellement mettre des poids plus importat sur un une des données du sampling si on sait qu'il est plus fiable (donc pas juste faire .sum)
+}
+
+// if the model output is an int, and with sampling, so the sampling output is  array[int]), and so is the data
+def distanceScalarSampling(data: Array[Int])(vs: Vector[Array[Int]]) = {
+  vs.map( x => absoluteDistanceArray(data, x) ).median
+}
+
+
+// if the model output is an array[Int] (dynamics), no sampling, (the data is an array(int) )
+def distanceArray(data:Array[Int])(vs: Vector[Array[Int]]) = {
+  vs.map( x => absoluteDistanceArray(data, x) ).median
+}
+
+
+def absoluteDistanceDoubleArray(d: Array[Array[Int]],v : Array[Array[Int]]) = {
+      d.zip(v).map{ case(a,b) => absoluteDistanceArray(a,b) }.sum 
+     // comparaison entre la data Array[Array[Int]] (sampling, dynamics) et le resultat des simus Array(Array[int]] (sampling, dynamics)
+     // on peut éventuellement mettre des poids differrent  sur une des données Array[Int] si on info sur la fiabilité  (donc pas juste faire .sum)
+}
+
+// if the model outputs is an array[Int] (dynamics), with sampling, so the sampling output is  array[array[int]], and so is the data
+def distanceArraySampling(data:Array[Array[Int]])(vs: Vector[Array[Array[Int]]]) = {
+    vs.map( x =>  absoluteDistanceDoubleArray(data, x)  ).median    
+}
+
+
+
+
+/*
+    def absoluteDistance(d: Array[Int],v : Array[Int]) = {
+      d.zip(v).map{ case(a,b) => math.abs(a-b) }.sum
+    }
+    // zombies
+    val fitness1 = zombies.zip(targetsZombies).map{case (a,b)=> math.abs(a - b)}.sum.toDouble
+    // rescued
+    val fitness2 = rescued.zip(targetsRescued).map{case (a,b)=> math.abs(a - b)}.sum.toDouble
+
+    // humansDynamic
+    val fitness3 = humansDynamic.zip(targetsHumansDynamics).map{case (a,b)=> absoluteDistance(a,b) }.sum.toDouble
+    //println(fitness3)
+    
+  */  
+
+/*
+val targetsZombies = Val[Array[Int]]
+val targetsRescued = Val[Array[Int]]
+val targetsHumansDynamics = Val[Array[Array[Int]]]
+*/
+
+// We do not need a task to have access to the sampling and create the data variable (targets) since aggregation in DirectSampling put the variable back in the new order 
+/*
+val data =  ScalaTask("""
+    // IMPORT DATA
+    // rescued 13 (14 th column)
+    val dataRescued = (workDirectory / "dataForCalibrationMultiple_Scalar.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray(13).toInt )}}.toMap
+    
+    // zombies : 16
+    val dataZombies = (workDirectory / "dataForCalibrationMultiple_Scalar.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray(16).toInt )}}.toMap
+            
+    // human dynamics: 8 to end
+    val dataHumansDynamic = (workDirectory / "dataForCalibrationMultiple_HumanDyamics.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray.drop(9).map(x => x.toInt) )}}.toMap
+    
+    
+    // targets: Array[int] in the same order as the sampling
+    val targetsZombies = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataZombies(paramValues)} 
+    val targetsRescued = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataRescued(paramValues)}
+    val targetsHumansDynamics = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataHumansDynamic(paramValues)}
+
+    """) set (
+    inputs += (zombiesSize.toArray, humanSize.toArray, redCrossSize.toArray),    
+    outputs += (targetsZombies, targetsRescued, targetsHumansDynamics),
+    resources += workDirectory / "dataForCalibrationMultiple_HumanDyamics.csv",
+    resources += workDirectory / "dataForCalibrationMultiple_Scalar.csv",
+    )
+    */
+    
+    val targetsRescued = (workDirectory / "dataForCalibrationMultiple_Scalar3.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ;  rowarray(13).toInt }}.toArray
+    
+    // zombies : 16
+    val targetsZombies = (workDirectory / "dataForCalibrationMultiple_Scalar3.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ;  rowarray(16).toInt }}.toArray
+            
+    // human dynamics: 8 to end
+    val targetsHumansDynamics = (workDirectory / "dataForCalibrationMultiple_HumanDyamics3_1.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ;  rowarray.drop(9).map(x => x.toInt) }}.toArray
+    
+
+
+
+val myExploration = DirectSampling(evaluation =  argumentsData_UNKNOWN -- argumentsData_KNOWN -- model,
+                                   sampling = samplingMultiple,
+                                   aggregation = myAggregration
+                                   )
+
+val nsga = 
+  NSGA2Evolution(
+    evaluation = myExploration ,
+    genome = Seq(
+      redCrossActivationDelay in (0, 10),
+      redCrossEfficiencyProbability in (0.7, 1.0),
+      redCrossExhaustionProbability in (0.45, 1.0) //,
+    ),
+    objectives = Seq(zombiesArray aggregate distanceScalarSampling(targetsZombies) , 
+                     rescuedArray aggregate distanceScalarSampling(targetsRescued),
+                     humansDynamicArray aggregate distanceArraySampling(targetsHumansDynamics)
+                     ),
+    stochastic = Stochastic(seed = seed),
+    //parallelism = 1,
+    //termination = 10 //,
+    parallelism = 500,
+    termination = 15000,
+    distribution = Island(5 minutes)
+  )
+  
+val savePopulationHook = SavePopulationHook(nsga, workDirectory / "resultsNSGA_Multiple3", frequency = 100)
+
+nsga hook savePopulationHook on env
+
+
+// test 
+
+
+

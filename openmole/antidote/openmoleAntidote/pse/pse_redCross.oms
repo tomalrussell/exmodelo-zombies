@@ -1,0 +1,62 @@
+import _parent_._file_.redcross._
+
+// val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+/*
+Aim: Find the Diversity in the dynamics ?
+Maybe, what is interesting, it is also the dynamics we can not reach ?
+*/
+
+
+val argumentsPSE = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    // val redCrossSize = 0 in [0, humanSize * proportionRedCrossSize]
+    // val redCrossActivationDelay = 4
+    // val redCrossEfficiencyProbability = 1.0
+    // val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),
+  inputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossSize),
+  outputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability),
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossInformProbability)
+    )
+  
+
+
+val explorationPSE =
+    PSEEvolution(
+      evaluation = MoleTask(argumentsPSE --  model),
+      genome =
+        Seq(
+          redCrossSize  in (0, 80),
+          redCrossActivationDelay in (0, 10),
+          redCrossEfficiencyProbability  in (0.8, 1.0),
+          redCrossExhaustionProbability in (0.45, 1.0)),
+      objectives =
+        Seq(
+          zombies in (0 to 254 by 25),
+          halfRescued in  (0 to 1000 by 15),
+          rescued in (0 to 250 by 25),  // Range[Int]("0", "humanSize", "5") 
+          pursued in (0 to 30000   by 500)),   
+      stochastic = Stochastic(seed = seed), 
+      parallelism = 200,
+      termination = 8000,
+      distribution = Island(5 minutes)
+    )
+
+
+val savePopulationHook = SavePopulationHook(explorationPSE, workDirectory / "resultsPSE2", frequency = 100)
+
+explorationPSE hook savePopulationHook on env
+
+
+
+

@@ -1,0 +1,171 @@
+import _parent_._file_.redcross._
+
+
+
+// val env = LocalEnvironment(2)
+// val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+/*
+Aim : generate multiple data for calibration
+
+Third: vary environment parameters (zip sampling)
+*/
+
+
+// variables for model outputs in array (result of sampling)
+
+val zombiesArray = Val[Array[Int]]
+val rescuedArray = Val[Array[Int]]
+val humansDynamicArray = Val[Array[Array[Int]]]
+
+// inputs
+val zombiesSizeArray = Val[Array[Int]]
+val humanSizeArray = Val[Array[Int]]
+val redCrossSizeArray = Val[Array[Int]]
+
+// inputs param
+val seedArray = Val[Array[Long]]
+val stepsArray = Val[Array[Int]]
+val redCrossActivationDelayArray = Val[Array[Int]]
+val redCrossEfficiencyProbabilityArray = Val[Array[Double]]
+val redCrossExhaustionProbabilityArray = Val[Array[Double]]
+val redCrossInformProbabilityArray = Val[Array[Double]]
+
+// other outputs final time
+val zombifiedArray = Val[Array[Int]]
+val zombifiedAntidotersActivatedArray = Val[Array[Int]]
+val zombifiedAntidotersNoActivatedArray = Val[Array[Int]]
+val zombifiedNoAntidotersNoActivatedArray = Val[Array[Int]]
+val fleeArray = Val[Array[Int]]
+val humansArray = Val[Array[Int]]
+val pursuedArray = Val[Array[Int]]
+val halfRescuedArray = Val[Array[Int]]
+val killedArray = Val[Array[Int]]
+
+
+
+// save the model outputs replication in arrays 
+
+
+val myAggregration =  ScalaTask("""
+    val zombiesArray = zombies
+    val rescuedArray = rescued
+    val humansDynamicArray = humansDynamic
+    
+    val zombiesSizeArray = zombiesSize
+    val humanSizeArray = humanSize
+    val redCrossSizeArray = redCrossSize
+
+    val seedArray = seed
+    val stepsArray = steps
+    val redCrossActivationDelayArray = redCrossActivationDelay
+    val redCrossEfficiencyProbabilityArray = redCrossEfficiencyProbability
+    val redCrossExhaustionProbabilityArray = redCrossExhaustionProbability
+    val redCrossInformProbabilityArray = redCrossInformProbability
+    
+    val zombifiedArray = zombified
+    val zombifiedAntidotersActivatedArray = zombifiedAntidotersActivated
+    val zombifiedAntidotersNoActivatedArray = zombifiedAntidotersNoActivated
+    val zombifiedNoAntidotersNoActivatedArray = zombifiedNoAntidotersNoActivated
+    val fleeArray = flee
+    val humansArray = humans
+    val pursuedArray = pursued
+    val halfRescuedArray = halfRescued
+    val killedArray = killed
+        
+    """) set (
+    inputs += (rescued.toArray, zombies.toArray, humansDynamic.toArray),    
+    outputs += (rescuedArray, zombiesArray, humansDynamicArray),
+    inputs += (zombiesSize.toArray, humanSize.toArray, redCrossSize.toArray),    
+    outputs += (zombiesSizeArray, humanSizeArray, redCrossSizeArray),
+    //
+    inputs += (seed.toArray, steps.toArray, redCrossActivationDelay.toArray,
+        redCrossEfficiencyProbability.toArray, redCrossExhaustionProbability.toArray, redCrossInformProbability.toArray),
+    outputs += (seedArray, stepsArray, redCrossActivationDelayArray,
+        redCrossEfficiencyProbabilityArray, redCrossExhaustionProbabilityArray, redCrossInformProbabilityArray),
+        
+    inputs += (zombified.toArray, zombifiedAntidotersActivated.toArray, zombifiedAntidotersNoActivated.toArray, zombifiedNoAntidotersNoActivated.toArray,
+    flee.toArray, humans.toArray, pursued.toArray, halfRescued.toArray, killed.toArray),
+    outputs += (zombifiedArray, zombifiedAntidotersActivatedArray, zombifiedAntidotersNoActivatedArray, zombifiedNoAntidotersNoActivatedArray,
+    fleeArray, humansArray, pursuedArray, halfRescuedArray, killedArray)
+    )
+
+
+
+
+
+// sampling size = 15
+val samplingMultiple = (zombiesSize in List(4,6,2,2,1,3,5,2,3,4,2,3,5,4,6)) zip 
+                       (humanSize in List(220,225,228,230,234,235,240,243,245,250,255,260,262,265,270) ) zip   //(0 to 10 by 2))
+                       (redCrossSize in  List(15,20,17,12,10,18,10,14,16,19,20,20,12,15,18)) 
+
+
+
+val samplingMultipleSeed = samplingMultiple zip (seed in List(12L,13L,14L,15L,16L,17L,18L,19L,20L,21L,22L,23L,24L,25L,26L))
+
+
+
+val argumentsData_UNKNOWN = ScalaTask("""
+    //val seed = 12L
+    
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+  
+  """ )  set (
+  inputs += (seed, humanSize, zombiesSize, redCrossSize),  // from sampling    
+  outputs += (seed, humanSize, zombiesSize, redCrossSize),    
+  outputs += (seed, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability)
+    )
+    
+
+
+val argumentsData_KNOWN = ScalaTask("""
+    
+    val steps = 1000
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed, humanSize, zombiesSize, redCrossSize),    
+  inputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability), // from KNOWN
+  outputs += (seed, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability), // from KNOWN
+  outputs += (steps, humanSize, zombiesSize, redCrossSize, redCrossInformProbability),
+  )
+
+
+    
+
+ 
+val dataCalibrationMultipleHookScalar = CSVHook(workDirectory / "dataForCalibrationMultiple_Scalar3.csv" , values = Seq(       
+    // inputs (redCross parameters)
+    seedArray, stepsArray, humanSizeArray, zombiesSizeArray, redCrossSizeArray, redCrossActivationDelayArray, redCrossEfficiencyProbabilityArray,
+    redCrossExhaustionProbabilityArray, redCrossInformProbabilityArray,
+    // final time
+    zombifiedArray, zombifiedAntidotersActivatedArray, zombifiedAntidotersNoActivatedArray, zombifiedNoAntidotersNoActivatedArray, rescuedArray,
+    fleeArray, humansArray, zombiesArray, pursuedArray, halfRescuedArray, killedArray)
+    )
+    
+val dataCalibrationMultipleHookHumansDynamics = CSVHook(workDirectory / "dataForCalibrationMultiple_HumanDyamics3.csv" , values = Seq(       
+    // inputs (redCross parameters)
+    seedArray, stepsArray, humanSizeArray, zombiesSizeArray, redCrossSizeArray, redCrossActivationDelayArray, redCrossEfficiencyProbabilityArray,
+    redCrossExhaustionProbabilityArray, redCrossInformProbabilityArray,
+    // dynamics
+    humansDynamicArray)
+    )
+    
+    
+    
+
+// Third
+val myMultipleDataForCalibration = DirectSampling(
+                                    evaluation = MoleTask(argumentsData_UNKNOWN -- argumentsData_KNOWN -- model), //on env by 2 , 
+                                    sampling = samplingMultipleSeed,
+                                    aggregation = myAggregration
+                                                 ) //hook (dataCalibrationMultipleHookScalar) //, dataCalibrationMultipleHookHumansDynamics)
+
+myMultipleDataForCalibration  hook (dataCalibrationMultipleHookScalar, dataCalibrationMultipleHookHumansDynamics)
+
+
+    
+  
