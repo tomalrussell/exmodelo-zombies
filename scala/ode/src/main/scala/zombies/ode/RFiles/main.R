@@ -3,7 +3,7 @@ library(tidyverse)
 
 
 # Real data
-file = read_csv("ZombielandData_100repli_2.csv") %>%
+file = read_csv("ZombielandData_1000repli.csv") %>%
     select(contains("Avg"))
 # ODE parameters
 panic0 = 7.252818
