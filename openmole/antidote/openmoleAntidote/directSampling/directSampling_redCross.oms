@@ -1,0 +1,89 @@
+import _parent_._file_.redcross._
+
+// val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+/*
+Aim: Find the "frontiere" in the (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossSize) space for a "good antidote" 
+good antidote: qui ne fait pas augmenter la taille de zombie ? on poiurra chercher une mesure intéressante parmis celle qu'on a en output (on garde toutes celles non dynamique)
+*/
+
+val proportionRedCrossSize = Val[Double]
+
+
+
+val argumentsSampling = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    // val redCrossSize = 0 in [0, humanSize * proportionRedCrossSize]
+    // val redCrossSize = math.floor(humanSize * proportionRedCrossSize ).toInt  // if required to do a sampling on a double (for specific method?)
+    // val redCrossActivationDelay = 4
+    // val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),
+  inputs += (redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability),
+  outputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability),
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossInformProbability)
+    )
+  
+
+val sampling =
+    (redCrossSize in (0 to 60 by 2)) x
+    (redCrossActivationDelay in (0 to 6 by 1)) x
+    (redCrossEfficiencyProbability in (0.8 to 1.0 by 0.01)) 
+
+
+val samplingHook = CSVHook(workDirectory / "resultsSampling/resultsDirectSampling.csv",  values = Seq(    
+    // inputs (redCross parameters)
+    seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability,
+    // final time
+    zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed)
+    )
+
+
+val myExploration = DirectSampling(
+  evaluation = Replication(evaluation = MoleTask(argumentsSampling --  model) on env by 200, 
+                            seed = seed,
+                            replications = 400
+                            ) hook samplingHook ,  
+  sampling = sampling  
+)
+
+
+myExploration 
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

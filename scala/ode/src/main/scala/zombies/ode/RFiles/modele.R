@@ -11,10 +11,10 @@ ODE <- function(t, pop, param) {
     hunt0    <- param[[4]]
     exhaustZ <- param[[5]]
 
-    tt <- floor(t)
+    N <- H_walk + H_run + Z_walk + Z_run
 
-    panic <- panic0*(Z_walk + Z_run)
-    hunt  <- hunt0*(H_walk + H_run)
+    panic <- panic0*(Z_walk + Z_run)/N
+    hunt  <- hunt0*(H_walk + H_run)/N
 
     dH_walk <- -(panic + inf) * H_walk + exhaustH * H_run
     dH_run  <- panic * H_walk - (exhaustH + inf) * H_run

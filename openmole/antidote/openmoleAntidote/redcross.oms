@@ -1,0 +1,142 @@
+import _root_.zombies.simulation._
+
+// inputs
+val humanSize = Val[Int] // antidoters + NOantidoters (but does not count zombie)
+val zombiesSize = Val[Int]
+val steps = Val[Int]
+val seed = Val[Long]
+
+// inputs: redCross
+val redCrossSize = Val[Int]
+val redCrossActivationDelay = Val[Int]
+val redCrossEfficiencyProbability = Val[Double]
+val redCrossExhaustionProbability = Val[Double]
+val redCrossInformProbability = Val[Double]
+
+// outputs (final time)
+val zombified = Val[Int]
+val zombifiedAntidotersActivated = Val[Int]
+val zombifiedAntidotersNoActivated = Val[Int]
+val zombifiedNoAntidotersNoActivated = Val[Int]
+val rescued = Val[Int]
+val flee = Val[Int]
+val humans = Val[Int]
+val zombies = Val[Int]
+val pursued = Val[Int]
+val halfRescued = Val[Int]
+val killed = Val[Int]
+
+
+// outputs: dynamics
+// state 
+val humansDynamic = Val[Array[Int]]
+val zombiesDynamic = Val[Array[Int]]
+
+// event
+val killedDynamic = Val[Array[Int]]
+val zombifiedDynamic = Val[Array[Int]]
+val fleeDynamic = Val[Array[Int]]
+val pursueDynamic = Val[Array[Int]]
+val rescuedDynamic = Val[Array[Int]]
+val humansGoneDynamic = Val[Array[Int]]
+val zombiesGoneDynamic = Val[Array[Int]]
+
+
+
+val model =
+  ScalaTask("""
+    //import _root_.zombies._
+    import _root_.zombies.world._
+    import _root_.zombies.simulation._
+    import _root_.zombies.agent._
+  
+    val rng = new util.Random(seed)
+  
+    val redCross = RedCross(
+      size = redCrossSize,
+      exhaustionProbability = Some(redCrossExhaustionProbability),
+      informProbability = redCrossInformProbability,
+      activationDelay = redCrossActivationDelay,
+      efficiencyProbability = redCrossEfficiencyProbability)
+ 
+    val simulation = Simulation.initialize(
+      world = environment.quarantine, //  closeWorld(environment.stadium) // environment.stadium
+      zombies = zombiesSize,
+      humans = humanSize - redCrossSize,
+      redCross = redCross,
+      random = rng)
+    
+    //val steps = 5500
+
+    val result = simulate(simulation, rng, steps)
+
+    // outputs: dynamics
+    val humansDynamic = result.humansDynamic(10)
+    val zombiesDynamic = result.zombiesDynamic(10)
+    val rescuedDynamic = result.rescuedDynamic(10)
+    val killedDynamic = result.killedDynamic(10)
+    val zombifiedDynamic = result.zombifiedDynamic(10)
+    val fleeDynamic = result.fleeDynamic(10)
+    val pursueDynamic = result.pursueDynamic(10)
+    val humansGoneDynamic = result.humansGoneDynamic(10)
+    val zombiesGoneDynamic = result.zombiesGoneDynamic(10)
+
+    
+    // outputs (final time)
+    val (_, events) = result
+    val halfRescued = result.halfRescued
+    val zombified = events.map(_.collect(Event.zombified).size).sum
+    val zombifiedAntidotersActivated = events.map(_.collect(Event.zombified).map(_.human.antidote).collect { case x: Antidote => x }.filter(a => Antidote.activated(a)).size).sum
+    val zombifiedAntidotersNoActivated = events.map(_.collect(Event.zombified).map(_.human.antidote).collect {case x: Antidote => x }.filter(a => !Antidote.activated(a)).size).sum
+    val zombifiedNoAntidotersNoActivated = events.map(_.collect(Event.zombified).map(_.human.antidote).collect { case NoAntidote => NoAntidote }.size).sum
+    val rescued = events.map(_.collect(Event.rescued).size).sum
+    val flee = events.map(_.collect(Event.flee).size).sum
+    val killed = events.map(_.collect(Event.killed).size).sum
+    val pursued = events.map(_.collect(Event.pursue).size).sum
+    val humans: Int = humansDynamic.last         //.toDouble
+    val zombies: Int = zombiesDynamic.last       //.toDouble
+    
+  """) set (
+    inputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability),
+    outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability),
+    // final time
+    outputs += (zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed),
+    // dynamics
+    outputs += (humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic),
+    plugins += pluginsOf[_root_.zombies.simulation.Simulation]
+  
+ /*
+    seed := 12L,
+    zombiesSize := 50,
+    humanSize := 250,
+    redCrossSize := 100,
+    redCrossActivationDelay := 10,
+    redCrossEfficiencyProbability := 1.0
+    redCrossExhaustionProbability := 0.6,  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    redCrossInformProbability := 1.0
+  */
+ 
+  )
+
+
+
+val arguments = ScalaTask("""
+    val seed = 12L
+    val steps = 500
+    val zombiesSize = 50
+    val humanSize = 250
+    val redCrossSize = 100
+    val redCrossActivationDelay = 3
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6 // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0   // pour les humains, par défaut, humanInformProbability = 0.09
+ 
+  """ )  set (
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize,
+redCrossActivationDelay, redCrossEfficiencyProbability,
+redCrossExhaustionProbability, redCrossInformProbability),
+  )
+ 
+arguments -- model
+//arguments --  (model hook ToStringHook(humansDynamic, humans))
+

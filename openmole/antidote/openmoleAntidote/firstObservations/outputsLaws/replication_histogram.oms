@@ -1,0 +1,97 @@
+/*
+Aim: first insight in the final quantities (outputs) with redCross: histogram
+compare with the NO RedCross situation
+3 cases for parameters values in arguments task(need to comment 2 of them to run)
+*/
+
+import _parent_._file_._parent_._file_.redcross._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+// Parameters choice 
+
+// Case 0:  NO MEDIC
+/*
+val arguments = ScalaTask("""
+
+    //val seed = 12L  // gérée dans la Replication task
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    val redCrossSize = 0
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+    )
+*/
+
+
+// Case 1:  redCrossEfficiencyProbability = 1 
+/*
+val arguments = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    val redCrossSize = 20
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+    )
+*/
+
+
+// Case 2: redCrossEfficiencyProbability =0.95< 1
+
+val arguments = ScalaTask("""
+
+    //val seed = 12L
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    val redCrossSize = 20
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 0.95
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed),  
+  outputs += (seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability)
+  )
+
+
+
+
+  
+val replications = 
+  Replication(
+    evaluation = MoleTask(arguments --  model) on env by 100 ,
+    seed = seed,
+    replications = 4000
+  ) 
+
+
+replications hook CSVHook(workDirectory / "results/outputsLaws_RC_20_eff_0.95.csv" , values = Seq(    
+    // inputs (redCross parameters)
+    seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability,
+    // final time
+    zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed)
+    )
+    
+    
+    
+    

@@ -1,0 +1,109 @@
+import _parent_._file_._parent_._file_.redcross._
+import _parent_._file_.generateMultipleData._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+/*
+Aim : Find antidote parameters with multiple data
+*/
+
+// variables for the fitness computation
+val fitness1 = Val[Double]
+val fitness2 = Val[Double]
+val fitness3 = Val[Double]
+
+
+
+
+// in the sampling to generate data we had seed, we can not use it here (do not want to impose seed for replications sans savoir ce que ca ferait)    
+// ou faire deux sampling un sans seed et l'autre = le premier zip une seed (pour dans la génération des données
+//val samplingMultiple = (zombiesSize in List(4,10)) zip (humanSize in List(250,300) ) zip (redCrossSize in  List(15,20)) 
+
+
+val myAggregration =  ScalaTask("""
+    // mettre les bons indices pour zombies resuced et les params (du sampling)
+    // zombiesSize:3 humanSize:2  redCrossSize:4
+    // rescued 13 (14 ieme colonne)
+   
+    val dataRescued = (workDirectory / "dataForCalibrationMultiple_Scalar.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray(13).toInt )}}.toMap
+    
+    // zombies : 16
+     val dataZombies = (workDirectory / "dataForCalibrationMultiple_Scalar.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray(16).toInt )}}.toMap
+            
+    // human dynamics: 8 to 109
+    val dataHumansDynamic = (workDirectory / "dataForCalibrationMultiple_HumanDyamics.csv").content.split("\n").tail.map{
+            row => {val rowarray = row.split(",") ; ( (rowarray(3).toInt,rowarray(2).toInt, rowarray(4).toInt), rowarray.drop(9).map(x => x.toInt) )}}.toMap
+    
+    
+    // tagets: Array de int (dans le "bon" ordre grace a la map
+    val targetsZombies = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataZombies(paramValues)} 
+    //println(targetsZombies.mkString(" "))
+    
+    val targetsRescued = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataRescued(paramValues)}
+    //println(targetsRescued.mkString(" "))
+    
+    val targetsHumansDynamics = zombiesSize.zip(humanSize).zip(redCrossSize).map{case ((x,y),z) => (x,y,z)}.toArray.map{paramValues => dataHumansDynamic(paramValues)}
+    //println(targetsHumansDynamics.deep.mkString("\n"))
+    
+    
+    //  VOIR LA MÉTHODE DE ROMAIN POUR FAIRE LA MEDIANE SUR LES INPUTS, DONC ICI humansDynamic
+    
+    // zombies
+    val fitness1 = zombies.zip(targetsZombies).map{case (a,b)=> math.abs(a - b)}.sum.toDouble
+    // rescued
+    val fitness2 = rescued.zip(targetsRescued).map{case (a,b)=> math.abs(a - b)}.sum.toDouble
+    // humansDynamic
+    
+    def absoluteDistance(d: Array[Int],v : Array[Int]) = {
+      d.zip(v).map{ case(a,b) => math.abs(a-b) }.sum
+    }
+    val fitness3 = humansDynamic.zip(targetsHumansDynamics).map{case (a,b)=> absoluteDistance(a,b) }.sum.toDouble
+    //println(fitness3)
+    
+    """) set (
+    inputs += (zombiesSize.toArray, humanSize.toArray, redCrossSize.toArray),    
+    inputs += (rescued.toArray, zombies.toArray, humansDynamic.toArray),    
+    //outputs += (dataRescued, dataZombies, dataHumansDynamic),
+    outputs += (fitness1, fitness2, fitness3),
+    resources += workDirectory / "dataForCalibrationMultiple_HumanDyamics.csv",
+    resources += workDirectory / "dataForCalibrationMultiple_Scalar.csv",
+    )
+
+
+val myExploration = DirectSampling(evaluation =  argumentsData_UNKNOWN -- argumentsData_KNOWN -- model,
+                                   sampling = samplingMultiple,
+                                   aggregation = myAggregration
+                                   //) set (outputs += (res)
+                                   )
+
+val nsga = 
+  NSGA2Evolution(
+    //evaluation = argumentsData_KNOWN -- model -- Strain(data) -- objective, //model -- Strain(data) -- (objective hook ToStringHook())
+    evaluation = myExploration,
+    genome = Seq(
+      redCrossActivationDelay in (0, 10),
+      redCrossEfficiencyProbability in (0.7, 1.0),
+      redCrossExhaustionProbability in (0.45, 1.0) //,
+    ),
+    objectives = Seq(fitness1, fitness2, fitness3),
+    stochastic = Stochastic(seed = seed),
+    //parallelism = 1,
+    //termination = 10,
+    parallelism = 100,
+    termination = 4000,
+    distribution = Island(5 minutes)
+  )
+  
+val savePopulationHook = SavePopulationHook(nsga, workDirectory / "resultsNSGA_Multiple", frequency = 100)
+
+nsga hook savePopulationHook on env
+
+
+
+
+
+
