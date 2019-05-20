@@ -19,10 +19,10 @@ object ODE extends App {
       t0 = 1,
       dt = 0.01,
       tMax = 500,
-      tWarp = 200
+      tWarp = 500
     )//.mkString("\n")
 
-  //println(simures)
+  println(simures)
   //println(simures._1.size)
 
 }
