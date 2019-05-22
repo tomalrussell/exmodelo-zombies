@@ -10,19 +10,19 @@ object ODE extends App {
       // ODE parameters
       panic0 = 1,
       staminaH = 10,
-      inf = 0.25,
       hunt0 = 0.5,
       staminaZ = 5,
+      inf0 = 0.25,
       // Initial conditions
       statesInit = Vector(250.0, 0.0, 4.0, 0.0),
       // Time steps
       t0 = 1,
       dt = 0.01,
       tMax = 500,
-      tWarp = 200
+      tWarp = 500
     )//.mkString("\n")
 
-  //println(simures)
+  println(simures)
   //println(simures._1.size)
 
 }
@@ -43,7 +43,8 @@ object Model {
     }
   }
 
-  def run(panic0: Double, staminaH: Double, inf: Double, hunt0: Double, staminaZ: Double,
+  def run(panic0: Double, staminaH: Double, hunt0: Double, staminaZ: Double, inf0: Double,
+          out0: Double = 0.0, fightback: Double = 0.0, die0: Double = 0.0,
           statesInit: Vector[Double],
           t0: Int, dt: Double, tMax: Int, tWarp: Int,
           ABMTimeSerieSteps: Int = 500
@@ -53,7 +54,7 @@ object Model {
     val nbIntervals = ((tMax - t0) / dt).toInt
 
     // Simulation data
-    val simul = integrate(dynamic(panic0, exhaustH, inf, hunt0, exhaustZ))(t0, dt, nbIntervals, List(statesInit))
+    val simul = integrate(dynamic(panic0, exhaustH, hunt0, exhaustZ, inf0, out0, fightback, die0))(t0, dt, nbIntervals, List(statesInit))
 
     val Vector(humansWalking, humansRunning, zombifiedWalking, zombifiedRunning) = simul.toVector.transpose
 
@@ -67,32 +68,66 @@ object Model {
 
     val humansWalkingSampled = samplingSteps.map(interpolate(humansWalking,_))
     val humansRunningSampled = samplingSteps.map(interpolate(humansRunning,_))
-    val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_) - statesInit(2))
-    val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_))
+    val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_))
+    val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_) - statesInit(3))
 
     (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
   }
 
 
   // Description of the ODE system
-  def dynamic(panic0: Double, exhaustH: Double, inf: Double, hunt0: Double, exhaustZ: Double)(t: Double, state: Vector[Double]): Vector[Double] = {
+//  def dynamic(panic0: Double, exhaustH: Double, inf: Double, hunt0: Double, exhaustZ: Double)(t: Double, state: Vector[Double]): Vector[Double] = {
+//    // Param
+//    val N = state.sum
+//    val panic = panic0 * (state(2) + state(3)) / N
+//    val hunt = hunt0 * (state(0) + state(1)) / N
+//
+//    // ODE system
+//    def dH_walk(state: Vector[Double]) =
+//      -(panic + inf) * state(0) + exhaustH * state(1)
+//
+//    def dH_run(state: Vector[Double]) =
+//      panic * state(0) - (exhaustH + inf) * state(1)
+//
+//    def dZ_walk(state: Vector[Double]) =
+//      inf * (state(0) + state(1)) - hunt * state(2) + exhaustZ * state(3)
+//
+//    def dZ_run(state: Vector[Double]) =
+//      hunt * state(2) - exhaustZ * state(3)
+//
+//    // Output
+//    Vector(
+//      dH_walk(state),
+//      dH_run(state),
+//      dZ_walk(state),
+//      dZ_run(state)
+//    )
+//  }
+
+  // Description of the ODE system
+  def dynamic(panic0: Double, exhaustH: Double, hunt0: Double, exhaustZ: Double, inf0: Double,
+              out0: Double = 0.0, fightback: Double = 0.0, die0: Double = 0.0)
+             (t: Double, state: Vector[Double]): Vector[Double] = {
     // Param
     val N = state.sum
     val panic = panic0 * (state(2) + state(3)) / N
     val hunt = hunt0 * (state(0) + state(1)) / N
+    val inf = inf0 * (1 - fightback)
+    val out = out0 * (state(0) + state(1)) / N
+    val die = die0 * (state(0) + state(1)) / N
 
     // ODE system
     def dH_walk(state: Vector[Double]) =
-      -(panic + inf) * state(0) + exhaustH * state(1)
+      -(panic + inf) * state(0) + exhaustH * state(1) - out * state(0)
 
     def dH_run(state: Vector[Double]) =
-      panic * state(0) - (exhaustH + inf) * state(1)
+      panic * state(0) - (exhaustH + inf) * state(1) - out * state(1)
 
     def dZ_walk(state: Vector[Double]) =
-      inf * (state(0) + state(1)) - hunt * state(2) + exhaustZ * state(3)
+      inf * (state(0) + state(1)) - hunt * state(2) + exhaustZ * state(3) - die * state(2)
 
     def dZ_run(state: Vector[Double]) =
-      hunt * state(2) - exhaustZ * state(3)
+      hunt * state(2) - exhaustZ * state(3) - die * state(3)
 
     // Output
     Vector(

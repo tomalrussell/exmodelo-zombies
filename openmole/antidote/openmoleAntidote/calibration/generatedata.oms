@@ -1,0 +1,100 @@
+import _parent_._file_.redcross._
+
+
+
+val env = LocalEnvironment(2)
+//val env = EGIEnvironment("vo.complex-systems.eu")
+
+
+/*
+Aim : générate data for calibration
+
+First: one trajectory (set parameters ...)
+Second: replication of First
+Third: vary parameters of First (for example the same antidote was used during different infections
+*/
+
+// Rq : redCrossInformProbability supposé connu (ce n'est pas vraiment un paramètre de l'antidote, plutôt du comprtement des antidoters)
+
+
+val argumentsData_UNKNOWN = ScalaTask("""
+    val seed = 12L
+    
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+  
+  """ )  set (
+  outputs += (seed, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability)
+    )
+  
+  
+  
+val argumentsData_UNKNOWN_REPLICATION = ScalaTask("""
+    //val seed = 12L
+    
+    val redCrossActivationDelay = 4
+    val redCrossEfficiencyProbability = 1.0
+    val redCrossExhaustionProbability = 0.6  // pour les humains, par défaut, humanExhaustionProbability = 0.45
+  
+  """ )  set (
+  inputs += (seed),      
+  outputs += (seed, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability)
+    )
+  
+      
+
+val argumentsData_KNOWN = ScalaTask("""
+    
+    val steps = 1000
+    val zombiesSize = 4
+    val humanSize = 250
+    val redCrossSize = 20 
+ 
+    val redCrossInformProbability = 1.0
+  
+  """ )  set (
+  inputs += (seed), // from replicationsTask
+  inputs += (redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability), // from KNOWN
+  outputs += (seed, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability), // from KNOWN
+  outputs += (steps, humanSize, zombiesSize, redCrossSize, redCrossInformProbability),
+  )
+    
+    
+    
+    
+// RQ : on met même les params qu'on n'est pas censé savoir, il faut les retirer pour la partie calibration (et ne garder que ce qui est utile pour la fitness)
+// pourquoi arrayOnRaw = true, ne marche pas ? 
+val dataCalibrationHook = CSVHook(workDirectory / "dataForCalibration.csv" , values = Seq(       
+    // inputs (redCross parameters)
+    seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability,
+    // final time
+    zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed,
+    // dynamics
+    humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic)
+    )
+    
+val dataCalibrationReplicationHook = CSVHook(workDirectory / "dataForCalibrationReplication.csv" , values = Seq(       
+    // inputs (redCross parameters)
+    seed, steps, humanSize, zombiesSize, redCrossSize, redCrossActivationDelay, redCrossEfficiencyProbability, redCrossExhaustionProbability, redCrossInformProbability,
+    // final time
+    zombified, zombifiedAntidotersActivated, zombifiedAntidotersNoActivated, zombifiedNoAntidotersNoActivated, rescued, flee, humans, zombies, pursued, halfRescued, killed,
+    // dynamics
+    humansDynamic, zombiesDynamic, rescuedDynamic, killedDynamic, zombifiedDynamic, fleeDynamic, pursueDynamic, humansGoneDynamic, zombiesGoneDynamic)
+    )    
+ 
+    
+// First    
+//argumentsData_UNKNOWN -- argumentsData_KNOWN -- (model hook dataCalibrationHook)    
+    
+// Second
+val myReplicationForCalibration = Replication(evaluation = MoleTask(argumentsData_UNKNOWN_REPLICATION -- argumentsData_KNOWN -- model) on env by 2 , 
+                                                seed = seed,
+                                                replications = 50
+                                                ) hook  dataCalibrationReplicationHook 
+
+myReplicationForCalibration 
+
+
+    
+  

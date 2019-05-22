@@ -1,0 +1,78 @@
+import _parent_._file_._parent_._file_.redcross._
+import _parent_._file_.generatedata._
+
+//val env = LocalEnvironment(2)
+val env = EGIEnvironment("vo.complex-systems.eu")
+
+/*
+ change compare with precendent version:
+ use of aggregate (function/ method?) in objective:
+ the objective is not computed directly after the model task in the evaluation in nsga, that alloaws to compute median (for example or other quantity) of the replications (done in nsga)
+ and then compare this quantity to data
+*/
+
+
+// Here we compute the median of simulations output (Int or array[Int]) obtained by model replication in nsga.
+// It has sens here to compute the median or the mean since the data was computed from the mean of replications
+// we can also put an objective that minimise the error in variance between model replication in nsga and the variance of the date (obtained by replications)
+// if the data is jst an observation, do we still compute the median over replications in nsga or do we just compute the distance of the current output with the data ?
+
+               
+//  val humansDynamicRef = (workDirectory / "meanHumansDynamicCalibration.csv").content.split(",").map( _.trim.toDouble).toArray
+// resources += workDirectory / "meanHumansDynamicCalibration.csv",
+
+// distance function for scalar model outputs  
+def distanceMedianScalar(data: Double)(vs: Vector[Int]) = {
+  math.abs(data - vs.median)
+}
+
+// distance function for array model outputs 
+//def distanceMedianArray(data:Array[Double])(vs: Vector[Array[Double]]) = {     // data: Array
+
+def distanceMedianArray(data:File)(vs: Vector[Array[Int]]) = {
+  
+  def absoluteDistance(d: Array[Double],v : Vector[Double]) = {
+      d.zip(v).map{ case(a,b) => math.abs(a-b) }.sum
+  }
+  //val humansDynamicRef = (workDirectory / "meanHumansDynamicCalibration.csv").content.split(",").map( _.trim.toDouble).toArray
+  val dataArray = data.content.split(",").map( _.trim.toDouble).toArray
+  absoluteDistance(dataArray, vs.transpose.map(_.median).map(_.toDouble))
+}
+
+
+val f = workDirectory / "meanHumansDynamicCalibration.csv"
+
+
+val nsga = 
+  NSGA2Evolution(
+    evaluation = argumentsData_KNOWN -- model, 
+    genome = Seq(
+      redCrossActivationDelay in (0, 10),
+      redCrossEfficiencyProbability in (0.7, 1.0),
+      redCrossExhaustionProbability in (0.45, 1.0)
+    ),
+    objectives = Seq(zombies aggregate distanceMedianScalar(0.28),
+                     rescued aggregate distanceMedianScalar(183.22), 
+                    humansDynamic aggregate distanceMedianArray(f) 
+                    ),
+    stochastic = Stochastic(seed = seed),
+    //parallelism = 1,
+    //termination = 10,
+    parallelism = 100,
+    termination = 5000,
+    distribution = Island(5 minutes)
+ ) 
+ /*
+ set(
+     f := workDirectory / "meanHumansDynamicCalibration.csv"
+     resources += workDirectory / "meanHumansDynamicCalibration.csv"
+      )
+  */
+  
+val savePopulationHook = SavePopulationHook(nsga, workDirectory / "resultsNSGA_v2", frequency = 100)
+
+nsga hook savePopulationHook on env
+
+
+
+
