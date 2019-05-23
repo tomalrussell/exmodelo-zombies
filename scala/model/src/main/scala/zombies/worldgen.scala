@@ -999,6 +999,23 @@ object worldgen {
     }
 
 
+    def entropy(values: Array[Array[Double]]): Double = entropy(values.flatten)
+
+    def entropy(values: Array[Double]): Double = {
+      val totalQuantity = values.sum
+      //assert(totalQuantity > 0)
+
+      totalQuantity match {
+        case 0.0 => 0.0
+        case _ =>
+          values.map {p =>
+            val quantityRatio = p / totalQuantity
+            val localEntropy = if (quantityRatio == 0.0) 0.0 else quantityRatio * math.log (quantityRatio)
+            //assert(!localEntropy.isNaN, s"${quantityRatio} ${math.log(quantityRatio)}")
+            localEntropy
+          }.sum * (- 1 / math.log (values.length) )
+      }
+    }
 
 
 

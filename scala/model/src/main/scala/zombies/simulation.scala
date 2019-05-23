@@ -308,31 +308,4 @@ object simulation {
     val zombieCanLeave = true
   }
 
-  def vigilence(world: World, humans: Int, zombies: Int, walkSpeed: Double, infectionRange: Double, rotation: Double, humanPerception: Double, humanInformedRatio: Double, humanAwarenessProbability: Double, zombiePerception: Double, random: Random, steps: Int): (List[Simulation], List[Vector[Event]]) = {
-
-    val simulation =
-      Simulation.initialize(
-       world,
-        infectionRange = infectionRange,
-        humanRunSpeed = walkSpeed,
-        humanExhaustionProbability = 1.0,
-        humanPerception = humanPerception,
-        humanMaxRotation = rotation,
-        humanFollowProbability = 0.0,
-        humanInformedRatio = humanInformedRatio,
-        humanInformProbability = humanAwarenessProbability,
-        humanFightBackProbability = 0.0,
-        humans = humans,
-        zombieRunSpeed = walkSpeed,
-        zombiePerception = zombiePerception,
-        zombieMaxRotation = rotation,
-        zombies = zombies,
-        walkSpeed = walkSpeed,
-        zombiePheromone = NoPheromone,
-        random = random
-      )
-
-    simulate(simulation, random, steps)
-  }
-
 }
