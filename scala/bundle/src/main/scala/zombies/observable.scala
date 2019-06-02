@@ -1,6 +1,5 @@
 package zombies
 
-import com.sun.xml.internal.fastinfoset.stax.EventLocation
 import org.apache.commons.math3.linear.MatrixUtils
 import zombies.agent.{Agent, Metabolism}
 import zombies.simulation.{Event, SimulationResult}
