@@ -85,7 +85,7 @@ object observable {
   def totalZombified(results: SimulationResult) = totalEvents(results, Event.zombified)
   def halfZombified(results: SimulationResult) = halfEvents(results, Event.zombified)
   def peakZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakEvents(results, window, Event.zombified)
-
+  def peakSizeZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakSizeEvents(results, window, Event.zombified)
 
   private def agentsDynamic(results : SimulationResult, by: Int, e: PartialFunction[Agent, Any]) = {
     val (simulations, _) = results
@@ -115,6 +115,14 @@ object observable {
     val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum)
     val maxRescued = dyn.max
     dyn.indexWhere(_ == maxRescued) + window / 2
+  }
+
+  /** Return the step where number rescued is maximum over @window simulation steps */
+  private def peakSizeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]): Int = {
+    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
+    val maxRescued = dyn.max
+    val peak = dyn.indexWhere(_ == maxRescued) + window / 2
+    dyn(peak)
   }
 
 

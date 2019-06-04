@@ -27,6 +27,7 @@ package object zombies {
     def totalZombified = observable.totalZombified(results)
     def halfZombified= observable.halfZombified(results)
     def peakZombified(window: Int = defaultGroupSize) = observable.peakZombified(results, window)
+    def peakSizeZombified(window: Int = defaultGroupSize) = observable.peakSizeZombified(results, window)
   }
 
   def physic = zombies.simulation.physic
