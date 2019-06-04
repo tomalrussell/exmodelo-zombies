@@ -112,7 +112,7 @@ object observable {
 
   /** Return the step where number rescued is maximum over @window simulation steps */
   private def peakTimeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]) = {
-    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum)
+    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
     val maxRescued = dyn.max
     dyn.indexWhere(_ == maxRescued) + window / 2
   }
