@@ -22,7 +22,8 @@ package object zombies {
 
     def totalRescued = observable.totalRescued(results)
     def halfTimeRescued = observable.halfTimeRescued(results)
-    def peakTimeRescued(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
+    def peakTimeRescued(window: Int = defaultGroupSize) = observable.peakTimeRescued(results, window)
+    def peakSizeRescued(window: Int = defaultGroupSize) = observable.peakSizeRescued(results, window)
 
     def totalZombified = observable.totalZombified(results)
     def halfZombified= observable.halfZombified(results)
