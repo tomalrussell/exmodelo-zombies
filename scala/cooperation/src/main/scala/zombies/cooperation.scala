@@ -8,8 +8,8 @@ object cooperation {
   def zombies(): Unit = {
     simulate.buildGUI(
       ()=> simulation.environment.quarantine,
-      humanPerception,
-      zombiePerception,
+      humanPerception isDefault,
+      zombiePerception isDefault,
       humanRunSpeed asDefaultFrom(walkSpeed),
       zombieRunSpeed asDefaultFrom(walkSpeed),
       infectionRange.isDefault,
@@ -20,8 +20,8 @@ object cooperation {
       numberHumans isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
-      humanFollowProbability isOff,
-      humanInformProbability isOff,
+      humanFollowProbability,
+      humanInformProbability,
       humanInformedRatio isOff,
       zombieMaxRotation isOff
     )
