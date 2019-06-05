@@ -81,6 +81,7 @@ object observable {
   def totalRescued(results: SimulationResult) = totalEvents(results, Event.rescued)
   def halfTimeRescued(results: SimulationResult) = halfTimeEvents(results, Event.rescued)
   def peakTimeRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakTimeEvents(results, window, Event.rescued)
+  def peakSizeRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakSizeEvents(results, window, Event.rescued)
 
   def totalZombified(results: SimulationResult) = totalEvents(results, Event.zombified)
   def halfZombified(results: SimulationResult) = halfTimeEvents(results, Event.zombified)
