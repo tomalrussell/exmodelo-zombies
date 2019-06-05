@@ -21,12 +21,13 @@ package object zombies {
     def zombiesGoneDynamic(by: Int = defaultGroupSize) = observable.zombiesGoneDynamic(results, by)
 
     def totalRescued = observable.totalRescued(results)
-    def halfRescued = observable.halfRescued(results)
-    def peakRescued(window: Int = defaultGroupSize) = observable.peakZombified(results, window)
+    def halfTimeRescued = observable.halfTimeRescued(results)
+    def peakTimeRescued(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
 
     def totalZombified = observable.totalZombified(results)
     def halfZombified= observable.halfZombified(results)
-    def peakZombified(window: Int = defaultGroupSize) = observable.peakZombified(results, window)
+    def peakTimeZombified(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
+    def peakSizeZombified(window: Int = defaultGroupSize) = observable.peakSizeZombified(results, window)
   }
 
   def physic = zombies.simulation.physic
