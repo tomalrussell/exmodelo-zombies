@@ -54,9 +54,7 @@ object parameters {
   trait Activation
 
   object Variable extends Activation
-
   object Off extends Activation
-
   object Default extends Activation
 
   object Range {
@@ -68,12 +66,10 @@ object parameters {
 
   case class Range[T](name: ParameterName, value: RangeValue[T], activation: Activation) extends Parameter {
     def isDefault = copy(activation = Default)
-
     def asDefaultFrom(parameter: Range[T]) = parameter.copy(value = from(parameter), activation = Default)
-
     def isOff = copy(activation = Off)
-
     def from(aParameter: Range[T]) = aParameter.value
+    def withDefault(v: T) = copy(value = value.copy(default = v))
   }
 
   val numberZombies = Range("numberZombies", RangeValue(0, 100, 1, 4, 0), Variable)

@@ -15,14 +15,13 @@ object cooperation {
       infectionRange.isDefault,
       humanExhaustionProbability isDefault,
       humanFightBackProbability isDefault,
-      humanFollowProbability,
+      humanFollowProbability withDefault(0.5),
       humanInformProbability isDefault,
       numberHumans isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
-      humanFollowProbability,
-      humanInformProbability,
-      humanInformedRatio isOff,
+      humanInformProbability withDefault(0.5),
+      humanInformedRatio withDefault(0.5),
       zombieMaxRotation isOff
     )
   }
