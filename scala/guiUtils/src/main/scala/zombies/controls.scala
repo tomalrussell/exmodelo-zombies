@@ -7,9 +7,7 @@ import scalatags.JsDom.all._
 
 import scalajs.js.|
 import rx._
-import scaladget.bootstrapnative.bsn
-import scaladget.bootstrapnative.bsn.buttonGroup
-import scalatags.JsDom.styles
+import scaladget.bootstrapnative.{BootstrapTags, bsn}
 import zombies.guitutils.parameters._
 
 object controls {
@@ -111,13 +109,16 @@ object controls {
 
   case class OnOffController(name: ParameterName, childs: Seq[ParameterName] = Seq()) extends Controller {
 
-    val button = scaladget.bootstrapnative.bsn.toggle(true, "Yes", "No")
+    val isOn: Var[Boolean] = Var(false)
 
-    val element = button.render.render
+    val button = bsn.checkbox(false)(onchange := {()=> isOn.update(!isOn.now)}).render
+
+    val element = button
 
     val valueElement = span.render
 
-    def value = button.position.now
+    def value = isOn.now
+
   }
 
   def build(parameter: Parameter): Controller = {
