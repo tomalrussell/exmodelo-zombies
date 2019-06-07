@@ -121,6 +121,7 @@ object simulation {
           fight = Fight(humanFightBackProbability),
           rescue = rescue,
           canLeave = true,
+          function = Human.Civilian,
           rng = random)
       }
 
@@ -140,6 +141,7 @@ object simulation {
           fight = Fight(army.fightBackProbability, aggressive = army.aggressive),
           rescue = rescue,
           canLeave = false,
+          function = Human.Army,
           rng = random)
       }
 
@@ -164,6 +166,7 @@ object simulation {
           rescue = rescue,
           canLeave = false,
           antidote = antidote,
+          function = Human.RedCross,
           rng = random)
       }
 
