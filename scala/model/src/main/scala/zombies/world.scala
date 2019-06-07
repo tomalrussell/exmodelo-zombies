@@ -39,7 +39,7 @@ object world {
 
       def parse(s: String) = {
         def toWall(c: Char): Option[Cell] = c match {
-          case l if l >= '0' && l <= '9' || l == 'a' => Some(Floor(information = informationLevel(l)))
+          case l if l >= '0' && l <= '9' || l == 'r' => Some(Floor(information = informationLevel(l)))
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
