@@ -11,11 +11,12 @@ import zombies.agent._
 import scala.scalajs.js.annotation._
 import scala.util.Random
 import scaladget.bootstrapnative.bsn._
-import zombies.simulation.{Event, Simulation}
+import zombies.simulation.{Event, RedCross, Simulation}
 import zombies.world.{Floor, NeighborhoodCache, Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
+import zombies.agent.Human.Army
 import zombies.guitutils.controls._
 import zombies.guitutils.parameters.ParameterName
 
@@ -164,7 +165,8 @@ object display {
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
           val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
-            case h: Human if h.fight.aggressive => "#08eafa"
+            case h: Human if h.function == Human.Army => "#08eafa"
+            case h: Human if h.function == Human.RedCross => "#f50bfa"
             case h: Human => "#666666"
             case _ => "red"
           }
@@ -267,12 +269,12 @@ object display {
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 30, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
+    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 10, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
       div(
         Rx {
           controllerList.map { p =>
             if (optionalControllers.contains(p.name) && !invisibleControllers().contains(p.name))
-              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20, fontWeight.bold)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20)).render
+              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
             else span.render
           }
         }

@@ -16,7 +16,9 @@ object simulate {
 
     val rng = new Random(42)
 
-    val controlList = parameters.filter{isVariable}.map { p => build(p) }
+    val controlList = parameters.filter {
+      isVariable
+    }.map { p => build(p) }
 
     def initialize(rng: Random) = {
 
@@ -27,7 +29,15 @@ object simulate {
 
 
       def value[T](p: Range[T]) = controlValues.getOrElse(p.name, defaultOrOff(p)).asInstanceOf[T]
+
       def optionValue(o: Options) = controlValues.getOrElse(o.name, defaultOrOff(o)).toString
+
+      def booleanValue[T](o: OnOff[T]) = controlValues.getOrElse(o.name, false).asInstanceOf[Boolean]
+
+      def scalaOptionValue[T, S ](o: OnOff[T], r: Range[S]) = controlValues.get(o.name) match {
+        case Some(r: Range[_])=> Some(value(r))
+        case _=> None
+      }
 
       val army = controlValues.getOrElse(armyOnOff.name, false) match {
         case false => NoArmy
@@ -39,9 +49,23 @@ object simulate {
           value(armyRunSpeed),
           value(armyFollowProbability),
           value(armyMaxRotation),
-          value(armyInformProbability))
+          value(armyInformProbability),
+          aggressive = booleanValue(armyAgressive)
+        )
       }
 
+      val redcross = controlValues.getOrElse(redCrossOnOff.name, false) match {
+        case false => NoRedCross
+        case _ => RedCross(
+          value(redCrossSize),
+          scalaOptionValue(redCrossExhaustionMechanism, redCrossExhaustionProbability).map{_.asInstanceOf[Double]},
+          value(redCrossFollowProbability),
+          value(redCrossInformProbability),
+          booleanValue(redCrossAgressive),
+          value(activationDelay),
+          value(efficiencyProbability)
+        )
+      }
       val worldsize = 40
 
       /*
@@ -59,7 +83,7 @@ object simulate {
       }
       */
 
-
+println("red cross " + redcross)
       val genworld = world() match {
         case World.dummyWorld => World(GridGeneratorLauncher(
           optionValue(generationMethod),
@@ -73,7 +97,7 @@ object simulate {
           value(blocksMaxSize),
           value(percolationProba),
           value(percolationBordPoints),
-          value(percolationLinkWidth)).getGrid(rng),worldsize)
+          value(percolationLinkWidth)).getGrid(rng), worldsize)
         case w => w
       }
 
@@ -96,6 +120,7 @@ object simulate {
         zombiePheromoneEvaporation = value(zombiePheromoneEvaporation),
         zombies = value(numberZombies),
         army = army,
+        redCross = redcross,
         random = rng
       )
     }
