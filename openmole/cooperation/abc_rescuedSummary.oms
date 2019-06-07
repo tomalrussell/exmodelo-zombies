@@ -1,0 +1,25 @@
+import _file_.model._
+
+val abc =
+  IslandABC(
+    evaluation = model,
+    prior = Seq(
+      humanInformedRatio in (0.0, 1.0),
+      humanInformProbability in (0.0, 1.0),
+      humanFollowProbability in (0.0, 1.0)),
+    observed =  Seq(totalRescued -> 115,
+                    peakTimeRescued -> 57,
+                    peakSizeRescued -> 47),
+    sample = 1000,
+    generated = 10,
+    minAcceptedRatio = 0.01,
+    stopSampleSizeFactor = 5,
+    parallelism = 4
+  )
+
+val save = ABCHook(abc, workDirectory / "results/abc/rescuedSummary/")
+
+//val env = EGIEnvironment("vo.complex-systems.eu")
+val env = LocalEnvironment(4)
+
+abc hook save on env

@@ -9,9 +9,9 @@ val medianTask =
   ) 
   
 Replication(
-  evaluation = model,
+  evaluation = model hook CSVHook(workDirectory / "results/replication.csv", arrayOnRow = true),
   seed = seed,
   replications = 100,
-  aggregation = medianTask
-) hook (workDirectory / "results/replication.csv", arrayOnRow = true)
+  aggregation = medianTask hook CSVHook(workDirectory / "results/replication_median.csv", arrayOnRow = true) 
+ ) 
 

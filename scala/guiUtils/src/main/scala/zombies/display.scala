@@ -10,7 +10,6 @@ import zombies.agent._
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
-import scaladget.tools
 import scaladget.bootstrapnative.bsn._
 import zombies.simulation.{Event, Simulation}
 import zombies.world.{Floor, NeighborhoodCache, Wall, World}
@@ -80,8 +79,6 @@ object display {
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
-    controllerList.foreach(c=>println(c.name))
-
     val simulation = initFunction()
     val side = simulation.world.side
 
@@ -94,18 +91,17 @@ object display {
     val timeOut: Var[Option[Int]] = Var(None)
     val people: Var[People] = Var(People())
 
-    val onOffControllerPositions = controllerList.collect(onOffControllers).map { ooc => ooc -> ooc.button.position }.toMap
+    val onOffControllerPositions = controllerList.collect(onOffControllers).map { ooc => ooc -> ooc.isOn }.toMap
     val invisibleControllers: Var[Seq[ParameterName]] = Var(Seq())
 
-    onOffControllerPositions.foreach { case (ooc, position) =>
-      position.trigger {
+    onOffControllerPositions.foreach { case (ooc, isOn) =>
+      isOn.trigger {
         invisibleControllers.update({
-          if (position.now) invisibleControllers.now ++ ooc.childs
-          else invisibleControllers.now.filterNot(ic => ooc.childs.contains(ic)).distinct
+          if (isOn.now) invisibleControllers.now.filterNot(ic => ooc.childs.contains(ic)).distinct
+          else invisibleControllers.now ++ ooc.childs
         }
         )
       }
-      println("Trigged " + invisibleControllers.now)
     }
 
     val optionalControllers = controllerList.collect(optionalParameters).flatten
@@ -168,8 +164,8 @@ object display {
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
           val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
-            case h: Human if h.fight.aggressive => "green"
-            case h: Human => "bleu"
+            case h: Human if h.fight.aggressive => "#08eafa"
+            case h: Human => "#666666"
             case _ => "red"
           }
           svgTags.g(agentPath.render(svgAttrs.fill := color), svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax},${ay})")
@@ -207,7 +203,6 @@ object display {
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
-      println("Setup")
       val simulation = initFunction()
       val stepNumber = 0
       val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
@@ -277,7 +272,7 @@ object display {
         Rx {
           controllerList.map { p =>
             if (optionalControllers.contains(p.name) && !invisibleControllers().contains(p.name))
-              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
+              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20, fontWeight.bold)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20)).render
             else span.render
           }
         }

@@ -25,19 +25,22 @@ object simulate {
           p.name -> p.value
         }.toMap
 
+
       def value[T](p: Range[T]) = controlValues.getOrElse(p.name, defaultOrOff(p)).asInstanceOf[T]
       def optionValue(o: Options) = controlValues.getOrElse(o.name, defaultOrOff(o)).toString
 
-
-      val army = Army(
-        size = value(armySize),
-        fightBackProbability = value(armyFightBackProbability),
-        exhaustionProbability = value(armyExhaustionProbability),
-        value(armyPerception),
-        value(armyRunSpeed),
-        value(armyFollowProbability),
-        value(armyMaxRotation),
-        value(armyInformProbability))
+      val army = controlValues.getOrElse(armyOnOff.name, false) match {
+        case false => NoArmy
+        case _ => Army(
+          size = value(armySize),
+          fightBackProbability = value(armyFightBackProbability),
+          exhaustionProbability = value(armyExhaustionProbability),
+          value(armyPerception),
+          value(armyRunSpeed),
+          value(armyFollowProbability),
+          value(armyMaxRotation),
+          value(armyInformProbability))
+      }
 
       val worldsize = 40
 
@@ -55,6 +58,7 @@ object simulate {
         }
       }
       */
+
 
       val genworld = world() match {
         case World.dummyWorld => World(GridGeneratorLauncher(
