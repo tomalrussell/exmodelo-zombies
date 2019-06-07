@@ -138,6 +138,11 @@ object observable {
 
     def slope(matrix: Array[Array[Double]]): Double = slope(matrix.flatten)
 
+    /**
+      * rank size slope
+      * @param values
+      * @return
+      */
     def slope(values: Array[Double]): Double = {
       def distribution: Array[Double] = values.sorted(Ordering.Double.reverse).filter(_ > 0)
       def distributionLog: Array[Array[Double]] = distribution.zipWithIndex.map { case (q, i) => Array(log(i + 1), log(q)) }
