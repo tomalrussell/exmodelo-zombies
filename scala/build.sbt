@@ -63,7 +63,7 @@ lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enab
   guiDependencies
   )
 
-lazy val zombieland = Project("zombieland", file("zombieland")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings (
+lazy val zombieland = Project("zombyland", file("zombyland")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings (
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
   )
 
