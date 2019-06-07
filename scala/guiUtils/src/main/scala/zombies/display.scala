@@ -269,12 +269,12 @@ object display {
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 30, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
+    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 10, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
       div(
         Rx {
           controllerList.map { p =>
             if (optionalControllers.contains(p.name) && !invisibleControllers().contains(p.name))
-              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20, fontWeight.bold)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20)).render
+              span(styles.display.flex, flexDirection.row, paddingTop := 10, textAlign.right)(span(minWidth := 220, paddingRight := 20)(p.name), span(p.element, paddingLeft := 10), span(p.valueElement, paddingLeft := 20, fontWeight.bold)).render
             else span.render
           }
         }
