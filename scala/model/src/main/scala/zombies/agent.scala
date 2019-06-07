@@ -219,7 +219,7 @@ object agent {
       }
 
       a match {
-        case human: Human if !human.rescue.informed && human.rescue.alerted =>
+        case human: Human if !Human.isInformed(human) && human.rescue.alerted =>
           val informedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.informed)
           val transmit = informedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
           if (transmit) human.copy(rescue = human.rescue.copy(informed = true)) else lookForInformation(human)
@@ -230,11 +230,11 @@ object agent {
 
     def alert(neighbors: Array[Agent], rng: Random)(a: Agent) =
       a match {
-        case h: Human if neighbors.exists(Agent.isZombie) => Human.alerted(h)
-        case h: Human =>
+        case h: Human if neighbors.exists(Agent.isZombie) => Human.run(Human.alerted(h))
+        case h: Human if !Human.isAlerted(h) =>
           val alertedNeighbors = neighbors.collect(Agent.human).filter(_.rescue.alerted)
           val transmit = alertedNeighbors.exists(h => rng.nextDouble() < h.rescue.informProbability)
-          if (transmit) Human.alerted(h) else h
+          if (transmit) Human.run(Human.alerted(h)) else h
         case a => a
       }
 
@@ -453,7 +453,11 @@ object agent {
       if(Metabolism.canRun(h.metabolism)) h.copy(velocity = normalize(h.velocity, h.metabolism.runSpeed), metabolism = h.metabolism.copy(run = true))
       else h
 
-    def alerted(h: Human) = run(h).copy(rescue = h.rescue.copy(alerted = true))
+    def isAlerted(h: Human) = h.rescue.alerted
+    def alerted(h: Human) = h.copy(rescue = h.rescue.copy(alerted = true))
+
+    def isInformed(h: Human) = h.rescue.informed
+    def informed(h: Human) = h.copy(rescue = h.rescue.copy(informed = true))
 
     def metabolism(h: Human, rng: Random) = {
       val newSpeed = Metabolism.metabolism(h.metabolism, h.antidote, rng)

@@ -1,9 +1,11 @@
-import zombies.agent.PheromoneMechanism
+import zombies.agent.{Agent, PheromoneMechanism}
 import zombies.observable.defaultGroupSize
 import zombies.simulation.{ArmyOption, NoArmy, NoRedCross, RedCrossOption, Simulation, SimulationResult}
 import zombies.world.World
 
 package object zombies {
+
+  implicit def stringToWorld(s: String) = World.parse()(s)
 
   implicit class ResultDecorator(results: SimulationResult) {
     def humansDynamic(by: Int = defaultGroupSize) = observable.humansDynamic(results, by)
@@ -60,6 +62,7 @@ package object zombies {
     rotationGranularity: Int = 5,
     army: ArmyOption = NoArmy,
     redCross: RedCrossOption = NoRedCross,
+    agents: Seq[Agent] = Seq(),
     steps: Int = 500,
     random: scala.util.Random) = {
 
@@ -86,6 +89,7 @@ package object zombies {
         rotationGranularity = rotationGranularity,
         army = army,
         redCross = redCross,
+        agents = agents,
         random = random)
 
     simulation.simulate(state, random, steps)
@@ -121,8 +125,8 @@ package object zombies {
     followProbability: Double = 0.0,
     informProbability: Double = physic.humanInformProbability,
     aggressive: Boolean = true,
-    activationDelay: Int,
-    efficiencyProbability: Double) =
+    activationDelay: Int = 10,
+    efficiencyProbability: Double = 1.0) =
     simulation.RedCross(
       size,
       exhaustionProbability = exhaustionProbability,

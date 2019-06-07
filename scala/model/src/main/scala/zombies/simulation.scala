@@ -102,6 +102,7 @@ object simulation {
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       redCross: RedCrossOption = NoRedCross,
+      agents: Seq[Agent] = Seq(),
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
@@ -176,11 +177,16 @@ object simulation {
           case a: RedCross => Vector.fill(a.size)(generateRedCrossVolunteers(a))
         }
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers ++ redCrossVolunteers
+      val allAgents =
+        Vector.fill(humans)(generateHuman) ++
+          Vector.fill(zombies)(generateZombie) ++
+          soldiers ++
+          redCrossVolunteers ++
+          agents
 
       Simulation(
         world = world,
-        agents = agents,
+        agents = allAgents,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
