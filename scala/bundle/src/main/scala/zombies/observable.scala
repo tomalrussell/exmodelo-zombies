@@ -122,7 +122,7 @@ object observable {
   private def peakSizeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]): Int = {
     val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
     val maxRescued = dyn.max
-    val peak = dyn.indexWhere(_ == maxRescued) + window / 2
+    val peak = math.min(math.max(0, dyn.indexWhere(_ == maxRescued) + window / 2), dyn.size - 1)
     dyn(peak)
   }
 
