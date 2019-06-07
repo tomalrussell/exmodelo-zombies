@@ -291,9 +291,10 @@ object agent {
           val (won, lost) = assailants.filter(a => !deadZombies.contains(a)).partition(_ => humanWins())
 
           if(!lost.isEmpty)
-            h.antidote match {
-              case NoAntidote => infectedHumans.put(h, rng.shuffle(lost).head)
-              case a: Antidote =>
+            (h.antidote, h.function) match {
+              case (NoAntidote, Human.Army) =>
+              case (NoAntidote, _) => infectedHumans.put(h, rng.shuffle(lost).head)
+              case (a: Antidote, _) =>
                 def antidoteWorked = rng.nextDouble() < a.efficiencyProbability
                 if (!Antidote.activated(a) || !antidoteWorked) infectedHumans.put(h, rng.shuffle(lost).head)
             }
@@ -443,7 +444,7 @@ object agent {
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function, rng: Random) = {
+    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
       val p = Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
       Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote, function = function)

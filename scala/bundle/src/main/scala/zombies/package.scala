@@ -62,7 +62,7 @@ package object zombies {
     rotationGranularity: Int = 5,
     army: ArmyOption = NoArmy,
     redCross: RedCrossOption = NoRedCross,
-    agents: Seq[Agent] = Seq(),
+    agents: Seq[(World, scala.util.Random) => Agent] = Seq(),
     steps: Int = 500,
     random: scala.util.Random) = {
 
@@ -89,7 +89,7 @@ package object zombies {
         rotationGranularity = rotationGranularity,
         army = army,
         redCross = redCross,
-        agents = agents,
+        agents = agents.map(_(world, random)),
         random = random)
 
     simulation.simulate(state, random, steps)
@@ -136,5 +136,13 @@ package object zombies {
       activationDelay = activationDelay,
       efficiencyProbability = efficiencyProbability
     )
+
+//
+//  def Human(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
+//      val p = Agent.randomPosition(world, rng)
+//      val v = Agent.randomVelocity(walkSpeed, rng)
+//      (world: World)Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote, function = function)
+//    }
+
 
 }
