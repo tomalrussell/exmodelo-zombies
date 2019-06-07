@@ -95,7 +95,7 @@ object simulation {
       zombieRunSpeed: Double = physic.zombieRunSpeed,
       zombiePerception: Double = physic.zombiePerception,
       zombieMaxRotation: Double = physic.zombieMaxRotation,
-      zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
+      zombiePheromoneEvaporation: Double = physic.zombiePheromoneEvaporation,
       zombieCanLeave: Boolean = physic.zombieCanLeave,
       zombies: Int,
       walkSpeed: Double = physic.walkSpeed,
@@ -192,7 +192,7 @@ object simulation {
         zombieMaxRotation = zombieMaxRotation,
         zombieCanLeave = zombieCanLeave,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromone = zombiePheromone,
+        zombiePheromone = Pheromone(zombiePheromoneEvaporation),
         rotationGranularity = rotationGranularity
       )
 
@@ -306,7 +306,7 @@ object simulation {
     /* Zombie parameters */
     val zombiePerception = 2.9
     val zombieRunSpeed = 0.28
-    val zombiePheromone = Pheromone(evaporation = 0.38)
+    val zombiePheromoneEvaporation = 0.38
     val zombieMaxRotation = 30
     val zombieCanLeave = true
   }

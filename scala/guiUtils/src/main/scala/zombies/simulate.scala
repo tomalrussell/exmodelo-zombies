@@ -93,7 +93,7 @@ object simulate {
         zombieRunSpeed = value(zombieRunSpeed),
         zombiePerception = value(zombiePerception),
         zombieMaxRotation = value(zombieMaxRotation),
-        zombiePheromone = Pheromone(evaporation = value(zombiePheromoneEvaporation)),
+        zombiePheromoneEvaporation = value(zombiePheromoneEvaporation),
         zombies = value(numberZombies),
         army = army,
         random = rng
