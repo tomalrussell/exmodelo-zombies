@@ -6,11 +6,18 @@ library(tidyverse)
 file = read_csv("ZombielandData_1000repli.csv") %>%
     select(contains("Avg"))
 # ODE parameters
+# calib no tWarp
 panic0 = 7.252818
 staminaH = 0.9997521
 inf = 0.01977554
 hunt0 = 10.153002
 staminaZ = 1.280096
+# calib tWarp
+panic0 = 100
+staminaH = 0.10866696052269618
+inf = 0.004585325476695915
+hunt0 = 7.974418405424284
+staminaZ = 0.6890335279647442
 # Initial conditions
 statesInit = c(250.0, 0.0, 0.0, 4.0)
 # Time steps
