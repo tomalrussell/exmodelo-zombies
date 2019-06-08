@@ -1,9 +1,11 @@
-import zombies.agent.PheromoneMechanism
+import zombies.agent.{Agent, PheromoneMechanism}
 import zombies.observable.defaultGroupSize
 import zombies.simulation.{ArmyOption, NoArmy, NoRedCross, RedCrossOption, Simulation, SimulationResult}
 import zombies.world.World
 
 package object zombies {
+
+  implicit def stringToWorld(s: String) = World.parse()(s)
 
   implicit class ResultDecorator(results: SimulationResult) {
     def humansDynamic(by: Int = defaultGroupSize) = observable.humansDynamic(results, by)
@@ -21,12 +23,22 @@ package object zombies {
     def zombiesGoneDynamic(by: Int = defaultGroupSize) = observable.zombiesGoneDynamic(results, by)
 
     def totalRescued = observable.totalRescued(results)
-    def halfRescued = observable.halfRescued(results)
-    def peakRescued(window: Int = defaultGroupSize) = observable.peakZombified(results, window)
+    def halfTimeRescued = observable.halfTimeRescued(results)
+    def peakTimeRescued(window: Int = defaultGroupSize) = observable.peakTimeRescued(results, window)
+    def peakSizeRescued(window: Int = defaultGroupSize) = observable.peakSizeRescued(results, window)
 
     def totalZombified = observable.totalZombified(results)
     def halfZombified= observable.halfZombified(results)
-    def peakZombified(window: Int = defaultGroupSize) = observable.peakZombified(results, window)
+    def peakTimeZombified(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
+    def peakSizeZombified(window: Int = defaultGroupSize) = observable.peakSizeZombified(results, window)
+
+    // spatial observables
+    def spatialMoranZombified: Double = observable.spatialMoran(observable.zombified)(results)
+    def spatialDistanceMeanZombified: Double = observable.spatialDistanceMean(observable.zombified)(results)
+    def spatialEntropyZombified: Double = observable.spatialEntropy(observable.zombified)(results)
+    def spatialSlopeZombified: Double = observable.spatialSlope(observable.zombified)(results)
+    def spatialRipleyZombified: Double = observable.spatialRipley(observable.zombified)(results)
+
   }
 
   def physic = zombies.simulation.physic
@@ -51,13 +63,14 @@ package object zombies {
     zombieRunSpeed: Double = physic.zombieRunSpeed,
     zombiePerception: Double = physic.zombiePerception,
     zombieMaxRotation: Double = physic.zombieMaxRotation,
-    zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
+    zombiePheromoneEvaporation: Double = physic.zombiePheromoneEvaporation,
     zombieCanLeave: Boolean = physic.zombieCanLeave,
     zombies: Int = 4,
     walkSpeed: Double = physic.walkSpeed,
     rotationGranularity: Int = 5,
     army: ArmyOption = NoArmy,
     redCross: RedCrossOption = NoRedCross,
+    agents: Seq[(World, scala.util.Random) => Agent] = Seq(),
     steps: Int = 500,
     random: scala.util.Random) = {
 
@@ -77,13 +90,14 @@ package object zombies {
         zombieRunSpeed = zombieRunSpeed,
         zombiePerception = zombiePerception,
         zombieMaxRotation = zombieMaxRotation,
-        zombiePheromone = zombiePheromone,
+        zombiePheromoneEvaporation = zombiePheromoneEvaporation,
         zombieCanLeave = zombieCanLeave,
         zombies = zombies,
         walkSpeed = walkSpeed,
         rotationGranularity = rotationGranularity,
         army = army,
         redCross = redCross,
+        agents = agents.map(_(world, random)),
         random = random)
 
     simulation.simulate(state, random, steps)
@@ -119,8 +133,8 @@ package object zombies {
     followProbability: Double = 0.0,
     informProbability: Double = physic.humanInformProbability,
     aggressive: Boolean = true,
-    activationDelay: Int,
-    efficiencyProbability: Double) =
+    activationDelay: Int = 10,
+    efficiencyProbability: Double = 1.0) =
     simulation.RedCross(
       size,
       exhaustionProbability = exhaustionProbability,
@@ -130,5 +144,13 @@ package object zombies {
       activationDelay = activationDelay,
       efficiencyProbability = efficiencyProbability
     )
+
+//
+//  def Human(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
+//      val p = Agent.randomPosition(world, rng)
+//      val v = Agent.randomVelocity(walkSpeed, rng)
+//      (world: World)Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote, function = function)
+//    }
+
 
 }

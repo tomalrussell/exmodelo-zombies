@@ -9,7 +9,9 @@ val seed = Val[Long]
 
 // Model outputs
 val totalRescued = Val[Int]
-val halfRescued = Val[Int]
+val halfTimeRescued = Val[Int]
+val peakTimeRescued = Val[Int]
+val peakSizeRescued = Val[Int]
 val rescuedDynamic = Val[Array[Int]]
 
 val model =
@@ -28,11 +30,13 @@ val model =
       random = rng)
     
     val totalRescued = result.totalRescued
-    val halfRescued = result.halfRescued
+    val halfTimeRescued = result.halfTimeRescued
+    val peakTimeRescued = result.peakTimeRescued()
+    val peakSizeRescued = result.peakSizeRescued()
     val rescuedDynamic = result.rescuedDynamic()
   """) set (
     inputs += (seed, humanFollowProbability, humanInformedRatio, humanInformProbability),
-    outputs += (rescuedDynamic, halfRescued, totalRescued),
+    outputs += (rescuedDynamic, halfTimeRescued, peakTimeRescued, peakSizeRescued, totalRescued),
     
     seed := 42L,
     humanInformedRatio := physic.humanInformedRatio,

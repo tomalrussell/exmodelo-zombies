@@ -69,7 +69,7 @@ object Model {
     val humansWalkingSampled = samplingSteps.map(interpolate(humansWalking,_))
     val humansRunningSampled = samplingSteps.map(interpolate(humansRunning,_))
     val zombifiedWalkingSampled = samplingSteps.map(interpolate(zombifiedWalking,_))
-    val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_) - statesInit(3))
+    val zombifiedRunningSampled = samplingSteps.map(interpolate(zombifiedRunning,_))
 
     (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
   }

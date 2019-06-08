@@ -1,6 +1,5 @@
 package zombies
 
-import com.sun.xml.internal.fastinfoset.stax.EventLocation
 import org.apache.commons.math3.linear.MatrixUtils
 import zombies.agent.{Agent, Metabolism}
 import zombies.simulation.{Event, SimulationResult}
@@ -80,13 +79,14 @@ object observable {
   def zombiesGoneDynamic(results: SimulationResult, by: Int = defaultGroupSize) = eventDynamic(results, by, Event.zombieGone)
 
   def totalRescued(results: SimulationResult) = totalEvents(results, Event.rescued)
-  def halfRescued(results: SimulationResult) = halfEvents(results, Event.rescued)
-  def peakRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakEvents(results, window, Event.rescued)
+  def halfTimeRescued(results: SimulationResult) = halfTimeEvents(results, Event.rescued)
+  def peakTimeRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakTimeEvents(results, window, Event.rescued)
+  def peakSizeRescued(results: SimulationResult, window: Int = defaultGroupSize) = peakSizeEvents(results, window, Event.rescued)
 
   def totalZombified(results: SimulationResult) = totalEvents(results, Event.zombified)
-  def halfZombified(results: SimulationResult) = halfEvents(results, Event.zombified)
-  def peakZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakEvents(results, window, Event.zombified)
-
+  def halfZombified(results: SimulationResult) = halfTimeEvents(results, Event.zombified)
+  def peakTimeZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakTimeEvents(results, window, Event.zombified)
+  def peakSizeZombified(results: SimulationResult, window: Int = defaultGroupSize) = peakSizeEvents(results, window, Event.zombified)
 
   private def agentsDynamic(results : SimulationResult, by: Int, e: PartialFunction[Agent, Any]) = {
     val (simulations, _) = results
@@ -103,7 +103,7 @@ object observable {
     events.map(_.collect(e).size).sum
   }
 
-  private def halfEvents(results: SimulationResult, e: PartialFunction[Event, Any]) = {
+  private def halfTimeEvents(results: SimulationResult, e: PartialFunction[Event, Any]) = {
     val (_, events) = results
     val rescuedCum = cumSum(events.map(_.collect(e)).map(_.size))
     val rescued = rescuedCum.last
@@ -112,10 +112,18 @@ object observable {
   }
 
   /** Return the step where number rescued is maximum over @window simulation steps */
-  private def peakEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]) = {
-    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum)
+  private def peakTimeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]) = {
+    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
     val maxRescued = dyn.max
     dyn.indexWhere(_ == maxRescued) + window / 2
+  }
+
+  /** Return the step where number rescued is maximum over @window simulation steps */
+  private def peakSizeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]): Int = {
+    val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
+    val maxRescued = dyn.max
+    val peak = math.min(math.max(0, dyn.indexWhere(_ == maxRescued) + window / 2), dyn.size - 1)
+    dyn(peak)
   }
 
 
@@ -130,6 +138,11 @@ object observable {
 
     def slope(matrix: Array[Array[Double]]): Double = slope(matrix.flatten)
 
+    /**
+      * rank size slope
+      * @param values
+      * @return
+      */
     def slope(values: Array[Double]): Double = {
       def distribution: Array[Double] = values.sorted(Ordering.Double.reverse).filter(_ > 0)
       def distributionLog: Array[Array[Double]] = distribution.zipWithIndex.map { case (q, i) => Array(log(i + 1), log(q)) }

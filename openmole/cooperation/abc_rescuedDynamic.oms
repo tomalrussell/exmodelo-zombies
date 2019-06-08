@@ -7,17 +7,17 @@ val abc =
       humanInformedRatio in (0.0, 1.0),
       humanInformProbability in (0.0, 1.0),
       humanFollowProbability in (0.0, 1.0)),
-    observed =  Seq(rescuedDynamic -> Array(0,1,14,31,33,28,14,6,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
+    observed =  Seq(rescuedDynamic -> Array(0,5,14,42,36,9,5,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,)),
     sample = 1000,
-    generated = 200,
+    generated = 100,
     minAcceptedRatio = 0.01,
     stopSampleSizeFactor = 5,
-    parallelism = 300
+    parallelism = 4
   )
 
-val save = ABCHook(abc, workDirectory / "results/abc/single_series/")
+val save = ABCHook(abc, workDirectory / "results/abc/rescuedDynamic/")
 
-val env = EGIEnvironment("vo.complex-systems.eu")
-//val env = LocalEnvironment(4)
+//val env = EGIEnvironment("vo.complex-systems.eu")
+val env = LocalEnvironment(4)
 
 abc hook save on env

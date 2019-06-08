@@ -67,7 +67,7 @@ lazy val zombieland = Project("zombieland", file("zombieland")) dependsOn (guiUt
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
   )
 
-lazy val vigilence = Project("vigilence", file("vigilence")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
+lazy val cooperation = Project("cooperation", file("cooperation")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
   scalaVersion := "2.12.8",
   OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
   OsgiKeys.importPackage := Seq("*;resolution:=optional"),

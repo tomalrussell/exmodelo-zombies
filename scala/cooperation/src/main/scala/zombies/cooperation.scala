@@ -3,26 +3,25 @@ package zombies
 import zombies.guitutils.parameters._
 import scala.scalajs.js.annotation.JSExportTopLevel
 
-object vigilence {
+object cooperation {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
     simulate.buildGUI(
-      ()=> world.World.jaude,
-      humanPerception,
-      zombiePerception,
+      ()=> simulation.environment.quarantine,
+      humanPerception isDefault,
+      zombiePerception isDefault,
       humanRunSpeed asDefaultFrom(walkSpeed),
       zombieRunSpeed asDefaultFrom(walkSpeed),
       infectionRange.isDefault,
       humanExhaustionProbability isDefault,
       humanFightBackProbability isDefault,
-      humanFollowProbability isDefault,
+      humanFollowProbability withDefault(0.5),
       humanInformProbability isDefault,
       numberHumans isDefault,
       numberZombies isDefault,
       humanMaxRotation isOff,
-      humanFollowProbability isOff,
-      humanInformProbability isOff,
-      humanInformedRatio isOff,
+      humanInformProbability withDefault(0.5),
+      humanInformedRatio withDefault(0.5),
       zombieMaxRotation isOff
     )
   }

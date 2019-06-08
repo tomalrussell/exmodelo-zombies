@@ -95,13 +95,14 @@ object simulation {
       zombieRunSpeed: Double = physic.zombieRunSpeed,
       zombiePerception: Double = physic.zombiePerception,
       zombieMaxRotation: Double = physic.zombieMaxRotation,
-      zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
+      zombiePheromoneEvaporation: Double = physic.zombiePheromoneEvaporation,
       zombieCanLeave: Boolean = physic.zombieCanLeave,
       zombies: Int,
       walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       redCross: RedCrossOption = NoRedCross,
+      agents: Seq[Agent] = Seq(),
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
@@ -121,6 +122,7 @@ object simulation {
           fight = Fight(humanFightBackProbability),
           rescue = rescue,
           canLeave = true,
+          function = Human.Civilian,
           rng = random)
       }
 
@@ -140,6 +142,7 @@ object simulation {
           fight = Fight(army.fightBackProbability, aggressive = army.aggressive),
           rescue = rescue,
           canLeave = false,
+          function = Human.Army,
           rng = random)
       }
 
@@ -164,6 +167,7 @@ object simulation {
           rescue = rescue,
           canLeave = false,
           antidote = antidote,
+          function = Human.RedCross,
           rng = random)
       }
 
@@ -173,11 +177,16 @@ object simulation {
           case a: RedCross => Vector.fill(a.size)(generateRedCrossVolunteers(a))
         }
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers ++ redCrossVolunteers
+      val allAgents =
+        Vector.fill(humans)(generateHuman) ++
+          Vector.fill(zombies)(generateZombie) ++
+          soldiers ++
+          redCrossVolunteers ++
+          agents
 
       Simulation(
         world = world,
-        agents = agents,
+        agents = allAgents,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
@@ -189,7 +198,7 @@ object simulation {
         zombieMaxRotation = zombieMaxRotation,
         zombieCanLeave = zombieCanLeave,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromone = zombiePheromone,
+        zombiePheromone = Pheromone(zombiePheromoneEvaporation),
         rotationGranularity = rotationGranularity
       )
 
@@ -303,7 +312,7 @@ object simulation {
     /* Zombie parameters */
     val zombiePerception = 2.9
     val zombieRunSpeed = 0.28
-    val zombiePheromone = Pheromone(evaporation = 0.38)
+    val zombiePheromoneEvaporation = 0.38
     val zombieMaxRotation = 30
     val zombieCanLeave = true
   }
