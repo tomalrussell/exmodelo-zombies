@@ -18,6 +18,17 @@ staminaH = 0.10866696052269618
 inf = 0.004585325476695915
 hunt0 = 7.974418405424284
 staminaZ = 0.6890335279647442
+# read from file
+load("calib_parcimony.RData")
+row = 4
+panic0 = as.double(data[row, "panic0"])
+staminaH = as.double(data[row, "staminaH"])
+hunt0 = as.double(data[row, "hunt0"])
+staminaZ = as.double(data[row, "staminaZ"])
+inf0 = as.double(data[row, "inf0"])
+out0 = as.double(data[row, "out0"])
+fightback = as.double(data[row, "fightback"])
+die0 = as.double(data[row, "die0"])
 # Initial conditions
 statesInit = c(250.0, 0.0, 0.0, 4.0)
 # Time steps
@@ -36,7 +47,7 @@ source("simulation.R")
 exhaustH <- 1.0 / staminaH
 exhaustZ <- 1.0 / staminaZ
 
-estim <- c(panic0, exhaustH, inf, hunt0, exhaustZ)
+estim <- c(panic0, exhaustH, hunt0, exhaustZ, inf0, out0, fightback, die0)
 
 simu <- simulation(estim, statesInit, Time, ODE)
 
