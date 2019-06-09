@@ -12,7 +12,7 @@ import scala.scalajs.js.annotation._
 import scala.util.Random
 import scaladget.bootstrapnative.bsn._
 import zombies.simulation.{Event, RedCross, Simulation}
-import zombies.world.{Floor, NeighborhoodCache, Wall, World}
+import zombies.world.{CaptureTrap, DeathTrap, Floor, NeighborhoodCache, Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
@@ -44,16 +44,19 @@ object display {
 
     val coldColor = (255, 238, 170)
     val hotColor = (255, 100, 0)
-    val rescueColor = (55, 170, 200)
-    val trapColor = (0, 0, 0)
-    val entranceColor = (125, 120, 200)
+    val rescue = (55, 170, 200)
+
+    val captureTrap = (150, 0, 0)
+    val deathTrap =  (50, 0, 0)
+
+    val entrance = (125, 120, 200)
     val wall = hotColor
 
     val baseR = (hotColor._1 - coldColor._1)
     val baseG = (hotColor._2 - coldColor._2)
     val baseB = (hotColor._3 - coldColor._3)
 
-    def colors = Seq(rescueColor, trapColor, entranceColor)
+    def colors = Seq(rescue, captureTrap, entrance)
 
     def color(value: Double) = (
         (baseR * value + coldColor._1).toInt,
@@ -132,10 +135,13 @@ object display {
       world.cells(lineIndex).map {
         case Wall => Some(Color.wall)
         case f: Floor =>
-          if (f.rescueZone) Some(Color.rescueColor)
-          else if (f.trapZone) Some(Color.trapColor)
-          else if(f.humanEntranceLambda.isDefined) Some(Color.entranceColor)
-          else None
+          (f.rescueZone, f.humanEntranceLambda, f.trap) match {
+            case (true, _, _) => Some(Color.rescue)
+            case (_, Some(_), _ )=> Some(Color.entrance)
+            case (_, _, Some(CaptureTrap)) => Some(Color.captureTrap)
+            case (_, _, Some(DeathTrap)) => Some(Color.deathTrap)
+            case _ => None
+          }
       }
     }
 

@@ -327,13 +327,24 @@ object agent {
       }
 
 
-    def fight(index: Index[Agent], agents: Vector[Agent], infectionRange: Double, zombify: (Zombie, Human) => Zombie, rng: Random) = {
+    def fight(world: World, index: Index[Agent], agents: Vector[Agent], infectionRange: Double, zombify: (Zombie, Human) => Zombie, rng: Random) = {
 
-      def attackers(index: Index[Agent], agent: Human, range: Double) =
-        neighbors(index, agent, range).collect(Agent.zombie)
+      def attackers(index: Index[Agent], agent: Human, range: Double) = neighbors(index, agent, range).collect(Agent.zombie)
 
       val deadZombies = collection.mutable.Set[Zombie]()
       val infectedHumans = collection.mutable.Map[Human, Zombie]()
+
+      for {
+        z <- agents.collect(Agent.zombie)
+        (x, y) = positionToLocation(Agent.position(z), world.side)
+      } {
+        World.get(world, x, y) match {
+          case Some(f: Floor) =>if (f.trap == Some(DeathTrap)) deadZombies += z
+          case _ =>
+        }
+      }
+
+
 
       for {
         a <- agents
@@ -396,7 +407,7 @@ object agent {
         val pv = possibleVelocities(z.position, z.velocity, z.maxRotation, Zombie.speed(z), Agent.canLeave(z), rng)
         val toNearByTraps = pv.flatMap { v =>
           World.get(world, positionToLocation(sum(z.position, v), world.side)) match {
-            case Some(f: Floor) if f.trapZone => Some(v)
+            case Some(f: Floor) if f.trap.isDefined => Some(v)
             case _ => None
           }
         }
@@ -463,7 +474,7 @@ object agent {
             case Some(trapped) =>
               val justTrapped =
                 World.get(world, positionToLocation(z.position, world.side)) match {
-                  case Some(floor: Floor) if floor.trapZone => None
+                  case Some(floor: Floor) if Floor.trapZone(floor) => None
                   case _ => Some(Trapped(z))
                 }
               (trapped, justTrapped)

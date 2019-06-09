@@ -17,12 +17,20 @@ object world {
     wallSlope: Vector[Slope] = Vector(),
     rescueSlope: Vector[Slope] = Vector(),
     rescueZone: Boolean = false,
-    trapZone:Boolean = false,
+    trap: Option[Trap] = None,
     information: Double = 0.0,
     pheromone: Double = 0.0,
     humanEntranceLambda: Option[Double] = None) extends Cell
 
+  sealed trait Trap
+  case object CaptureTrap extends Trap
+  case object DeathTrap extends Trap
+
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
+
+  object Floor {
+    def trapZone(f: Floor) = f.trap.isDefined
+  }
 
   object World {
     def floor: PartialFunction[Cell, Floor] = {
@@ -50,7 +58,8 @@ object world {
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
           case 'e' => Some(Floor(humanEntranceLambda = Some(0.1)))
-          case 'T' => Some(Floor(trapZone = true))
+          case 'T' => Some(Floor(trap = Some(CaptureTrap)))
+          case 'D' => Some(Floor(trap = Some(DeathTrap)))
           case _ => None
         }
 
@@ -325,7 +334,7 @@ object world {
         (x, y) <- trapLocation
       } {
         cells(x)(y) match {
-          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, true, f.information, f.pheromone)
+          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, Some(CaptureTrap), f.information, f.pheromone)
           case _ =>
         }
       }
