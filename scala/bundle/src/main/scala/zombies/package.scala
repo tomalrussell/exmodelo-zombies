@@ -31,6 +31,14 @@ package object zombies extends DSL {
     def halfZombified= observable.halfZombified(results)
     def peakTimeZombified(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
     def peakSizeZombified(window: Int = defaultGroupSize) = observable.peakSizeZombified(results, window)
+
+    // spatial observables
+    def spatialMoranZombified: Double = observable.spatialMoran(observable.zombified)(results)
+    def spatialDistanceMeanZombified: Double = observable.spatialDistanceMean(observable.zombified)(results)
+    def spatialEntropyZombified: Double = observable.spatialEntropy(observable.zombified)(results)
+    def spatialSlopeZombified: Double = observable.spatialSlope(observable.zombified)(results)
+    def spatialRipleyZombified: Double = observable.spatialRipley(observable.zombified)(results)
+
   }
 
 }

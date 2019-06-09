@@ -55,11 +55,7 @@ object Model {
 
     // Simulation data
     val simul = integrate(dynamic(panic0, exhaustH, hunt0, exhaustZ, inf0, out0, fightback, die0))(t0, dt, nbIntervals, List(statesInit))
-
     val Vector(humansWalking, humansRunning, zombifiedWalking, zombifiedRunning) = simul.toVector.transpose
-
-//    val humans = (humansWalking zip humansRunning).map { case(a, b) => a + b }
-//    val zombified = (zombifiedWalking zip zombifiedRunning).map { case (a, b) => a + b - statesInit(2) }
 
     // Sampling over simulation data
     val maxIndSampling = (tWarp - t0) / dt
@@ -73,36 +69,6 @@ object Model {
 
     (humansWalkingSampled, humansRunningSampled, zombifiedWalkingSampled, zombifiedRunningSampled)
   }
-
-
-  // Description of the ODE system
-//  def dynamic(panic0: Double, exhaustH: Double, inf: Double, hunt0: Double, exhaustZ: Double)(t: Double, state: Vector[Double]): Vector[Double] = {
-//    // Param
-//    val N = state.sum
-//    val panic = panic0 * (state(2) + state(3)) / N
-//    val hunt = hunt0 * (state(0) + state(1)) / N
-//
-//    // ODE system
-//    def dH_walk(state: Vector[Double]) =
-//      -(panic + inf) * state(0) + exhaustH * state(1)
-//
-//    def dH_run(state: Vector[Double]) =
-//      panic * state(0) - (exhaustH + inf) * state(1)
-//
-//    def dZ_walk(state: Vector[Double]) =
-//      inf * (state(0) + state(1)) - hunt * state(2) + exhaustZ * state(3)
-//
-//    def dZ_run(state: Vector[Double]) =
-//      hunt * state(2) - exhaustZ * state(3)
-//
-//    // Output
-//    Vector(
-//      dH_walk(state),
-//      dH_run(state),
-//      dZ_walk(state),
-//      dZ_run(state)
-//    )
-//  }
 
   // Description of the ODE system
   def dynamic(panic0: Double, exhaustH: Double, hunt0: Double, exhaustZ: Double, inf0: Double,
@@ -118,16 +84,16 @@ object Model {
 
     // ODE system
     def dH_walk(state: Vector[Double]) =
-      -(panic + inf) * state(0) + exhaustH * state(1) - out * state(0)
+      -(panic + inf + out) * state(0) + exhaustH * state(1)
 
     def dH_run(state: Vector[Double]) =
-      panic * state(0) - (exhaustH + inf) * state(1) - out * state(1)
+      panic * state(0) - (exhaustH + inf + out) * state(1)
 
     def dZ_walk(state: Vector[Double]) =
-      inf * (state(0) + state(1)) - hunt * state(2) + exhaustZ * state(3) - die * state(2)
+      inf * (state(0) + state(1)) - (hunt + die) * state(2) + exhaustZ * state(3)
 
     def dZ_run(state: Vector[Double]) =
-      hunt * state(2) - exhaustZ * state(3) - die * state(3)
+      hunt * state(2) - (exhaustZ + die) * state(3)
 
     // Output
     Vector(

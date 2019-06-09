@@ -2,12 +2,14 @@
 
 simulation <- function(estim_par, condInit, temps, modele)
 {
-    # param = list(B0 = estim_par[1], X = estim_par[2], P0 = estim_par[3], P = 0, L = lambda, data_flu = data_flu)
     param = list(panic0 = estim_par[1],
                  exhaustH = estim_par[2],
-                 inf = estim_par[3],
-                 hunt0 = estim_par[4],
-                 exhaustZ = estim_par[5])
+                 hunt0 = estim_par[3],
+                 exhaustZ = estim_par[4],
+                 inf0 = estim_par[5],
+                 out0 = estim_par[6],
+                 fightback = estim_par[7],
+                 die0 = estim_par[8])
 
     # Execute
     result <- lsoda(y = condInit, times = temps, func = modele, parms = param)
