@@ -31,15 +31,11 @@ object world {
     def outsideOfTheWorld(world: World, l: Location) = l._1 < 0 || l._1 >= world.side || l._2 < 0 || l._2 >= world.side
 
     def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
-      def informationLevel(l: Char) =
-        l match {
-          case l if l >= '0' && l <= '9' => l.toInt * 0.1
-          case _ => 1.0
-        }
 
       def parse(s: String) = {
         def toWall(c: Char): Option[Cell] = c match {
-          case l if l >= '0' && l <= '9' || l == 'r' => Some(Floor(information = informationLevel(l)))
+          case '0' => Some(Floor())
+          case 'r' => Some(Floor(information = 1.0))
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))

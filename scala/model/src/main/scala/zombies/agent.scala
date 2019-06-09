@@ -161,7 +161,13 @@ object agent {
 
       def computePosition(position: Position, velocity: Velocity) = {
         val newPosition = sum(position, velocity)
-        if (World.outsideOfTheWorld(world, positionToLocation(newPosition, world.side))) None else Some(newPosition)
+
+        def outsideOfTheWorld(position: Position) = {
+          val (x, y) = position
+          x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0
+        }
+
+        if (outsideOfTheWorld(newPosition)) None else Some(newPosition)
       }
 
       agent match {

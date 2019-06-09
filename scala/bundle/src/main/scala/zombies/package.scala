@@ -5,8 +5,6 @@ import zombies.world.World
 
 package object zombies extends DSL {
 
-  implicit def stringToWorld(s: String) = World.parse()(s)
-
   implicit class ResultDecorator(results: SimulationResult) {
     def humansDynamic(by: Int = defaultGroupSize) = observable.humansDynamic(results, by)
     def walkingHumansDynamic(by: Int = defaultGroupSize) = observable.walkingHumansDynamic(results, by)

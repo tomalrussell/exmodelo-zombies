@@ -177,6 +177,9 @@ trait DSL {
       efficiencyProbability = efficiencyProbability
     )
 
+  def World(s: String) = zombies.world.World.parse()(s)
+
+
   //
   //  def Human(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
   //      val p = Agent.randomPosition(world, rng)
