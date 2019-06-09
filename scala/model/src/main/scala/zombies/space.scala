@@ -1,5 +1,7 @@
 package zombies
 
+import zombies.world.World
+
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.ClassTag
 import scala.scalajs.js.annotation._
@@ -87,6 +89,12 @@ object space {
   def positionToLocation(v: Position, side: Int): Location = {
     val (x, y) = v
     ((side * x).toInt, (side * y).toInt)
+  }
+
+  def cellCenter(world: World, location: Location) = {
+    val (x, y) = location
+    val cellSize = 1.0 / world.side
+    (x.toDouble * cellSize + cellSize / 2, y.toDouble * cellSize + cellSize / 2)
   }
 
   object Index {

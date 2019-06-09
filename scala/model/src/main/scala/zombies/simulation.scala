@@ -107,7 +107,6 @@ object simulation {
 
       val cellSide = space.cellSide(world.side)
 
-
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
         val rescue = Rescue(informed = informed, informProbability = humanInformProbability)
@@ -193,6 +192,9 @@ object simulation {
         humanMaxRotation = humanMaxRotation,
         humanExhaustionProbability = humanExhaustionProbability,
         humanFollowProbability = humanFollowProbability,
+        humanFightBackProbability = humanFightBackProbability,
+        humanInformedRatio = humanInformedRatio,
+        humanInformProbability = humanInformProbability,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
@@ -215,6 +217,9 @@ object simulation {
     humanMaxRotation: Double,
     humanExhaustionProbability: Double,
     humanFollowProbability: Double,
+    humanFightBackProbability: Double,
+    humanInformedRatio: Double,
+    humanInformProbability: Double,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
@@ -253,13 +258,15 @@ object simulation {
 
     val (na2, rescued) = Agent.rescue(w1, na1.flatten)
 
+    val newAgents = Agent.joining(w1, simulation, rng)
+
     val events =
       infected.map(i => Zombified(i)) ++
       died.map(d => Killed(d)) ++
       rescued.map(r => Rescued(r)) ++
       moveEvents.flatten
 
-    (simulation.copy(agents = na2, world = w1), events)
+    (simulation.copy(agents = na2 ++ newAgents, world = w1), events)
   }
 
  type SimulationResult = (List[Simulation], List[Vector[Event]])

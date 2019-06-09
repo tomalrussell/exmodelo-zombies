@@ -10,8 +10,18 @@ import scala.scalajs.js.annotation._
 object world {
 
   sealed trait Cell
+
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, trapZone:Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
+
+  case class Floor(
+    wallSlope: Vector[Slope] = Vector(),
+    rescueSlope: Vector[Slope] = Vector(),
+    rescueZone: Boolean = false,
+    trapZone:Boolean = false,
+    information: Double = 0.0,
+    pheromone: Double = 0.0,
+    humanEntranceLambda: Option[Double] = None) extends Cell
+
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
 
   object World {
@@ -39,6 +49,7 @@ object world {
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
+          case 'e' => Some(Floor(humanEntranceLambda = Some(0.1)))
           case 'T' => Some(Floor(trapZone = true))
           case _ => None
         }

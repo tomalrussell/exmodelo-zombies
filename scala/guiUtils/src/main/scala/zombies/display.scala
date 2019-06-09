@@ -46,22 +46,24 @@ object display {
     val hotColor = (255, 100, 0)
     val rescueColor = (55, 170, 200)
     val trapColor = (0, 0, 0)
-
+    val entranceColor = (125, 120, 200)
+    val wall = hotColor
 
     val baseR = (hotColor._1 - coldColor._1)
     val baseG = (hotColor._2 - coldColor._2)
     val baseB = (hotColor._3 - coldColor._3)
 
-    def color(value: Double) = value match {
-      case 10.0 => rescueColor
-      case 55.0 => trapColor
-      case _ => (
+    def colors = Seq(rescueColor, trapColor, entranceColor)
+
+    def color(value: Double) = (
         (baseR * value + coldColor._1).toInt,
         (baseG * value + coldColor._2).toInt,
         (baseB * value + coldColor._3).toInt
       )
-    }
+
   }
+
+  type Color = (Int, Int, Int)
 
   implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
@@ -125,16 +127,20 @@ object display {
 
     val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
-    def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
+    def worldToInts(world: World, lineIndex: Int): Seq[Option[Color]] = {
 
       world.cells(lineIndex).map {
-        case Wall => 1
-        case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55 else 0)
+        case Wall => Some(Color.wall)
+        case f: Floor =>
+          if (f.rescueZone) Some(Color.rescueColor)
+          else if (f.trapZone) Some(Color.trapColor)
+          else if(f.humanEntranceLambda.isDefined) Some(Color.entranceColor)
+          else None
       }
     }
 
     def buildWorld(nbCellsByDimension: Int, world: World) = {
-      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
+      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Option[Color]]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
       scene.appendChild(
         svgTags.rect(x := 0, y := 0, width := gridSize * cellDimension, height := gridSize * cellDimension,
           style := s"fill:rgb${Color.color(0)};").render
@@ -143,13 +149,15 @@ object display {
         col <- (0 to nbCellsByDimension - 1).toArray
         colCoord = (col * cellDimension) + 1
         row <- (0 to nbCellsByDimension - 1).toArray
-      } yield {
+      } {
         val v = values(row)(col)
-        if (v != 0) {
-          scene.appendChild(
-            svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
-              style := s"fill:rgb${Color.color(v)};").render
-          )
+        v match {
+          case Some(c) =>
+            scene.appendChild(
+              svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
+                style := s"fill:rgb${c};").render
+            )
+          case None =>
         }
       }
     }
