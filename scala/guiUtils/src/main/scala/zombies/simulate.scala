@@ -13,23 +13,14 @@ object simulate {
 
   def buildGUI(world: (Seq[Controller], Random) => World, parameters: Parameter*): Unit = {
     val rng = new Random(42)
-
-    val controlList = parameters.filter {
-      isVariable
-    }.map { p => build(p) }
+    val controlList = parameters.filter { isVariable }.map { p => build(p) }
 
     def initialize(rng: Random) = {
 
-      val controlValues =
-        controlList.map { p =>
-          p.name -> p.value
-        }.toMap
-
+      val controlValues =  controlList.map { p => p.name -> p.value }.toMap
 
       def value[T](p: Range[T]) = controlValues.getOrElse(p.name, defaultOrOff(p)).asInstanceOf[T]
-
       def optionValue(o: Options) = controlValues.getOrElse(o.name, defaultOrOff(o)).toString
-
       def booleanValue[T](o: OnOff[T]) = controlValues.getOrElse(o.name, false).asInstanceOf[Boolean]
 
       def scalaOptionValue[T, S ](o: OnOff[T], r: Range[S]) = controlValues.get(o.name) match {
