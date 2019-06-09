@@ -5,15 +5,13 @@ import zombies.guitutils.controls._
 import zombies.guitutils.parameters._
 import zombies.simulation._
 import zombies.world.World
-import zombies.worldgen._
+
 
 import scala.util.Random
 
 object simulate {
 
-  def buildGUI(world: () => World, parameters: Parameter*): Unit = {
-
-
+  def buildGUI(world: (Seq[Controller], Random) => World, parameters: Parameter*): Unit = {
     val rng = new Random(42)
 
     val controlList = parameters.filter {
@@ -66,43 +64,9 @@ object simulate {
           value(efficiencyProbability)
         )
       }
-      val worldsize = 40
-
-      /*
-      implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
-
-      def getController(name: String) = Rx{display.controllerSeq().find(_.name == name)}.now
-
-      def getMecanismValue(name: String) = {
-        getController(name).map(_.value.asInstanceOf[Mecanism]) match {
-          case Some(v) => v
-          case None =>
-            println(s"$name not found")
-            "random"
-        }
-      }
-      */
-
-println("red cross " + redcross)
-      val genworld = world() match {
-        case World.dummyWorld => World(GridGeneratorLauncher(
-          optionValue(generationMethod),
-          worldsize,
-          value(randomDensity),
-          value(expMixtureCenters),
-          value(expMixtureRadius),
-          value(expMixtureThreshold),
-          value(blocksNumber),
-          value(blocksMinSize),
-          value(blocksMaxSize),
-          value(percolationProba),
-          value(percolationBordPoints),
-          value(percolationLinkWidth)).getGrid(rng), worldsize)
-        case w => w
-      }
 
       Simulation.initialize(
-        genworld,
+        world(controlList, rng),
         infectionRange = value(infectionRange),
         walkSpeed = value(walkSpeed),
         humanRunSpeed = value(humanRunSpeed),

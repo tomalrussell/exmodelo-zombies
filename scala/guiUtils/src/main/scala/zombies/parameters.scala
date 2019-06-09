@@ -34,9 +34,22 @@ object parameters {
 
   case class OnOff[T](name: ParameterName, activeInSimulation: Boolean, activation: Activation, childs: Seq[ParameterName]) extends Parameter {
     def isOn = copy(activation = Variable)
-
     def isOff = copy(activation = Off)
   }
+
+  case class Range[T](name: ParameterName, value: RangeValue[T], activation: Activation) extends Parameter {
+    def isDefault = copy(activation = Default)
+    def asDefaultFrom(parameter: Range[T]) = parameter.copy(value = from(parameter), activation = Default)
+    def isOff = copy(activation = Off)
+    def from(aParameter: Range[T]) = aParameter.value
+    def withDefault(v: T) = copy(value = value.copy(default = v))
+  }
+
+
+  def value(p: Parameter) = {
+
+  }
+
 
   def isVariable(p: Parameter) = p match {
     case o: Options => o.activation == Variable
@@ -69,17 +82,6 @@ object parameters {
 
   case class RangeValue[T](min: T, max: T, step: T, default: T, off: T)
 
-  case class Range[T](name: ParameterName, value: RangeValue[T], activation: Activation) extends Parameter {
-    def isDefault = copy(activation = Default)
-
-    def asDefaultFrom(parameter: Range[T]) = parameter.copy(value = from(parameter), activation = Default)
-
-    def isOff = copy(activation = Off)
-
-    def from(aParameter: Range[T]) = aParameter.value
-
-    def withDefault(v: T) = copy(value = value.copy(default = v))
-  }
 
   val numberZombies = Range("numberZombies", RangeValue(0, 100, 1, 4, 0), Variable)
   val numberHumans = Range("numberHumans", RangeValue(0, 1500, 1, 250, 0), Variable)
