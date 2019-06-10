@@ -19,12 +19,12 @@ object apigui {
         "+0000000000000\n" +
         "+000000000++++\n" +
         "++++000000++++\n" +
-        "++++TTRR00++++\n" +
+        "++++DTRR00++++\n" +
         "0000000000++++\n" +
         "0000000000++++\n" +
         "0000000000++++\n" +
         "0000000000++++\n" +
-        "++++0000DD++++\n" +
+        "++++0000TD++++\n" +
         "++++0000ee++++\n" +
         "++++++++++++++"
       }
@@ -34,8 +34,9 @@ object apigui {
     def init(random: Random) =
       initialize(
         world = world,
-        zombies = 4,
-        humans = 250,
+        zombies = 0,
+        humans = 0,
+        agents = (0 to 100).map(_ => Human(location = (7, 7))) ++ (0 to 5).map(_ => Zombie(location = (1, 9))),
         random = rng
       )
 

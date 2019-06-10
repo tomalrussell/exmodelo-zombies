@@ -92,6 +92,12 @@ object world {
       filteredFloors.map{ case(loc,cell) => loc}
     }
 
+    def cellCenter(world: World, location: Location) = {
+      val (x, y) = location
+      val cellSize = 1.0 / world.side
+      (x.toDouble * cellSize + cellSize / 2, y.toDouble * cellSize + cellSize / 2)
+    }
+
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
       x >= 0 && y >= 0 && x < world.side && y < world.side
 

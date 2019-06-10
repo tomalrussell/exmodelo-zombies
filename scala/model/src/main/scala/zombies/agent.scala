@@ -12,7 +12,7 @@ object agent {
 
   sealed trait Agent
   case class Human(position: Position, velocity: Velocity, metabolism: Metabolism, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism, function: Human.Function) extends Agent
-  case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean = false, canLeave: Boolean) extends Agent
+  case class Zombie(position: Position, velocity: Velocity, walkSpeed: Double, runSpeed: Double, perception: Double, maxRotation: Double, pursuing: Boolean, canLeave: Boolean) extends Agent
   case class Metabolism(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, run: Boolean, exhausted: Boolean)
 
   case class Rescue(informed: Boolean = false, alerted: Boolean = false, reach: Boolean = false, informProbability: Double = 0.0, noFollow: Boolean = false)
@@ -234,7 +234,7 @@ object agent {
             val informed = random.nextDouble() < simulation.humanInformedRatio
             val rescue = Rescue(informed = informed, informProbability = simulation.humanInformProbability)
 
-            def human = Human.random(
+            def human = Human.apply(
               world,
               walkSpeed = simulation.walkSpeed,
               runSpeed = simulation.humanRunSpeed ,
@@ -246,7 +246,7 @@ object agent {
               rescue = rescue,
               canLeave = true,
               function = Human.Civilian,
-              rng = random).copy(position = cellCenter(world, (x, y)))
+              rng = random).copy(position = World.cellCenter(world, (x, y)))
 
             (0 until poisson).map(_ => human)
           case _ => Seq()
@@ -512,8 +512,22 @@ object agent {
   }
 
   object Human {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
-      val p = Agent.randomPosition(world, rng)
+    def apply(
+      world: World,
+      walkSpeed: Double,
+      runSpeed: Double,
+      exhaustionProbability: Double,
+      perception: Double,
+      maxRotation: Double,
+      followRunningProbability: Double,
+      fight: Fight,
+      rescue: Rescue,
+      canLeave: Boolean,
+      antidote: AntidoteMechanism = NoAntidote,
+      function: Function = Civilian,
+      position: Option[Position] = None,
+      rng: Random): Human = {
+      val p = position getOrElse Agent.randomPosition(world, rng)
       val v = Agent.randomVelocity(walkSpeed, rng)
       Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote, function = function)
     }
@@ -543,10 +557,18 @@ object agent {
   }
 
   object Zombie {
-    def random(world: World, walkSpeed: Double, runSpeed: Double, vision: Double, maxRotation: Double, canLeave: Boolean, rng: Random) = {
-      val p = Agent.randomPosition(world, rng)
-      val v = Agent.randomVelocity(walkSpeed, rng)
-      Zombie(p, v, walkSpeed, runSpeed, vision, maxRotation, canLeave, false)
+    def apply(
+      world: World,
+      walkSpeed: Double,
+      runSpeed: Double,
+      perception: Double,
+      maxRotation: Double,
+      canLeave: Boolean,
+      position: Option[Position] = None,
+      random: Random): Zombie = {
+      val p = position getOrElse Agent.randomPosition(world, random)
+      val v = Agent.randomVelocity(walkSpeed, random)
+      Zombie(p, v, walkSpeed, runSpeed, perception, maxRotation, pursuing = false, canLeave = canLeave)
     }
 
     def pursue(z: Zombie) = z.copy(pursuing = true)

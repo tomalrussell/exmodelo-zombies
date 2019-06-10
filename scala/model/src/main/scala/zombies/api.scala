@@ -2,7 +2,10 @@ package zombies
 
 import zombies.agent.Agent
 import zombies.simulation.{ArmyOption, NoArmy, NoRedCross, RedCrossOption, Simulation}
+import zombies.space.{Location, Position}
 import zombies.world.World
+
+import scala.util.Random
 
 /*
  * Copyright (C) 2019 Romain Reuillon
@@ -52,7 +55,7 @@ trait DSL {
     rotationGranularity: Int = 5,
     army: ArmyOption = NoArmy,
     redCross: RedCrossOption = NoRedCross,
-    agents: Seq[(World, scala.util.Random) => Agent] = Seq(),
+    agents: Seq[AgentGenerator] = Seq(),
     steps: Int = 500,
     random: scala.util.Random) = {
 
@@ -106,9 +109,32 @@ trait DSL {
     rotationGranularity: Int = 5,
     army: ArmyOption = NoArmy,
     redCross: RedCrossOption = NoRedCross,
-    agents: Seq[(World, scala.util.Random) => Agent] = Seq(),
+    agents: Seq[AgentGenerator] = Seq(),
     steps: Int = 500,
     random: scala.util.Random) = {
+
+    val generatedAgents =
+      agents.flatMap { a =>
+        AgentGenerator.generateAgent(
+          a,
+          humanRunSpeed = humanRunSpeed,
+          humanPerception = humanPerception,
+          humanMaxRotation = humanMaxRotation,
+          humanExhaustionProbability = humanExhaustionProbability,
+          humanFollowProbability = humanFollowProbability,
+          humanInformedRatio = humanInformedRatio,
+          humanInformProbability = humanInformProbability,
+          humanFightBackProbability = humanFightBackProbability,
+          zombieRunSpeed = zombieRunSpeed,
+          zombiePerception = zombiePerception,
+          zombieMaxRotation = zombieMaxRotation,
+          zombieCanLeave = zombieCanLeave,
+          world = world,
+          walkSpeed = walkSpeed,
+          random = random
+        )
+      }
+
     Simulation.initialize(
       world = world,
       infectionRange = infectionRange,
@@ -131,7 +157,7 @@ trait DSL {
       rotationGranularity = rotationGranularity,
       army = army,
       redCross = redCross,
-      agents = agents.map(_(world, random)),
+      agents = generatedAgents,
       random = random)
   }
 
@@ -180,12 +206,129 @@ trait DSL {
   def World(s: String) = zombies.world.World.parse()(s)
 
 
-  //
-  //  def Human(walkSpeed: Double, runSpeed: Double, exhaustionProbability: Double, perception: Double, maxRotation: Double, followRunningProbability: Double, fight: Fight, rescue: Rescue, canLeave: Boolean, antidote: AntidoteMechanism = NoAntidote, function: Function = Civilian, rng: Random) = {
-  //      val p = Agent.randomPosition(world, rng)
-  //      val v = Agent.randomVelocity(walkSpeed, rng)
-  //      (world: World)Human(p, v, Metabolism(walkSpeed, runSpeed, exhaustionProbability, false, false), perception, maxRotation, followRunningProbability, fight, rescue = rescue, canLeave = canLeave, antidote = antidote, function = function)
-  //    }
+  object AgentGenerator {
+
+    object Optional {
+      implicit def toOptional[T](t: T) = Value(t)
+
+      implicit def toOption[T](optional: Optional[T]) =
+        optional match {
+          case Value(v) => Some(v)
+          case NoValue => None
+        }
+
+      implicit def fromOption[T](option: Option[T]) =
+        option match {
+          case Some(v) => Value(v)
+          case None => NoValue
+        }
+    }
+
+    sealed trait Optional[+T] {
+      def toOption = Optional.toOption(this)
+    }
+    case class Value[T](v: T) extends Optional[T]
+    case object NoValue extends Optional[Nothing]
+
+    def generateAgent(
+      generator: AgentGenerator,
+      walkSpeed: Double,
+      humanRunSpeed: Double,
+      humanPerception: Double,
+      humanMaxRotation: Double,
+      humanExhaustionProbability: Double,
+      humanFollowProbability: Double,
+      humanInformedRatio: Double,
+      humanInformProbability: Double,
+      humanFightBackProbability: Double,
+      zombieRunSpeed: Double,
+      zombiePerception: Double,
+      zombieMaxRotation: Double,
+      zombieCanLeave: Boolean,
+      world: World,
+      random: Random) = {
+
+
+      val cellSide = space.cellSide(world.side)
+
+      def toPosition(l: Location) = {
+        val (x, y) = l
+        zombies.world.World.get(world, x, y) match {
+          case Some(_: zombies.world.Floor) => Some(zombies.world.World.cellCenter(world, (x, y)))
+          case _ => None
+        }
+      }
+
+      def generateHuman(human: Human) = {
+        val informed = human.informed.getOrElse(random.nextDouble() < humanInformedRatio)
+        val rescue = zombies.agent.Rescue(informed = informed, informProbability = human.informProbability.getOrElse(humanInformProbability))
+
+        zombies.agent.Human(
+          world = world,
+          walkSpeed = human.walkSpeed.getOrElse(walkSpeed) * cellSide,
+          runSpeed = human.runSpeed.getOrElse(humanRunSpeed) * cellSide,
+          exhaustionProbability = human.exhaustionProbability.getOrElse(humanExhaustionProbability),
+          perception = human.perception.getOrElse(humanPerception) * cellSide,
+          maxRotation = human.maxRotation.getOrElse(humanMaxRotation),
+          followRunningProbability = human.followProbability.getOrElse(humanFollowProbability),
+          fight = zombies.agent.Fight(human.fightBackProbability.getOrElse(humanFightBackProbability), aggressive = human.aggressive),
+          rescue = rescue,
+          canLeave = true,
+          rng = random)
+      }
+
+      def generateZombie(zombie: Zombie) = {
+        zombies.agent.Zombie(
+          world = world,
+          walkSpeed = zombie.walkSpeed.getOrElse(walkSpeed) * cellSide,
+          runSpeed = zombie.runSpeed.getOrElse(zombieRunSpeed) * cellSide,
+          perception = zombie.perception.getOrElse(zombiePerception) * cellSide,
+          maxRotation = zombie.maxRotation.getOrElse(zombieMaxRotation),
+          canLeave = zombieCanLeave,
+          random = random
+        )
+      }
+
+      generator match {
+        case human: Human =>
+          human.location.toOption match {
+            case Some(l) => toPosition(l).map(l => generateHuman(human).copy(position = l))
+            case None => Some(generateHuman(human))
+          }
+        case zombie: Zombie =>
+          zombie.location.toOption match {
+            case Some(l) => toPosition(l).map(l => generateZombie(zombie).copy(position = l))
+            case None => Some(generateZombie(zombie))
+          }
+
+      }
+    }
+
+
+
+  }
+
+  sealed trait AgentGenerator
+
+  case class Human(
+    walkSpeed: AgentGenerator.Optional[Double] = None,
+    runSpeed:  AgentGenerator.Optional[Double] = None,
+    exhaustionProbability:  AgentGenerator.Optional[Double] = None,
+    perception:  AgentGenerator.Optional[Double] = None,
+    maxRotation:  AgentGenerator.Optional[Double] = None,
+    followProbability:  AgentGenerator.Optional[Double] = None,
+    location:  AgentGenerator.Optional[Location] = None,
+    fightBackProbability:  AgentGenerator.Optional[Double] = None,
+    informProbability:  AgentGenerator.Optional[Double] = None,
+    aggressive: Boolean = false,
+    informed:  AgentGenerator.Optional[Boolean] = None) extends AgentGenerator
+
+  case class Zombie(
+    walkSpeed: AgentGenerator.Optional[Double] = None,
+    runSpeed:  AgentGenerator.Optional[Double] = None,
+    perception:  AgentGenerator.Optional[Double] = None,
+    maxRotation:  AgentGenerator.Optional[Double] = None,
+    location:  AgentGenerator.Optional[Location] = None) extends AgentGenerator
 
 
 }

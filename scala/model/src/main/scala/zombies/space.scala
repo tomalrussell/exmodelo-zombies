@@ -91,12 +91,6 @@ object space {
     ((side * x).toInt, (side * y).toInt)
   }
 
-  def cellCenter(world: World, location: Location) = {
-    val (x, y) = location
-    val cellSize = 1.0 / world.side
-    (x.toDouble * cellSize + cellSize / 2, y.toDouble * cellSize + cellSize / 2)
-  }
-
   object Index {
 
     def apply[T: ClassTag](content: Iterable[T], location: T => Location, side: Int): Index[T] = {

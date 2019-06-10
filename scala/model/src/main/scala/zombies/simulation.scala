@@ -110,7 +110,7 @@ object simulation {
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
         val rescue = Rescue(informed = informed, informProbability = humanInformProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = humanRunSpeed * cellSide,
@@ -125,12 +125,20 @@ object simulation {
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, zombieCanLeave, random)
+      def generateZombie =
+        Zombie(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = zombieRunSpeed * cellSide,
+          perception = zombiePerception * cellSide,
+          maxRotation = zombieMaxRotation,
+          canLeave = zombieCanLeave,
+          random = random)
 
 
       def generateSoldier(army: Army) = {
         val rescue = Rescue(informed = true, alerted = true, informProbability = army.informProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = army.runSpeed * cellSide,
@@ -154,7 +162,7 @@ object simulation {
       def generateRedCrossVolunteers(redCross: RedCross) = {
         val rescue = Rescue(informProbability = redCross.informProbability, noFollow = true)
         val antidote = Antidote(activationDelay = redCross.activationDelay, efficiencyProbability = redCross.efficiencyProbability, exhaustionProbability = redCross.exhaustionProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = humanRunSpeed * cellSide,
