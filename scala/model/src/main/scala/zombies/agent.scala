@@ -22,7 +22,6 @@ object agent {
   case object NoPheromone extends PheromoneMechanism
   case class Pheromone(evaporation: Double) extends PheromoneMechanism
 
-
   sealed trait AntidoteMechanism
   case object NoAntidote extends AntidoteMechanism
 
@@ -343,8 +342,6 @@ object agent {
           case _ =>
         }
       }
-
-
 
       for {
         a <- agents
