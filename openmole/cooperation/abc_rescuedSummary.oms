@@ -11,15 +11,15 @@ val abc =
                     peakTimeRescued -> 57,
                     peakSizeRescued -> 47),
     sample = 1000,
-    generated = 10,
+    generated = 100,
     minAcceptedRatio = 0.01,
     stopSampleSizeFactor = 5,
-    parallelism = 4
+    parallelism = 300
   )
 
 val save = ABCHook(abc, workDirectory / "results/abc/rescuedSummary/")
 
-//val env = EGIEnvironment("vo.complex-systems.eu")
-val env = LocalEnvironment(4)
+val env = EGIEnvironment("vo.complex-systems.eu")
+//val env = LocalEnvironment(4)
 
 abc hook save on env

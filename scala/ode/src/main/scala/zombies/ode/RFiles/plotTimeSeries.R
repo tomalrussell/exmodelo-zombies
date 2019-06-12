@@ -6,9 +6,10 @@ file = read_csv("ZombielandData_1000repli.csv") %>%
 
 # ODE data
 simul0 <- read_csv("simulODE.csv")
-simulOut <- read_csv("simulODE_out.csv")
-simulFightback <- read_csv("simulODE_fightback.csv")
-simulDie <- read_csv("simulODE_die.csv")
+simul <- read_csv("simulODE_calib_190522.csv")
+# simulOut <- read_csv("simulODE_out.csv")
+# simulFightback <- read_csv("simulODE_fightback.csv")
+# simulDie <- read_csv("simulODE_die.csv")
 
 prepareSimulData <- function(dataset, mecanism) {
     res <- dataset %>%
@@ -23,7 +24,8 @@ prepareSimulData <- function(dataset, mecanism) {
 }
 
 allData <- prepareSimulData(file, "ABM") %>%
-    full_join(prepareSimulData(simul0, "none")) %>%
+    full_join(prepareSimulData(simul0, "no tWarp")) %>%
+    full_join(prepareSimulData(simul, "tWarp")) %>%
     full_join(prepareSimulData(simulOut, "humans leave")) %>%
     full_join(prepareSimulData(simulFightback, "humans fight back infection")) %>%
     full_join(prepareSimulData(simulDie, "humans kill zombies"))

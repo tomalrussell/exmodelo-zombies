@@ -1,5 +1,7 @@
 package zombies
 
+import zombies.world.World
+
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.ClassTag
 import scala.scalajs.js.annotation._

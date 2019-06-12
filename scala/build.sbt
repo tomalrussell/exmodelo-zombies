@@ -34,8 +34,7 @@ lazy val bundle = Project("zombies-bundle", file("bundle")) enablePlugins(SbtOsg
 
 
 lazy val console = Project("console", file("console")) dependsOn (bundle) settings (
-  libraryDependencies += "com.github.tomas-langer" % "chalk" % "1.0.2",
-  )
+  libraryDependencies += "com.github.tomas-langer" % "chalk" % "1.0.2")
 
 
 lazy val buildGUI = taskKey[Unit]("buildGUI")
@@ -51,7 +50,6 @@ lazy val guiDependencies = Seq(
 )
 
 def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS: File, depsCSS: File, globalCSS: File) = {
-
   IO.copyFile(jsBuild, demoTarget / "js/demo.js")
   IO.copyFile(dependencyJS, demoTarget / "js/deps.js")
   IO.copyDirectory(globalCSS, demoTarget / "css")
@@ -60,31 +58,24 @@ def guiBuilder(demoTarget: File, demoResource: File, jsBuild: File, dependencyJS
 }
 
 lazy val guiUtils = Project("guiUtils", file("guiUtils")) dependsOn (model) enablePlugins (ExecNpmPlugin) settings (
-  guiDependencies
-  )
+  scalaVersion := "2.12.8",
+  guiDependencies)
 
 lazy val zombieland = Project("zombieland", file("zombieland")) dependsOn (guiUtils) enablePlugins (ExecNpmPlugin) settings (
-  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
-  )
-
-lazy val cooperation = Project("cooperation", file("cooperation")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
   scalaVersion := "2.12.8",
-  OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
-  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
-  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
-  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
-  osgiSettings,
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css"))
+
+lazy val cooperation = Project("cooperation", file("cooperation")) dependsOn (guiUtils) enablePlugins(ExecNpmPlugin) settings(
+  scalaVersion := "2.12.8",
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
 )
 
-
-lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (guiUtils) enablePlugins(SbtOsgi, ExecNpmPlugin) settings(
+lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (guiUtils) enablePlugins(ExecNpmPlugin) settings(
   scalaVersion := "2.12.8",
-  OsgiKeys.exportPackage := Seq("zombies.*;-split-package:=merge-first"),
-  OsgiKeys.importPackage := Seq("*;resolution:=optional"),
-  OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*"),
-  OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"""",
-  osgiSettings,
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
 )
 
+lazy val apiGUI = Project("apigui", file("apigui")) dependsOn (guiUtils) enablePlugins(ExecNpmPlugin) settings(
+  scalaVersion := "2.12.8",
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
+)

@@ -10,9 +10,27 @@ import scala.scalajs.js.annotation._
 object world {
 
   sealed trait Cell
+
   case object Wall extends Cell
-  case class Floor(wallSlope: Vector[Slope] = Vector(), rescueSlope: Vector[Slope] = Vector(), rescueZone: Boolean = false, trapZone:Boolean = false, information: Double = 0.0, pheromone: Double = 0.0) extends Cell
+
+  case class Floor(
+    wallSlope: Vector[Slope] = Vector(),
+    rescueSlope: Vector[Slope] = Vector(),
+    rescueZone: Boolean = false,
+    trap: Option[Trap] = None,
+    information: Double = 0.0,
+    pheromone: Double = 0.0,
+    humanEntranceLambda: Option[Double] = None) extends Cell
+
+  sealed trait Trap
+  case object CaptureTrap extends Trap
+  case object DeathTrap extends Trap
+
   case class Slope(x: Double = 0.0, y: Double = 0.0, intensity: Double = 0)
+
+  object Floor {
+    def trapZone(f: Floor) = f.trap.isDefined
+  }
 
   object World {
     def floor: PartialFunction[Cell, Floor] = {
@@ -31,19 +49,17 @@ object world {
     def outsideOfTheWorld(world: World, l: Location) = l._1 < 0 || l._1 >= world.side || l._2 < 0 || l._2 >= world.side
 
     def parse(altitudeLambdaDecay: Double = 1.0, slopeIntensity: Double = 0.1)(worldDescription: String) = {
-      def informationLevel(l: Char) =
-        l match {
-          case l if l >= '0' && l <= '9' => l.toInt * 0.1
-          case _ => 1.0
-        }
 
       def parse(s: String) = {
         def toWall(c: Char): Option[Cell] = c match {
-          case l if l >= '0' && l <= '9' || l == 'r' => Some(Floor(information = informationLevel(l)))
+          case '0' => Some(Floor())
+          case 'r' => Some(Floor(information = 1.0))
           case '+' => Some(Wall)
           case 'R' => Some(Floor(rescueZone = true))
           case 'E' => Some(Floor(rescueZone = true, information = 1.0))
-          case 'T' => Some(Floor(trapZone = true))
+          case 'e' => Some(Floor(humanEntranceLambda = Some(0.1)))
+          case 'T' => Some(Floor(trap = Some(CaptureTrap)))
+          case 'D' => Some(Floor(trap = Some(DeathTrap)))
           case _ => None
         }
 
@@ -74,6 +90,12 @@ object world {
       val floors = coordinates(world).collect{ case (loc, cell:Floor) => loc -> cell }
       val filteredFloors = floors.filter{ _._2.rescueZone == includeRescueZone}
       filteredFloors.map{ case(loc,cell) => loc}
+    }
+
+    def cellCenter(world: World, location: Location) = {
+      val (x, y) = location
+      val cellSize = 1.0 / world.side
+      (x.toDouble * cellSize + cellSize / 2, y.toDouble * cellSize + cellSize / 2)
     }
 
     def locationIsInTheWorld(world: World, x: Int, y: Int) =
@@ -251,8 +273,6 @@ object world {
         |""".stripMargin
     }
 
-    val dummyWorld = World(Array.empty,0)
-
     def square(side: Int) = parse() {
       s"""${"+" * side}\n""" +
         s"""+${"0" * (side - 2)}+\n""" * (side - 2) +
@@ -320,7 +340,7 @@ object world {
         (x, y) <- trapLocation
       } {
         cells(x)(y) match {
-          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, true, f.information, f.pheromone)
+          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, Some(CaptureTrap), f.information, f.pheromone)
           case _ =>
         }
       }
