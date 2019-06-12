@@ -5,7 +5,7 @@ val humanFollowProbability = Val[Double]
 val humanInformedRatio = Val[Double]
 val humanInformProbability = Val[Double]
 
-//val seed = Val[Long]
+val replication = Val[Long]
 
 // Model outputs
 val humansDynamic = Val[Array[Int]]
@@ -25,7 +25,7 @@ val model =
   ScalaTask("""
     import zombies._
 
-    val rng = new scala.util.Random
+    val rng = new scala.util.Random(replication)
 
     val result = zombieInvasion(
       humanFollowProbability = humanFollowProbability,
@@ -49,29 +49,33 @@ val model =
     //val spatialSlopeZombified = result.spatialSlopeZombified
     //val spatialRipleyZombified = result.spatialRipleyZombified
   """) set (
-    inputs += (humanFollowProbability, humanInformedRatio, humanInformProbability),
+    inputs += (humanFollowProbability, humanInformedRatio, humanInformProbability,replication),
     outputs += (humansDynamic, zombiesDynamic,rescuedDynamic,peakTime,peakSize,totalZombified,halfZombified),//,spatialMoranZombified,spatialDistanceMeanZombified,spatialEntropyZombified,spatialSlopeZombified),//,spatialRipleyZombified),
     plugins += pluginsOf[zombies.agent.Agent]
   )
 
-val purpose = "SALTELLI_GRID"
-//val purpose = "TEST"
+//val purpose = "LHS_GRID"
+val purpose = "TEST"
 
-val env = EGIEnvironment("vo.complex-systems.eu")
-//val env = LocalEnvironment(10)
+//val env = EGIEnvironment("vo.complex-systems.eu")
+val env = LocalEnvironment(10)
 
-val sen = SensitivitySaltelli(
-  //evaluation = (model on env),
-  evaluation = (model on env by 1000),
-  samples = 100000,
-  inputs = Seq(humanFollowProbability in (0.0,1.0), humanInformedRatio in (0.0,1.0),humanInformProbability in (0.0,1.0)),
-  outputs = Seq(peakTime, peakSize, totalZombified,halfZombified)//, spatialMoranZombified,spatialDistanceMeanZombified,spatialEntropyZombified,spatialSlopeZombified),//,spatialRipleyZombified)
-)
+val reshook = workDirectory / "exploration" / (((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose)
 
 
+val explo = DirectSampling(
+  evaluation = (model hook reshook on env),
+  //evaluation = (model hook reshook on env by 1000),
+  sampling = LHS(
+      10,
+      humanFollowProbability in (0.0,1.0),
+      humanInformedRatio in (0.0,1.0),
+      humanInformProbability in (0.0,1.0)
+    ) x (replication in UniformDistribution[Long](100000) take 1)
+ )
 
 
-val resfile = workDirectory / "sensitivity" / (((new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")).format(new java.util.Date()))+"_"+purpose)
+explo
 
 
-sen hook SaltelliHook(sen,resfile)
+
