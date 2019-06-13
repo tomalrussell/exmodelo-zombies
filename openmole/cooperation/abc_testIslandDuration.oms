@@ -10,12 +10,13 @@ val abc =
       humanFollowProbability in (0.0, 1.0)),
     observed =  Seq(rescuedDynamic -> Array(0,5,14,42,36,9,5,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
     sample = 1000,
-    generated = 100,
+    generated = 10,
     minAcceptedRatio = 0.01,
     stopSampleSizeFactor = 5,
-    parallelism = default_env.par
+    parallelism = 1,
+    maxStep = 1
   )
 
-val save = ABCHook(abc, workDirectory / "results/abc/rescuedDynamic/")
+val save = ABCHook(abc, workDirectory / "results/abc/testIslandDuration/")
 
-abc hook save on default_env.env
+abc hook save on local.env

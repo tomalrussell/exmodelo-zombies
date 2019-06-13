@@ -13,6 +13,7 @@ val halfTimeRescued = Val[Int]
 val peakTimeRescued = Val[Int]
 val peakSizeRescued = Val[Int]
 val rescuedDynamic = Val[Array[Int]]
+val rescuedDynamicWindow = Val[Int]
 
 val model =
   ScalaTask("""
@@ -33,7 +34,7 @@ val model =
     val halfTimeRescued = result.halfTimeRescued
     val peakTimeRescued = result.peakTimeRescued()
     val peakSizeRescued = result.peakSizeRescued()
-    val rescuedDynamic = result.rescuedDynamic()
+    val rescuedDynamic = result.rescuedDynamic(by=rescuedDynamicWindow)
   """) set (
     inputs += (seed, humanFollowProbability, humanInformedRatio, humanInformProbability),
     outputs += (rescuedDynamic, halfTimeRescued, peakTimeRescued, peakSizeRescued, totalRescued),
@@ -42,7 +43,7 @@ val model =
     humanInformedRatio := physic.humanInformedRatio,
     humanInformProbability := physic.humanInformProbability,
     humanFollowProbability := physic.humanFollowProbability,
-
+    rescuedDynamicWindow := 20,
     plugins += pluginsOf[zombies.agent.Agent]    
   )
   
