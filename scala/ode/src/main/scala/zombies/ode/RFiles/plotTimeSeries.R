@@ -42,11 +42,11 @@ plot_dynamics <- allData %>%
 plot_dynamics
 
 
-
-LL <- logLik(simulOMS$humansWalking, file$walkingHumansAvg) +
-    logLik(simulOMS$humansRunning, file$runningHumansAvg) +
-    logLik(simulOMS$zombifiedWalking, file$walkingZombiesAvg) +
-    logLik(simulOMS$zombifiedRunning, file$runningZombiesAvg)
+source("fitness.R")
+LL <- logLik(simul0$humansWalking, file$walkingHumansAvg) +
+    logLik(simul0$humansRunning, file$runningHumansAvg) +
+    logLik(simul0$zombifiedWalking, file$walkingZombiesAvg) +
+    logLik(simul0$zombifiedRunning, file$runningZombiesAvg)
 
 print(LL)
 
