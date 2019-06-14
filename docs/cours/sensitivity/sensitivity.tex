@@ -102,7 +102,7 @@ Ensemble product of discrete variation ranges for factors (usually a regular gri
 \sframe{DOE Samplings}{
 
 
-*Computational limitations => need specific methods to efficiently sample the parameter space*
+\textit{Computational limitations} $\implies$ \textit{need specific methods to efficiently sample the parameter space}
 
 The field of Design of Experiments has proposed different methods for numerical experiments given limited computational resources
 
@@ -192,12 +192,12 @@ ST_i = \frac{E_{\mathbf{X}\sim i}\left[Var(Y | \mathbf{X}\sim i) \right]}{Var(Y)
 \sframe{OpenMOLE syntax: Direct sampling}{
 
 
-%\begin{lstlisting}
+\texttt{
 val explo = DirectSampling(
     evaluation = model,
     sampling = ...
 )
-%\end{lstlisting}
+}
 
 }
 
@@ -205,29 +205,28 @@ val explo = DirectSampling(
 \sframe{Example of samplings}{
 
  - One-factor sampling
-```
+
+\texttt{
   sampling = OneFactorSampling(
     (x1 in (0.0 to 1.0 by 0.2)) nominal 0.5,
     (x2 in (0.0 to 1.0 by 0.2)) nominal 0.5
   )
-```
+}
+
 
  - Grid sampling
-```
-  sampling = (x1 in (0.0 to 1.0 by 0.5)) x (x2 in (0.0 to 1.0 by 0.5))
-```
+
+\texttt{sampling = (x1 in (0.0 to 1.0 by 0.5)) x (x2 in (0.0 to 1.0 by 0.5))}
+
 
  - LHS Sampling
 
-```
-  sampling = LHS(100,x1 in (0.0,1.0),x2 in (0.0,1.0))
-```
+\texttt{sampling = LHS(100,x1 in (0.0,1.0),x2 in (0.0,1.0))}
 
  - Sobol sampling
 
-```
-  sampling = SobolSampling(100,x1 in (0.0,1.0),x2 in (0.0,1.0))
-```
+\texttt{sampling = SobolSampling(100,x1 in (0.0,1.0),x2 in (0.0,1.0))}
+
 
 }
 
@@ -236,7 +235,7 @@ val explo = DirectSampling(
 
 (method in itself)
 
-```
+\texttt{
 val sen = SensitivitySaltelli(
   //evaluation = (model on env),
   evaluation = (model on env by 1000),
@@ -244,7 +243,9 @@ val sen = SensitivitySaltelli(
   inputs = Seq(humanFollowProbability in (0.0,1.0), humanInformedRatio in (0.0,1.0),humanInformProbability in (0.0,1.0)),
   outputs = Seq(peakTime, peakSize, totalZombified,halfZombified, spatialMoranZombified,spatialDistanceMeanZombified,spatialEntropyZombified,spatialSlopeZombified),
   )
-```
+}
+
+
 
 }
 
@@ -253,7 +254,8 @@ val sen = SensitivitySaltelli(
 \sframe{Morris}{
 
 (example from market)
-```
+
+\texttt{
 SensitivityMorris(
     evaluation = modelExec on envLocal hook storeSimuCSV,
     inputs = Seq(inputNumberOfCars in (1.0, 41.0), 
@@ -263,7 +265,9 @@ SensitivityMorris(
     outputs = Seq(outputSpeedMin, outputSpeedMax),
     repetitions = 100,
     levels = 5)
-```
+}
+
+
 }
 
 
@@ -296,7 +300,7 @@ Your turn to run some direct samplings and/or sensitivity analysis
 
 \backupbegin
 
-\appendix
+%\appendix
 
 
 \sframe{Results of grid exploration}{
