@@ -82,6 +82,8 @@
 	\includegraphics[scale=1]{figures/logos/openmole.png}
 }
 
+\newcommand{\sframe}[2]{\frame{\frametitle{#1\addlogo} #2}}
+
 
 %% Color theme
 % Palette
@@ -167,3 +169,4 @@
 %		\vspace{-1cm}\small{\insertframenumber/\inserttotalframenumber}
 %	}
 }
+

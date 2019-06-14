@@ -1,6 +1,6 @@
 \documentclass{../beamer_template/myBeamer}
 
-\input{header}
+\input{header.tex}
 
 \title[DOE/Sensitivity Analysis]{Design of Experiments and Sensitivity analysis}
 \subtitle{Course and practical application}
@@ -192,12 +192,12 @@ ST_i = \frac{E_{\mathbf{X}\sim i}\left[Var(Y | \mathbf{X}\sim i) \right]}{Var(Y)
 \sframe{OpenMOLE syntax: Direct sampling}{
 
 
-\begin{lstlisting}
+%\begin{lstlisting}
 val explo = DirectSampling(
     evaluation = model,
     sampling = ...
 )
-\end{lstlisting}
+%\end{lstlisting}
 
 }
 
@@ -232,9 +232,7 @@ val explo = DirectSampling(
 }
 
 
-----
-
-*Saltelli*
+\sframe{Saltelli}{
 
 (method in itself)
 
@@ -248,9 +246,11 @@ val sen = SensitivitySaltelli(
   )
 ```
 
----
+}
 
-*Morris*
+
+
+\sframe{Morris}{
 
 (example from market)
 ```
@@ -264,37 +264,30 @@ SensitivityMorris(
     repetitions = 100,
     levels = 5)
 ```
+}
 
-----
-### Practical application
+
+
+\section{Practical application}
+
+
+\sframe{Practical application}{
+
 
 Your turn to run some direct samplings and/or sensitivity analysis
 
-  - given the described zombie model, what first experiment beyond stochasticity would be relevant ?
-  - write a script
-  - explore results (using e.g. the OpenMOLE GUI plots)
+\begin{itemize}
+	\item given the described zombie model, what first experiment beyond stochasticity would be relevant ?
+    \item write a script
+    \item explore results (using e.g. the OpenMOLE GUI plots)
+\end{itemize}
 
-*resources:*
+\textit{Resources:}
  - one script running directsampling
  - example of grid explo results
  - example of Saltelli
 
-
-
-----
-**Reserve**
-
--> results of direct sampling
-
-
-
----
-## References 
-
-Saltelli, A., Tarantola, S., Campolongo, F., & Ratto, M. (2004). Sensitivity analysis in practice: a guide to assessing scientific models. Chichester, England.
-
-
-
+}
 
 
 
@@ -304,6 +297,15 @@ Saltelli, A., Tarantola, S., Campolongo, F., & Ratto, M. (2004). Sensitivity ana
 \backupbegin
 
 \appendix
+
+
+\sframe{Results of grid exploration}{
+
+\textit{Cooperation model}
+
+}
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%

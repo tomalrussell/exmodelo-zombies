@@ -22,9 +22,17 @@
 
 \makeatletter
 
+
+\renewcommand{\addlogo}{
+	\hfill	
+	\includegraphics[height=.4cm]{../beamer_template/figures/logos/iconOM.png}
+	\includegraphics[scale=1]{../beamer_template/figures/logos/openmole.png}
+}
+
+
 \newcommand{\noun}[1]{\textsc{#1}}
 \newcommand{\jitem}[1]{\item \begin{justify} #1 \end{justify} \vfill{}}
-\newcommand{\sframe}[2]{\frame{\frametitle{#1} #2}}
+%\newcommand{\sframe}[2]{\frame{\frametitle{#1}\addlogo #2}}
 
 \newenvironment{centercolumns}{\begin{columns}[c]}{\end{columns}}
 %\newenvironment{jitem}{\begin{justify}\begin{itemize}}{\end{itemize}\end{justify}}
@@ -65,6 +73,7 @@
 
 
 \usepackage{listings}
+\lstset{language=Java} 
 
 \makeatother
 
