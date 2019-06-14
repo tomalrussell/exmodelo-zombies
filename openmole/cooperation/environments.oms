@@ -1,0 +1,24 @@
+default_env = criann
+
+object local {
+    val env = LocalEnvironment(4)
+    val par = 4
+}
+
+object grid2fr {
+    val env = EGIEnvironment("vo.complex-systems.eu")
+    val par = 300
+}
+
+object criann_test {
+    val env= SLURMEnvironment(
+        "gchere01",
+        "myria.criann.fr",
+        queue = "debug",
+        workDirectory = "/tmp",
+        nTasks = 1,
+        memory = 3 gigabytes,
+        wallTime = 15 minutes
+        )
+    val par = 200
+}

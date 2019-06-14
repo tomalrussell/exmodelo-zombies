@@ -10,13 +10,13 @@ import zombies.agent._
 
 import scala.scalajs.js.annotation._
 import scala.util.Random
-import scaladget.tools
 import scaladget.bootstrapnative.bsn._
-import zombies.simulation.{Event, Simulation}
-import zombies.world.{Floor, NeighborhoodCache, Wall, World}
+import zombies.simulation.{Event, RedCross, Simulation}
+import zombies.world.{CaptureTrap, DeathTrap, Floor, NeighborhoodCache, Wall, World}
 import rx._
 import scaladget.svg.path._
 import scaladget.tools._
+import zombies.agent.Human.Army
 import zombies.guitutils.controls._
 import zombies.guitutils.parameters.ParameterName
 
@@ -44,24 +44,29 @@ object display {
 
     val coldColor = (255, 238, 170)
     val hotColor = (255, 100, 0)
-    val rescueColor = (55, 170, 200)
-    val trapColor = (0, 0, 0)
+    val rescue = (55, 170, 200)
 
+    val captureTrap = (150, 0, 0)
+    val deathTrap =  (50, 0, 0)
+
+    val entrance = (125, 120, 200)
+    val wall = hotColor
 
     val baseR = (hotColor._1 - coldColor._1)
     val baseG = (hotColor._2 - coldColor._2)
     val baseB = (hotColor._3 - coldColor._3)
 
-    def color(value: Double) = value match {
-      case 10.0 => rescueColor
-      case 55.0 => trapColor
-      case _ => (
+    def colors = Seq(rescue, captureTrap, entrance)
+
+    def color(value: Double) = (
         (baseR * value + coldColor._1).toInt,
         (baseG * value + coldColor._2).toInt,
         (baseB * value + coldColor._3).toInt
       )
-    }
+
   }
+
+  type Color = (Int, Int, Int)
 
   implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 
@@ -80,8 +85,6 @@ object display {
 
   def init(initFunction: () => Simulation, controllerList: Seq[Controller]) = {
 
-    controllerList.foreach(c=>println(c.name))
-
     val simulation = initFunction()
     val side = simulation.world.side
 
@@ -94,18 +97,17 @@ object display {
     val timeOut: Var[Option[Int]] = Var(None)
     val people: Var[People] = Var(People())
 
-    val onOffControllerPositions = controllerList.collect(onOffControllers).map { ooc => ooc -> ooc.button.position }.toMap
+    val onOffControllerPositions = controllerList.collect(onOffControllers).map { ooc => ooc -> ooc.isOn }.toMap
     val invisibleControllers: Var[Seq[ParameterName]] = Var(Seq())
 
-    onOffControllerPositions.foreach { case (ooc, position) =>
-      position.trigger {
+    onOffControllerPositions.foreach { case (ooc, isOn) =>
+      isOn.trigger {
         invisibleControllers.update({
-          if (position.now) invisibleControllers.now ++ ooc.childs
-          else invisibleControllers.now.filterNot(ic => ooc.childs.contains(ic)).distinct
+          if (isOn.now) invisibleControllers.now.filterNot(ic => ooc.childs.contains(ic)).distinct
+          else invisibleControllers.now ++ ooc.childs
         }
         )
       }
-      println("Trigged " + invisibleControllers.now)
     }
 
     val optionalControllers = controllerList.collect(optionalParameters).flatten
@@ -128,16 +130,23 @@ object display {
 
     val agentPath = Path(precisionPattern = "%1.2f").m(0, agentSize).l(thirdAgentSize, 0).l(2 * thirdAgentSize, agentSize).l(thirdAgentSize, agentSize * 5 / 6).z
 
-    def worldToInts(world: World, lineIndex: Int): Seq[Int] = {
+    def worldToInts(world: World, lineIndex: Int): Seq[Option[Color]] = {
 
       world.cells(lineIndex).map {
-        case Wall => 1
-        case f: Floor => if (f.rescueZone) 10 else (if (f.trapZone) 55 else 0)
+        case Wall => Some(Color.wall)
+        case f: Floor =>
+          (f.rescueZone, f.humanEntranceLambda, f.trap) match {
+            case (true, _, _) => Some(Color.rescue)
+            case (_, Some(_), _ )=> Some(Color.entrance)
+            case (_, _, Some(CaptureTrap)) => Some(Color.captureTrap)
+            case (_, _, Some(DeathTrap)) => Some(Color.deathTrap)
+            case _ => None
+          }
       }
     }
 
     def buildWorld(nbCellsByDimension: Int, world: World) = {
-      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Int]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
+      val values = (1 to nbCellsByDimension).foldLeft(Seq[Seq[Option[Color]]]())((elems, index) => elems :+ worldToInts(world, index - 1)).transpose
       scene.appendChild(
         svgTags.rect(x := 0, y := 0, width := gridSize * cellDimension, height := gridSize * cellDimension,
           style := s"fill:rgb${Color.color(0)};").render
@@ -146,13 +155,15 @@ object display {
         col <- (0 to nbCellsByDimension - 1).toArray
         colCoord = (col * cellDimension) + 1
         row <- (0 to nbCellsByDimension - 1).toArray
-      } yield {
+      } {
         val v = values(row)(col)
-        if (v != 0) {
-          scene.appendChild(
-            svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
-              style := s"fill:rgb${Color.color(v)};").render
-          )
+        v match {
+          case Some(c) =>
+            scene.appendChild(
+              svgTags.rect(x := ((row * cellDimension) + 1), y := colCoord, width := cellDimension, height := cellDimension,
+                style := s"fill:rgb${c};").render
+            )
+          case None =>
         }
       }
     }
@@ -168,8 +179,9 @@ object display {
           val ay = "%1.2f".format((Agent.position(a)._1) * gridSize + 1 - offsetY)
           val rotation = "%1.2f".format(math.atan2(Agent.velocity(a)._2, -Agent.velocity(a)._1).toDegrees)
           val color = a match {
-            case h: Human if h.fight.aggressive => "green"
-            case h: Human => "bleu"
+            case h: Human if h.function == Human.Army => "#08eafa"
+            case h: Human if h.function == Human.RedCross => "#f50bfa"
+            case h: Human => "#666666"
             case _ => "red"
           }
           svgTags.g(agentPath.render(svgAttrs.fill := color), svgAttrs.transform := s"rotate($rotation, ${ax}, ${ay}) translate(${ax},${ay})")
@@ -207,7 +219,6 @@ object display {
     }
 
     val setupButton = button("Setup", btn_default, onclick := { () =>
-      println("Setup")
       val simulation = initFunction()
       val stepNumber = 0
       val neighborhoodCache = World.visibleNeighborhoodCache(simulation.world, math.max(simulation.humanPerception, simulation.zombiePerception))
@@ -272,7 +283,7 @@ object display {
       span(styles.display.flex, styles.justifyContent.center)(buttonGroup(paddingTop := 20)(setupButton, stepButton))
     )
 
-    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 30, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
+    val optional = div(marginTop := 50, marginLeft := 200, marginRight := 10, `class` := "optional", styles.display.flex, flexDirection.column, styles.justifyContent.flexEnd, alignItems.flexStart)(
       div(
         Rx {
           controllerList.map { p =>

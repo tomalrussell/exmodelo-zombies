@@ -122,7 +122,7 @@ object observable {
   private def peakSizeEvents(results: SimulationResult, window: Int, e: PartialFunction[Event, Any]): Int = {
     val dyn = eventDynamic(results, 1, e).sliding(window).map(_.sum).toVector
     val maxRescued = dyn.max
-    val peak = dyn.indexWhere(_ == maxRescued) + window / 2
+    val peak = math.min(math.max(0, dyn.indexWhere(_ == maxRescued) + window / 2), dyn.size - 1)
     dyn(peak)
   }
 
@@ -138,6 +138,11 @@ object observable {
 
     def slope(matrix: Array[Array[Double]]): Double = slope(matrix.flatten)
 
+    /**
+      * rank size slope
+      * @param values
+      * @return
+      */
     def slope(values: Array[Double]): Double = {
       def distribution: Array[Double] = values.sorted(Ordering.Double.reverse).filter(_ > 0)
       def distributionLog: Array[Array[Double]] = distribution.zipWithIndex.map { case (q, i) => Array(log(i + 1), log(q)) }

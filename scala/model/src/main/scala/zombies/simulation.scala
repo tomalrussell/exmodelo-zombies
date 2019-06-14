@@ -95,22 +95,22 @@ object simulation {
       zombieRunSpeed: Double = physic.zombieRunSpeed,
       zombiePerception: Double = physic.zombiePerception,
       zombieMaxRotation: Double = physic.zombieMaxRotation,
-      zombiePheromone: PheromoneMechanism = physic.zombiePheromone,
+      zombiePheromoneEvaporation: Double = physic.zombiePheromoneEvaporation,
       zombieCanLeave: Boolean = physic.zombieCanLeave,
       zombies: Int,
       walkSpeed: Double = physic.walkSpeed,
       rotationGranularity: Int = 5,
       army: ArmyOption = NoArmy,
       redCross: RedCrossOption = NoRedCross,
+      agents: Seq[Agent] = Seq(),
       random: Random) = {
 
       val cellSide = space.cellSide(world.side)
 
-
       def generateHuman = {
         val informed = random.nextDouble() < humanInformedRatio
         val rescue = Rescue(informed = informed, informProbability = humanInformProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = humanRunSpeed * cellSide,
@@ -121,15 +121,24 @@ object simulation {
           fight = Fight(humanFightBackProbability),
           rescue = rescue,
           canLeave = true,
+          function = Human.Civilian,
           rng = random)
       }
 
-      def generateZombie = Zombie.random(world, walkSpeed * cellSide, zombieRunSpeed * cellSide, zombiePerception * cellSide, zombieMaxRotation, zombieCanLeave, random)
+      def generateZombie =
+        Zombie(
+          world = world,
+          walkSpeed = walkSpeed * cellSide,
+          runSpeed = zombieRunSpeed * cellSide,
+          perception = zombiePerception * cellSide,
+          maxRotation = zombieMaxRotation,
+          canLeave = zombieCanLeave,
+          random = random)
 
 
       def generateSoldier(army: Army) = {
         val rescue = Rescue(informed = true, alerted = true, informProbability = army.informProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = army.runSpeed * cellSide,
@@ -140,6 +149,7 @@ object simulation {
           fight = Fight(army.fightBackProbability, aggressive = army.aggressive),
           rescue = rescue,
           canLeave = false,
+          function = Human.Army,
           rng = random)
       }
 
@@ -152,7 +162,7 @@ object simulation {
       def generateRedCrossVolunteers(redCross: RedCross) = {
         val rescue = Rescue(informProbability = redCross.informProbability, noFollow = true)
         val antidote = Antidote(activationDelay = redCross.activationDelay, efficiencyProbability = redCross.efficiencyProbability, exhaustionProbability = redCross.exhaustionProbability)
-        Human.random(
+        Human(
           world = world,
           walkSpeed = walkSpeed * cellSide,
           runSpeed = humanRunSpeed * cellSide,
@@ -164,6 +174,7 @@ object simulation {
           rescue = rescue,
           canLeave = false,
           antidote = antidote,
+          function = Human.RedCross,
           rng = random)
       }
 
@@ -173,23 +184,31 @@ object simulation {
           case a: RedCross => Vector.fill(a.size)(generateRedCrossVolunteers(a))
         }
 
-      val agents = Vector.fill(humans)(generateHuman) ++ Vector.fill(zombies)(generateZombie) ++ soldiers ++ redCrossVolunteers
+      val allAgents =
+        Vector.fill(humans)(generateHuman) ++
+          Vector.fill(zombies)(generateZombie) ++
+          soldiers ++
+          redCrossVolunteers ++
+          agents
 
       Simulation(
         world = world,
-        agents = agents,
+        agents = allAgents,
         infectionRange = infectionRange * cellSide,
         humanRunSpeed = humanRunSpeed * cellSide,
         humanPerception = humanPerception * cellSide,
         humanMaxRotation = humanMaxRotation,
         humanExhaustionProbability = humanExhaustionProbability,
         humanFollowProbability = humanFollowProbability,
+        humanFightBackProbability = humanFightBackProbability,
+        humanInformedRatio = humanInformedRatio,
+        humanInformProbability = humanInformProbability,
         zombieRunSpeed = zombieRunSpeed * cellSide,
         zombiePerception = zombiePerception * cellSide,
         zombieMaxRotation = zombieMaxRotation,
         zombieCanLeave = zombieCanLeave,
         walkSpeed = walkSpeed * cellSide,
-        zombiePheromone = zombiePheromone,
+        zombiePheromone = Pheromone(zombiePheromoneEvaporation),
         rotationGranularity = rotationGranularity
       )
 
@@ -206,6 +225,9 @@ object simulation {
     humanMaxRotation: Double,
     humanExhaustionProbability: Double,
     humanFollowProbability: Double,
+    humanFightBackProbability: Double,
+    humanInformedRatio: Double,
+    humanInformProbability: Double,
     zombieRunSpeed: Double,
     zombiePerception: Double,
     zombieMaxRotation: Double,
@@ -217,8 +239,7 @@ object simulation {
   def step(step: Int, simulation: Simulation, neighborhoodCache: NeighborhoodCache, rng: Random) = {
     val index = Agent.index(simulation.agents, simulation.world.side)
     val w1 = Agent.releasePheromone(index, simulation.world, simulation.zombiePheromone)
-
-    val (ai, infected, died) = Agent.fight(index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
+    val (ai, infected, died) = Agent.fight(w1, index, simulation.agents, simulation.infectionRange, Agent.zombify(_, _), rng)
 
     val (na1, moveEvents) =
       ai.map { a0 =>
@@ -244,13 +265,15 @@ object simulation {
 
     val (na2, rescued) = Agent.rescue(w1, na1.flatten)
 
+    val newAgents = Agent.joining(w1, simulation, rng)
+
     val events =
       infected.map(i => Zombified(i)) ++
       died.map(d => Killed(d)) ++
       rescued.map(r => Rescued(r)) ++
       moveEvents.flatten
 
-    (simulation.copy(agents = na2, world = w1), events)
+    (simulation.copy(agents = na2 ++ newAgents, world = w1), events)
   }
 
  type SimulationResult = (List[Simulation], List[Vector[Event]])
@@ -303,7 +326,7 @@ object simulation {
     /* Zombie parameters */
     val zombiePerception = 2.9
     val zombieRunSpeed = 0.28
-    val zombiePheromone = Pheromone(evaporation = 0.38)
+    val zombiePheromoneEvaporation = 0.38
     val zombieMaxRotation = 30
     val zombieCanLeave = true
   }

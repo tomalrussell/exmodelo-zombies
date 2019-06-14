@@ -7,7 +7,7 @@ object cooperation {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
     simulate.buildGUI(
-      ()=> simulation.environment.quarantine,
+      (_, _)=> simulation.environment.quarantine,
       humanPerception isDefault,
       zombiePerception isDefault,
       humanRunSpeed asDefaultFrom(walkSpeed),

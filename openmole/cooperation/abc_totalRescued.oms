@@ -1,4 +1,6 @@
 import _file_.model._
+import _file_.environment._
+
 
 val abc =
   IslandABC(
@@ -12,12 +14,12 @@ val abc =
     generated = 100,
     minAcceptedRatio = 0.01,
     stopSampleSizeFactor = 5,
-    parallelism = 4
+    parallelism = 300
   )
 
 val save = ABCHook(abc, workDirectory / "results/abc/totalRescued/")
 
-//val env = EGIEnvironment("vo.complex-systems.eu")
-val env = LocalEnvironment(4)
+val env = EGIEnvironment("vo.complex-systems.eu")
+//val env = LocalEnvironment(4)
 
-abc hook save on env
+abc hook save on default_env.env
