@@ -1,0 +1,84 @@
+\documentclass{myBeamer}
+
+%% Title page
+\title[Short Title]{Long Title}
+\subtitle{Subtitle}
+\author[Short Author]{Author}
+\date{\today}
+\institute{Institut\\
+\bigskip
+\includegraphics[scale=2]{figures/logos/openmole.png}}
+
+
+\begin{document}
+
+\begin{frame}[plain]
+	\titlepage
+\end{frame}
+\addtocounter{framenumber}{-1}
+
+\AtBeginSection[]
+{
+	\frame{
+		\tableofcontents[currentsection, hideallsubsections]
+	}
+	\addtocounter{framenumber}{-1}
+}
+
+
+\section{Section}
+
+\begin{frame}{Frame Title}
+	Some text.
+\end{frame}
+
+
+\begin{frame}{Frame Title}
+	\begin{block}{Block Title}
+	\begin{itemize}
+		\item Item 1
+		\item Item 2
+		\item Item 3
+	\end{itemize}
+	\end{block}
+	
+	\begin{alertblock}{Alert Block}
+		Something important.
+	\end{alertblock}
+\end{frame}
+
+
+%% Stop numbering
+\backupbegin
+
+\appendix
+\begin{frame}[plain]{Acknowledgements}
+	\begin{center}
+	\head{Lab:}\\
+	
+	\medskip
+	XXX\\
+	\medskip
+	YYY\\
+	\medskip
+	ZZZ\\
+	
+	\bigskip
+	Logos
+	\end{center}
+	
+	\visible<2>{
+	\bigskip
+	\begin{LARGE}
+		\begin{center}
+		\head{Thank you for your attention!}
+		\end{center}
+	\end{LARGE}
+	}
+\end{frame}
+
+%\input{parts/backup}
+
+\backupend
+
+\end{document}
