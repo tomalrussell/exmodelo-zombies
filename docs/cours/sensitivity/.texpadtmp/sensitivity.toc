@@ -1,6 +1,0 @@
-\select@language {english}
-\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
-\beamer@sectionintoc {2}{Basic experiments}{5}{0}{2}
-\beamer@sectionintoc {3}{DOE Samplings}{9}{0}{3}
-\beamer@sectionintoc {4}{Sensitivity analysis}{13}{0}{4}
-\beamer@sectionintoc {5}{Application in OpenMOLE}{17}{0}{5}
