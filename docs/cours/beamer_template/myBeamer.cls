@@ -70,8 +70,8 @@
 
 %%% Theme
 \usetheme{Darmstadt}
-\useoutertheme[subsection=false]{miniframes}
-\useoutertheme{smoothbars}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}[frame number]
 \setbeamertemplate{navigation symbols}{}
 
 
@@ -89,11 +89,11 @@
 % Palette
 \setbeamercolor{palette primary}{fg=primaryGreenOM, bg=primaryDarkOM}
 \setbeamercolor{palette secondary}{fg=primaryDarkOM, bg=primaryGreenOM}
-\setbeamercolor{palette tertiary}{fg=primaryDarkOM, bg=primaryGreenOM}
-%\setbeamercolor{palette quaternary}{fg=white, bg=orange}
+%\setbeamercolor{palette tertiary}{fg=primaryGreenOM, bg=primaryDarkOM}
+%\setbeamercolor{palette quaternary}{fg=primaryDarkOM, bg=primaryGreenOM}
 
 \setbeamercolor{normal text}{fg=primaryDarkOM}
-\setbeamercolor{title}{fg=primaryDarkOM, bg=primaryGreenOM}
+%\setbeamercolor{title}{fg=primaryDarkOM, bg=primaryGreenOM}
 \setbeamercolor{item}{fg=primaryGreenOM}
 \setbeamertemplate{itemize items}[triangle]
 \setbeamertemplate{enumerate items}[default]
@@ -108,23 +108,23 @@
 
 
 %% Footer
-\setbeamertemplate{footline}{
-	\leavevmode%
-	\hbox{%
-		\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}
-			\insertshortauthor
-	  	\end{beamercolorbox}%
-	  	\begin{beamercolorbox}[wd=.4\paperwidth,ht=2.25ex,dp=1ex,center]{frametitle}
-	    	\insertshorttitle
-		\end{beamercolorbox}%
-		\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}
-			\insertdate
-			\hspace{.5cm}
-			\insertframenumber / \inserttotalframenumber
-	  \end{beamercolorbox}%
-  }%
-  \vskip0pt%
-}
+%\setbeamertemplate{footline}{
+%	\leavevmode%
+%	\hbox{%
+%		\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}
+%			\insertshortauthor
+%	  	\end{beamercolorbox}%
+%	  	\begin{beamercolorbox}[wd=.4\paperwidth,ht=2.25ex,dp=1ex,center]{frametitle}
+%	    	\insertshorttitle
+%		\end{beamercolorbox}%
+%		\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}
+%			\insertdate
+%			\hspace{.5cm}
+%			\insertframenumber / \inserttotalframenumber
+%	  \end{beamercolorbox}%
+%  }%
+%  \vskip0pt%
+%}
 
 
 %% Section page
