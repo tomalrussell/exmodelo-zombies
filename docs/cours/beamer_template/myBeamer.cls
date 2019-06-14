@@ -2,21 +2,24 @@
 \ProvidesClass{myBeamer}
 \LoadClass{beamer}
 
+
+
 %%% Language
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 
+
+
 %%% Colors
 \usepackage{xcolor}
-\definecolor{myGrey}{RGB}{64,61,86}
-\definecolor{myLightGrey}{rgb}{0.9,0.9,0.9}
+\definecolor{primaryDarkOM}{HTML}{3F3D56}
+\definecolor{primaryGreenOM}{HTML}{A6BF26}
 
-\definecolor{myGreen}{RGB}{166,191,37}
-\definecolor{myLightGreen}{RGB}{214,219,186}
+\definecolor{accentDarkOM}{HTML}{2F2E41}
+\definecolor{accentRedOM}{HTML}{F86D70}
 
-\definecolor{myDarkRed}{RGB}{231,21,21}
-\definecolor{myLightRed}{RGB}{255,216,216}
+
 
 %%% Page layout
 \usepackage{multicol}
@@ -27,16 +30,22 @@
 \usepackage{setspace}
 \usepackage{xmpmulti}
 
+
+
 %%% Font style
 \renewcommand{\familydefault}{lmss}
+
 \usepackage{quoting}
 \usepackage{xparse}
+
 \newcommand{\refs}[3]{
 	{\tiny \textit{#1 et al. #2#3}}\hspace{-0.25cm}
 }
 \newcommand{\head}[1]{
-	{\color{myGreen}\textbf{#1}}
+	{\color{primaryGreenOM}\textbf{#1}}
 }
+
+
 
 %%% Math
 \usepackage{mathtools}
@@ -44,6 +53,8 @@
 \everymath{\displaystyle}
 \usepackage{gensymb}
 \usepackage{xfrac}
+
+
 
 %%% Tables
 \usepackage{float}
@@ -55,31 +66,44 @@
 \usepackage{diagbox}
 \usepackage{colortbl}
 
+
+
 %%% Theme
 \usetheme{Darmstadt}
 \useoutertheme[subsection=false]{miniframes}
 \useoutertheme{smoothbars}
 \setbeamertemplate{navigation symbols}{}
 
+
+%% Logo
+\newcommand{\addlogo}{
+	\hfill	
+	\includegraphics[height=.4cm]{figures/logos/iconOM.png}
+	\includegraphics[scale=1]{figures/logos/openmole.png}
+}
+
+
 %% Color theme
 % Palette
-\setbeamercolor{palette primary}{fg=myGreen, bg=myGrey}
-\setbeamercolor{palette secondary}{fg=myGrey, bg=myGreen}
-\setbeamercolor{palette tertiary}{fg=myGrey, bg=myGreen}
+\setbeamercolor{palette primary}{fg=primaryGreenOM, bg=primaryDarkOM}
+\setbeamercolor{palette secondary}{fg=primaryDarkOM, bg=primaryGreenOM}
+\setbeamercolor{palette tertiary}{fg=primaryDarkOM, bg=primaryGreenOM}
 %\setbeamercolor{palette quaternary}{fg=white, bg=orange}
 
-\setbeamercolor{title}{fg=myGrey, bg=myGreen}
-\setbeamercolor{item}{fg=myGreen}
+\setbeamercolor{normal text}{fg=primaryDarkOM}
+\setbeamercolor{title}{fg=primaryDarkOM, bg=primaryGreenOM}
+\setbeamercolor{item}{fg=primaryGreenOM}
 \setbeamertemplate{itemize items}[triangle]
 \setbeamertemplate{enumerate items}[default]
-\setbeamercolor{section in toc}{fg=myGreen}
+\setbeamercolor{section in toc}{fg=primaryGreenOM}
 
 % Block
-\setbeamercolor{block title}{bg=myGreen}
-\setbeamercolor{block body}{bg=myLightGreen}
-\setbeamercolor{block title alerted}{bg=myDarkRed}
-\setbeamercolor{block body alerted}{bg=myLightRed}
-\AtBeginEnvironment{alertblock}{\setbeamercolor{item}{fg=myDarkRed}}
+\setbeamercolor{block title}{fg=primaryDarkOM, bg=primaryGreenOM}
+\setbeamercolor{block body}{bg=white}
+\setbeamercolor{block title alerted}{fg=accentDarkOM, bg=accentRedOM}
+\setbeamercolor{block body alerted}{bg=white}
+\AtBeginEnvironment{alertblock}{\setbeamercolor{item}{fg=accentRedOM}}
+
 
 %% Footer
 \setbeamertemplate{footline}{
@@ -100,14 +124,20 @@
   \vskip0pt%
 }
 
+
 %% Section page
 \setbeamertemplate{section page}{
 	\begin{center}
-		{\LARGE \color{myGreen}\bfseries\insertsection} \\
-%		\vspace{1cm}
-%		{\normalsize \tableofcontents[sectionstyle = hide/hide, hideothersubsections]}
+		{\LARGE \color{primaryGreenOM}\bfseries\insertsection}
 	\end{center}
 }
+
+%\setbeamertemplate{frametitle}{
+%	\insertframetitle
+%	\hfill
+%	\insertlogo
+%}
+
 
 %% Backup
 \newcommand{\backupbegin}{
