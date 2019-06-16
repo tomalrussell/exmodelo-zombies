@@ -4,11 +4,10 @@
 
 \title[DOE/Sensitivity Analysis]{Design of Experiments and Sensitivity analysis}
 \subtitle{Course and practical application}
-\author[Short Author]{Author}
-\date{\today}
-\institute{Institut\\
-\bigskip
-\includegraphics[scale=2]{../beamer_template/figures/logos/openmole.png}}
+%\author[Short Author]{Author}
+\author{ExModelo Summer School}
+\date{June 24, 2019}
+\institute{\includegraphics[scale=2]{../beamer_template/figures/logos/openmole.png}}
 
 \begin{document}
 
@@ -28,28 +27,37 @@
 }
 
 
-\sframe{Outline}{
-\tableofcontents
-}
 
 
-\section{Introduction}
+%\section{Introduction}
 
 
 \sframe{Design of Experiments}{
+\justify
 
- - Interactive model exploration by hand and the need for preliminary experiments
- - The Design of Experiments as the definition of tasks to extract information from the simulation model
- - Example: NetLogo behavior space: basic grid DOE
- - Sensitivity analysis as an advanced DOE
+\begin{itemize}
+	\item Interactive model exploration by hand and the need for preliminary experiments
+    \item The Design of Experiments (DOE) as the definition of computational experiments to extract information from the simulation model
+    \item Example: NetLogo behavior space: basic grid DOE
+    \item Sensitivity analysis as an advanced DOE
+\end{itemize}
 
-*Remark 1: terminology strongly depends on disciplines and practices*
+\bigskip
 
-*Remark 2: these are generally **preliminary experiments** to prepare more elaborated, question-related, experiments*
+\textbf{Remark 1:} \textit{terminology strongly depends on disciplines and practices}
+
+\medskip
+
+\textbf{Remark 2:} \textit{most are generally \textbf{preliminary experiments} to prepare more elaborated, question-related, experiments}
 
 
 }
 
+
+
+\sframe{Outline}{
+\tableofcontents
+}
 
 
 \section{Basic experiments}
@@ -57,10 +65,16 @@
 
 \sframe{Basic experiments}{
 
-*Provide explicitly sampling points on which the model (or its replication task) will be run: notion of **direct sampling** in OpenMOLE (corresponds to DOE in the literature)*
+\justify
 
- - full samplings
- - elaborated sampling for high dimensions given a low computational budget (**the curse of dimensionality**)
+\textit{Provide explicitly sampling points on which the model (or its replication task) will be run: notion of \textbf{direct sampling} in OpenMOLE (corresponds to DOE in the literature)}
+
+\bigskip
+
+\begin{itemize}
+	\item full samplings
+    \item elaborated sampling for high dimensions given a low computational budget (\textbf{the curse of dimensionality})
+\end{itemize}
 
 }
 
@@ -68,18 +82,31 @@
 \sframe{One factor at a time}{
   
   
-
-All factors have nominal values and a discrete variation set, in which each is varied while others remaining fixed
-
- - *when model is slow - or computational budget highly limited* 
- - *does not capture interaction between parameters, and highly dependent on nominal values*
- - *seen as a bad practice* BUT *useful for models taking significant time, and prone to thematic interpretation*
-
-
-%<img width=600 src=https://miniocodimd.openmole.org:443/codimd/uploads/upload_82c20b2e74a3f5b96a0fc227311cd516.png/>
-
-*Example where One-At-a-Time fails*
+\justify  
   
+Cheapest and intuitive DOE: \textit{all factors have nominal values and a discrete variation set, in which each is varied while others remaining fixed}
+
+\bigskip
+
+\begin{itemize}
+  \item when model is slow - or computational budget highly limited
+  \item does not capture interaction between parameters, and highly dependent on nominal values
+  \item seen as a bad practice \textbf{BUT} useful for models taking significant time, and prone to thematic interpretation
+\end{itemize}
+
+  
+}
+
+\sframe{Example where One-At-a-Time fails}{
+
+ %<img width=600 src=https://miniocodimd.openmole.org:443/codimd/uploads/upload_82c20b2e74a3f5b96a0fc227311cd516.png/>
+ 
+ \centering
+ 
+ \includegraphics[width=\textwidth]{figures/example_oatfailure.png}
+ 
+ 
+
 }
 
 
@@ -87,43 +114,87 @@ All factors have nominal values and a discrete variation set, in which each is v
 
 
 
-Ensemble product of discrete variation ranges for factors (usually a regular grid but not necessarily)
+Brute force DOE: \textit{ensemble product of discrete variation ranges for factors (usually a regular grid but not necessarily)}
 
-*quickly limited by the curse of dimensionality - in practice still powerful with a quick model and a low number of parameters*
+\bigskip
 
-*naive approach, i.e. done by many "simulation-newcomers" such as economics or some parts of physics*
+
+\begin{itemize}
+  \item quickly limited by the curse of dimensionality - in practice still powerful with a quick model and a low number of parameters
+  \item naive approach, i.e. only DOE for many "simulation-newcomers" such as economics or some parts of physics
+\end{itemize}
+
 
 }
 
 
-\section{DOE Samplings}
+\section{High-dimensional samplings}
 
 
-\sframe{DOE Samplings}{
+\sframe{High-dimensional samplings}{
 
+\justify
 
 \textit{Computational limitations} $\implies$ \textit{need specific methods to efficiently sample the parameter space}
 
-The field of Design of Experiments has proposed different methods for numerical experiments given limited computational resources
+\bigskip
 
-Examples: Sobol sequence (quicker convergence of integral estimation), Latin Hypercube Sampling, Orthogonal sampling
+Different methods for improving sampling in numerical experiments given limited computational resources have been proposed, as for example:
+
+\medskip
+
+\begin{itemize}
+	\item Sobol sequences (quicker convergence of integral estimation)
+	\item Latin Hypercube Sampling
+	\item Orthogonal sampling
+\end{itemize}
+
+
+}
+
+
+\sframe{Low discrepancy samplings}{
+
+\textit{Minimizing discrepancy for a point cloud: intuitively being spread evenly across the definition space}
+
+\bigskip
+
+%(def of discrepancy)
+% The discrepancy is defined as the $L2$-norm of local discrepancy which is for normalized data points $\mathbf{X}=(x_{ij})\in \left[0,1\right]^d$, a function of $\mathbf{t}\in \left[0,1\right]^d$ comparing the number of points falling in the corresponding hypercube with its volume, by $disc(\mathbf{t}) = \frac{1}{n}\sum_i \mathbbm{1}_{\prod_j x_{ij}<t_j} - \prod_j t_j$. It is a measure of how the point cloud covers the space.
+
+L2-discrepancy given for normalized data points $\mathbf{X}=(x_{ij})\in \left[0,1\right]^d$ by
+
+\[
+\left\lVert \mathbf{t} \in \left[0,1\right]^d \mapsto \frac{1}{n}\sum_i \mathbbm{1}_{\prod_j x_{ij}<t_j} - \prod_j t_j \right\rVert_2
+\]
 
 }
 
 
 \sframe{Latin Hypercube Sampling}{
 
-*Minimizing discrepency: intuitively being spread evenly accross the parameter space*
-(def of discrepancy)
 
-|x|||||
-|:--:|:--:|:--:|:--:|:--:|
-||x||||
-|||||x|
-||||x||
-|||x|||
+%|x|||||
+%|:--:|:--:|:--:|:--:|:--:|
+%||x||||
+%|||||x|
+%||||x||
+%|||x|||
 
-*Latin cube: one point in each row and column; hypercube generalization in any dimension*
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+	x & & & & \\\hline
+	 & x & & & \\\hline
+	 & & & & x \\\hline
+	 & & & x & \\\hline
+	 & & x & & \\\hline
+\end{tabular}
+\end{center}
+
+\bigskip
+
+\textit{Latin cube: one point in each row and column; hypercube generalization in any dimension}
 
 }
 
@@ -131,13 +202,27 @@ Examples: Sobol sequence (quicker convergence of integral estimation), Latin Hyp
 
 \sframe{Sobol sequence}{
 
-*Quasi-random sequences with low discrepancy (also Halton sequences e.g.)*
+\textit{Sobol sequences are a case of quasi-random sequences with low discrepancy (also Halton sequences e.g.)}
 
-Estimate integral in $1/N$ instead of $1/\sqrt{N}$ with random sampling
+\bigskip
 
-Constructed recursively (using bit representations).
 
-TODO illustration in 2D
+\begin{itemize}
+	\item Estimate integral in $1/N$ instead of $1/\sqrt{N}$ with random sampling
+	\item Constructed recursively (using bit representations)
+\end{itemize}
+
+}
+
+\sframe{Comparison of samplings}{
+
+For $N=2500$ samples in 2 dimensions
+
+\centering
+
+\medskip
+
+\includegraphics[height=0.8\textheight]{figures/sobol.png}
 
 }
 
@@ -148,26 +233,39 @@ TODO illustration in 2D
 
 \sframe{Sensitivity analysis}{
 
-*How to summarize model sensitivity and isolate principal factors ?*
+\textbf{Aim of sensitivity analysis methods} \textit{How to summarize model sensitivity and isolate principal factors ?}
 
-Examples: Morris and Saltelli methods
+\bigskip
+
+
+ \begin{itemize}
+ 	\item Most methods are \textit{global}, i.e. provide an aggregate of factor effect on the full parameter space
+ 	\item Advanced methods, still useful for preliminary experiments e.g. to discard factors from further experiments
+ 	\item Examples: Morris and Saltelli methods
+ \end{itemize}
+
+
 
 }
 
 
 \sframe{Morris method}{
 
+\justify
 
-*Idea :* Sample trajectories in the parameter space in a One-At-a-Time manner. Screening method isolating *elementary effects*
+\textbf{Idea: } \textit{Sample trajectories in the parameter space in a One-At-a-Time manner. Screening method isolating \textbf{elementary effects}}
 
-\cite{saltelli2004sensitivity}
+\bigskip
 
- - isolate local effects of factors
- - more efficient than point sampling to get individual effects
- - useful as a first experiment to understand the relative influence of factors
+\begin{itemize}
+  \item isolate local effects of factors
+  \item more efficient than point sampling to get individual effects
+  \item useful as a first experiment to understand the relative influence of factors
+\end{itemize}
 
-\cite{campolongo2011screening} propose to extend the method with Sobol sequences
+\bigskip
 
+Introduced by \cite{morris1991factorial}, improved by \cite{saltelli2004sensitivity}, \cite{campolongo2011screening} propose to extend the method with Sobol sequences
 
 
 
@@ -189,62 +287,93 @@ ST_i = \frac{E_{\mathbf{X}\sim i}\left[Var(Y | \mathbf{X}\sim i) \right]}{Var(Y)
 \section{Application in OpenMOLE}
 
 
-\sframe{OpenMOLE syntax: Direct sampling}{
+\sframe{OpenMOLE syntax}{
 
+\textbf{Syntax of the direct sampling:}
 
 \texttt{
-val explo = DirectSampling(
-    evaluation = model,
-    sampling = ...
+val explo = DirectSampling(\\
+ \hspace{1cm}evaluation = model,\\
+ \hspace{1cm}sampling = \dots \\
 )
 }
+
 
 }
 
 
 \sframe{Example of samplings}{
 
- - One-factor sampling
+  \textbf{One-factor sampling: }
+
+\bigskip
 
 \texttt{
-  sampling = OneFactorSampling(
-    (x1 in (0.0 to 1.0 by 0.2)) nominal 0.5,
-    (x2 in (0.0 to 1.0 by 0.2)) nominal 0.5
-  )
+ sampling = OneFactorSampling(\\
+  \hspace{1cm}(x1 in (0.0 to 1.0 by 0.2)) nominal 0.5,\\
+  \hspace{1cm}(x2 in (0.0 to 1.0 by 0.2)) nominal 0.5\\
+ )
+}
+
 }
 
 
- - Grid sampling
 
-\texttt{sampling = (x1 in (0.0 to 1.0 by 0.5)) x (x2 in (0.0 to 1.0 by 0.5))}
+\sframe{Example of samplings}{
 
+\begin{itemize}
+ \item Grid sampling
 
- - LHS Sampling
+\texttt{
+sampling = \\
+ \hspace{1cm} (x1 in (0.0 to 1.0 by 0.5)) x\\
+ \hspace{1cm} (x2 in (0.0 to 1.0 by 0.5))
+}
+  \item LHS Sampling
+  
+\texttt{
+sampling = LHS(\\
+\hspace{1cm}100,\\
+\hspace{1cm}x1 in (0.0,1.0),\\
+\hspace{1cm}x2 in (0.0,1.0)\\
+)
+}
 
-\texttt{sampling = LHS(100,x1 in (0.0,1.0),x2 in (0.0,1.0))}
+  \item Sobol sampling
 
- - Sobol sampling
+\texttt{
+sampling = SobolSampling(\\
+\hspace{1cm} 100,
+\hspace{1cm}x1 in (0.0,1.0),
+\hspace{1cm}x2 in (0.0,1.0)
+)
+}
 
-\texttt{sampling = SobolSampling(100,x1 in (0.0,1.0),x2 in (0.0,1.0))}
-
+\end{itemize}
 
 }
 
 
 \sframe{Saltelli}{
 
-(method in itself)
+\justify
+
+\textit{Saltelli is a method in itself}
+
+\bigskip
 
 \texttt{
-val sen = SensitivitySaltelli(
-  //evaluation = (model on env),
-  evaluation = (model on env by 1000),
-  samples = 100000,
-  inputs = Seq(humanFollowProbability in (0.0,1.0), humanInformedRatio in (0.0,1.0),humanInformProbability in (0.0,1.0)),
-  outputs = Seq(peakTime, peakSize, totalZombified,halfZombified, spatialMoranZombified,spatialDistanceMeanZombified,spatialEntropyZombified,spatialSlopeZombified),
-  )
+val sen = SensitivitySaltelli(\\
+ \hspace{1cm} evaluation = (model on env by 1000),\\
+ \hspace{1cm} samples = 100000,\\
+ \hspace{1cm} inputs = Seq(\\
+ \hspace{2cm} humanFollowProbability in (0.0,1.0),\\
+ \hspace{2cm} humanInformedRatio in (0.0,1.0),\\
+ \hspace{2cm} humanInformProbability in (0.0,1.0)),\\
+ \hspace{1cm} outputs = Seq(totalZombified,halfZombified),\\
+)
 }
-
+% TODO add hook
 
 
 }
@@ -253,19 +382,36 @@ val sen = SensitivitySaltelli(
 
 \sframe{Morris}{
 
-(example from market)
+\textit{Morris is also a method}
+
+\bigskip
+
+%\texttt{
+%SensitivityMorris(
+%    evaluation = modelExec on envLocal hook storeSimuCSV,
+%    inputs = Seq(inputNumberOfCars in (1.0, 41.0), 
+%                inputAcceleration in (0.0, 0.0099),
+%                inputDeceleration in (0.0, 0.099)
+%                ),
+%    outputs = Seq(outputSpeedMin, outputSpeedMax),
+%    repetitions = 100,
+%    levels = 5)
+%}
 
 \texttt{
-SensitivityMorris(
-    evaluation = modelExec on envLocal hook storeSimuCSV,
-    inputs = Seq(inputNumberOfCars in (1.0, 41.0), 
-                inputAcceleration in (0.0, 0.0099),
-                inputDeceleration in (0.0, 0.099)
-                ),
-    outputs = Seq(outputSpeedMin, outputSpeedMax),
-    repetitions = 100,
-    levels = 5)
+\noindent val morrisHook = \\
+val sen = SensitivityMorris(\\
+\hspace{1cm}evaluation = model on env hook morrisHook,\\
+ \hspace{1cm} inputs = Seq(\\
+ \hspace{2cm} humanFollowProbability in (0.0,1.0),\\
+ \hspace{2cm} humanInformedRatio in (0.0,1.0),\\
+ \hspace{2cm} humanInformProbability in (0.0,1.0)),\\
+ \hspace{1cm} outputs = Seq(totalZombified,halfZombified),\\
+ \hspace{1cm} repetitions = 100,\\
+ \hspace{1cm}  levels = 5 \\
+)
 }
+
 
 
 }
@@ -286,10 +432,10 @@ Your turn to run some direct samplings and/or sensitivity analysis
     \item explore results (using e.g. the OpenMOLE GUI plots)
 \end{itemize}
 
-\textit{Resources:}
- - one script running directsampling
- - example of grid explo results
- - example of Saltelli
+%\textit{Resources:}
+% - one script running directsampling
+% - example of grid explo results
+% - example of Saltelli
 
 }
 
@@ -298,16 +444,16 @@ Your turn to run some direct samplings and/or sensitivity analysis
 
 
 
-\backupbegin
+%\backupbegin
 
 %\appendix
 
 
-\sframe{Results of grid exploration}{
+%\sframe{Results of grid exploration}{
 
-\textit{Cooperation model}
+%\textit{Cooperation model}
 
-}
+%}
 
 
 
@@ -321,7 +467,7 @@ Your turn to run some direct samplings and/or sensitivity analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\backupend
+%\backupend
 
 
 
