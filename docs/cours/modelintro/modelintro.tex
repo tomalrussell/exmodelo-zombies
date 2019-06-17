@@ -3,8 +3,8 @@
 \input{../beamer_template/header.tex}
 
 \title[Case study model]{Case study: an epidemiological model}
-%\subtitle{Course and practical application}
-\author[Short Author]{Author}
+\subtitle{ExModelo Summer School}
+%\author[Short Author]{Author}
 \date{\today}
 \institute{Institut\\
 \bigskip
@@ -48,14 +48,64 @@
  % contextualize Center for Zombie Research
  % knowledge forgotten about how to use simulation models ? -> you are the last hope of the world
 
+\centering
+
+\includegraphics[width=\linewidth,height=0.8\textheight]{figures/zombieOutbreak.png}
+
+\justify
+
+\textit{Simulation of the 2010 Zombie outbreak in the US} \cite{alemi2015you}
+
 }
 
-\sframe{An operational model}{
+
+\sframe{History of Zombie epidemiology}{
+
+\begin{itemize}
+	\item 2007: first outbreak in Island, relatively contained through ad-hoc measures
+	\item 2010: it becomes pandemic
+	\item 2010-2015: no clear records of events
+	\item 2015-2018: reorganization of institutions, the MOLE (Medical Overview of Ludicus Experiments) center in Chongqing gathers observational from many local invasions across the world
+	\item 2019: they released the first version of the model ZOMBIE (Zone of Optimal Management for Bacillus Infecting Everyone) is released and successfully applied
+\end{itemize}
+
+% 
+
+
+}
+
+
+\sframe{An operational model for local Zombie invasion}{
+
+\justify
+
+
+
+\centering
+
+\includegraphics[width=\textwidth]{figures/zombieGUI.png}
 
 }
 
 
 \sframe{Overview of the model}{
+
+\begin{itemize}
+	\item Simulate agent-level collective movements at the scale of a district
+	\item Include behavioral processes for human (panic, search for rescues, \ldots) and zombies (self-organization, spontaneous attacks, \ldots), which can be adapted to local settings
+	\item Include realistic pedestrian dynamics and realistic spatial configuration, which can be applied to local configuration
+\end{itemize}
+
+\medskip
+
+\justify
+
+\textbf{Objective of the model: } optimal policies and behavioral prevention to minimize the impact of recurring invasions
+
+\medskip
+
+\textbf{}
+
 
 }
 
@@ -98,6 +148,13 @@
   
 }
 
+
+\sframe{The scala model}{
+
+% main function zombieInvasion
+% (transition for next course)
+
+}
 
 
 \backupbegin
