@@ -27,7 +27,7 @@ package object zombies extends DSL {
     def peakSizeRescued(window: Int = defaultGroupSize) = observable.peakSizeRescued(results, window)
 
     def totalZombified = observable.totalZombified(results)
-    def halfZombified= observable.halfZombified(results)
+    def halfZombified= observable.halfTimeZombified(results)
     def peakTimeZombified(window: Int = defaultGroupSize) = observable.peakTimeZombified(results, window)
     def peakSizeZombified(window: Int = defaultGroupSize) = observable.peakSizeZombified(results, window)
 
