@@ -333,14 +333,14 @@ object world {
 
 
     /* ------------- Traps ------------- */
-    def setTrap(world: World, trapLocation: Location*): World = {
+    def setTraps(world: World, trapLocation: Seq[(Location, Trap)]): World = {
       val cells = copyCells(world.cells)
 
       for {
-        (x, y) <- trapLocation
+        ((x, y), t) <- trapLocation
       } {
         cells(x)(y) match {
-          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, Some(CaptureTrap), f.information, f.pheromone)
+          case f: Floor => cells(x)(y) = Floor(f.wallSlope, f.rescueSlope, f.rescueZone, Some(t), f.information, f.pheromone)
           case _ =>
         }
       }
@@ -348,6 +348,8 @@ object world {
       world.copy(cells = cells)
     }
 
+
+    def setTrap(world: World, trapLocation: Location*): World = setTraps(world, trapLocation.map(_ -> CaptureTrap))
     def withTrap(trapLocation: Location*)(world: World) = setTrap(world, trapLocation: _*)
   }
 

@@ -70,6 +70,11 @@ lazy val cooperation = Project("cooperation", file("cooperation")) dependsOn (gu
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
 )
 
+lazy val cooperationandarmy = Project("cooperationandarmy", file("cooperationandarmy")) dependsOn (guiUtils) enablePlugins(ExecNpmPlugin) settings(
+  scalaVersion := "2.12.8",
+  buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
+)
+
 lazy val spatialsens = Project("spatialsens", file("spatialsens")) dependsOn (guiUtils) enablePlugins(ExecNpmPlugin) settings(
   scalaVersion := "2.12.8",
   buildGUI := guiBuilder(target.value, (resourceDirectory in Compile).value, (fullOptJS in Compile).value.data, dependencyFile.value, cssFile.value, (resourceDirectory in guiUtils in Compile).value / "css")
