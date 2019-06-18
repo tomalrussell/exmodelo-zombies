@@ -3,12 +3,10 @@
 \input{../beamer_template/header.tex}
 
 \title[Case study model]{Case study: an epidemiological model}
-\subtitle{ExModelo Summer School}
-%\author[Short Author]{Author}
-\date{\today}
-\institute{Institut\\
-\bigskip
-\includegraphics[scale=2]{../beamer_template/figures/logos/openmole.png}}
+%\subtitle{}
+\author[]{ExModelo Summer School}
+\date{June 24, 2019}
+\institute{\includegraphics[scale=2]{../beamer_template/figures/logos/openmole.png}}
 
 \begin{document}
 
@@ -104,12 +102,23 @@
 
 \medskip
 
-\textbf{}
+\textbf{Issue with model application: } model has many parameters and processes, model behavior is unknown, application may be strongly case-dependent
+
+\medskip
+
+$\rightarrow$ \textit{we need YOU to understand this model to save the world}
 
 
 }
 
 \sframe{Basic processes and parameters}{
+
+\begin{itemize}
+	\item Humans and Zombies walk/run randomly (smoothed random walk) in an open urban space (movement parameters: rotation angle, walk and run speed)
+	\item Interactions: human flee from zombie, zombies run for food, fight when encounter
+	\item Humans can be rescued and information on the existence of rescues propagates between humans
+	\item Additional processes in a multi-modeling approach (army, vaccination, \ldots)
+\end{itemize}
 
 }
 
@@ -122,6 +131,12 @@
 
 
 \sframe{Information and rescues}{
+
+}
+
+\sframe{Agents state machines}{
+
+\includegraphics[width=0.51\textwidth]{figures/humanStateMachine.png}\hspace{0.2cm}\includegraphics[width=0.46\textwidth]{figures/zombieStateMachine.png}
 
 }
 
@@ -153,6 +168,8 @@
 
 % main function zombieInvasion
 % (transition for next course)
+
+
 
 }
 
