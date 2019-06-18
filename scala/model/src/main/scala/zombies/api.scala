@@ -330,6 +330,12 @@ trait DSL {
     maxRotation:  AgentGenerator.Optional[Double] = None,
     location:  AgentGenerator.Optional[Location] = None) extends AgentGenerator
 
+  val CaptureTrap = world.CaptureTrap
+  val DeathTrap = world.DeathTrap
+
+  implicit class TrapDecorator(w: World) {
+    def withTrap(t: (Location, world.Trap)*) = world.World.setTraps(w, t)
+  }
 
 }
 

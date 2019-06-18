@@ -37,7 +37,6 @@ package object zombies extends DSL {
     def spatialEntropyZombified: Double = observable.spatialEntropy(observable.zombified)(results)
     def spatialSlopeZombified: Double = observable.spatialSlope(observable.zombified)(results)
     def spatialRipleyZombified: Double = observable.spatialRipley(observable.zombified)(results)
-
   }
 
 }
