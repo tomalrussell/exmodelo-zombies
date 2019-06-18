@@ -97,3 +97,135 @@ pp <- ggplot(orderedResultsDF, aes(x = Var2, y = Var1)) +
   labs(subtitle = paste("Nb Zombification = " ,  sum(orderedResultsDF$value)) ) 
 pp
 
+
+
+## animation results calibration
+
+
+res_calib_dir <- "/home/chap/Téléchargements/results/results/"
+calib_files <- list.files(path = res_calib_dir) 
+
+calib_files_sample <-  head(calib_files, 300)
+setwd(res_calib_dir)
+
+
+############################################################"
+# make a dataframe with most replicated line in each population file
+##########################################################"
+
+extract_max_rep <-  function (fifi){
+df <-  read_csv(fifi)
+max_replicated_obs <-  df %>%  top_n(1,`evolution$samples`)
+return(list(max_replicated_obs))
+}
+
+final_df <-  sapply(calib_files_sample,extract_max_rep)
+
+
+
+locs <- c("trapLocation1","trapLocation2","trapLocation3")
+
+
+
+
+
+lili <- (extract_max_rep(calib_files[1]))
+lili <- lili[[1]]
+lili
+
+
+
+extractCoord <-  function(col, x){
+  cat("col:", col)
+  bloc <- gsub(pattern = ")", replacement = "",gsub(pattern = "\\(", replacement = "", x[col]))
+  coord <- str_split(bloc,pattern = "," )
+  return(as.numeric(unlist(coord)))
+}
+
+
+long_df_by_lili <-  function(){
+trap_coords <-  lapply(locs, extractCoord,lili)
+XYtrapcoords <- unlist(trap_coords)
+long_generation_df <-  data.frame(matrix(XYtrapcoords,nrow = 3, byrow = T))
+long_generation_df$generation <- lili$`evolution$generation`
+long_generation_df$trap <- c("TRAP 1", "TRAP 2", "TRAP 3")
+long_generation_df$nbsample <- lili$`evolution$samples`
+long_generation_df$nbZ <-  lili$countZombifie
+
+return(long_generation_df)
+}
+
+
+
+
+# long format tibble /data.frame
+final_df <-  bind_rows(final_df)
+final_df[1,]
+
+##################################
+# prepare background plot
+#################################
+
+background <-  orderedResultsDF
+#remove the trap of previous plot
+background[background$tileType=="TRAP","tileType"] <-  "Soil"
+
+
+library(stringr)
+
+
+final_df$trapLocation1 <- gsub(pattern = "\\(", replacement = "",final_df$trapLocation1)
+final_df$trapLocation1 <- gsub(pattern = ")", replacement = "",final_df$trapLocation1)
+final_df<-  separate(final_df, col = trapLocation1, into = c("trap1X","trap1Y"), sep=",")
+
+final_df$trapLocation2 <- gsub(pattern = "\\(", replacement = "",final_df$trapLocation2)
+final_df$trapLocation2 <- gsub(pattern = ")", replacement = "",final_df$trapLocation2)
+final_df <-  separate(final_df, col = trapLocation2, into = c("trap2X","trap2Y"), sep=",")
+
+final_df$trapLocation3 <- gsub(pattern = "\\(", replacement = "",final_df$trapLocation3)
+final_df$trapLocation3 <- gsub(pattern = ")", replacement = "",final_df$trapLocation3)
+final_df <-  separate(final_df, col = trapLocation3, into = c("trap3X","trap3Y"), sep=",")
+
+final_df$tileType <- "TRAP"
+
+
+
+names(orderedResultsDF)
+
+
+
+library(gganimate)
+
+
+
+ppp <- ggplot(background, aes(x = Var2, y = Var1)) +
+  geom_tile( colour = "grey20", fill="white") +
+  xlab("X") + ylab("Y") +
+  # dessin des tiles fonction du type 
+  geom_point(aes(shape=tileType, color=tileType,size=tileType))+
+  scale_shape_manual(values= c(13, NA, 10,7), name="tile")+
+  scale_colour_manual(name="tile", values=c("#222222", NA,"#3fad1d", "red")) + 
+  scale_size_manual("", values=c(2,0,4,4), guide=FALSE) +
+  coord_equal()+
+  labs(color  = "tile", shape = "tile")+
+  # 
+
+  #
+  scale_y_reverse()+
+  labs( title = paste0("Zombifications occurences with 3 traps ")) +
+  labs(subtitle = paste("Nb Zombification = " ,  "tutututu")) 
+ppp
+
+
+
+final_df[1,]
+
+p4 <-  ppp+
+  geom_poi
+
+
+
+transition_time(gener)
+
+
+

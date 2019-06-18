@@ -79,7 +79,7 @@
 \newcommand{\addlogo}{
 	\hfill	
 	\includegraphics[height=.4cm]{figures/logos/iconOM.png}
-	\includegraphics[scale=1]{figures/logos/openmole.png}
+	\includegraphics[scale=1]{figures/logos/openmole_dark.png}
 }
 
 \newcommand{\sframe}[2]{\frame{\frametitle{#1\addlogo} #2}}
