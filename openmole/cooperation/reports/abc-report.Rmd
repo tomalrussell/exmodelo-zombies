@@ -2,11 +2,11 @@
 title: "ABC output report."
 output_document: html_document
 params:
-  datafile: "data/mixGauss3D.csv"
-  input_variables: !r c("theta1", "theta2", "theta3") 
-  prior_bounds: !r list(theta1=c(-10,10), theta2=c(-10,10), theta3=c(-10,10))
-  bins: !r list(theta1=20, theta2=20, theta3=20)
-  bandwidth: !r list(theta1=0.01, theta2=0.01, theta3=0.01)
+  datafile: "../results/abc/rescuedDynamic/step872.csv"
+  input_variables: !r c("humanInformedRatio", "humanInformProbability", "humanFollowProbability")
+  prior_bounds: !r list(humanInformedRatio = c(0,1), humanInformProbability = c(0,1), humanFollowProbability = c(0,1))
+  bins: !r list(humanInformedRatio = 20, humanInformProbability = 20, humanFollowProbability = 20)
+  bandwidth: !r list(humanInformedRatio = 0.1, humanInformProbability = 0.1, humanFollowProbability = 0.1))
 ---
 
 ```{r}
