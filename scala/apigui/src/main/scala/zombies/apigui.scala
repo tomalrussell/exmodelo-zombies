@@ -10,7 +10,6 @@ object apigui {
   @JSExportTopLevel("zombies")
   def zombies(): Unit = {
 
-
     def world =
       World {
         "++++++++++++++\n" +

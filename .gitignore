@@ -30,3 +30,10 @@ release/*
 .Rhistory
 *.RData
 .Ruserdata
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
