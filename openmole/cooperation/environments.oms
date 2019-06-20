@@ -1,4 +1,4 @@
-default_env = criann
+val default_env = criann_test
 
 object local {
     val env = LocalEnvironment(4)
