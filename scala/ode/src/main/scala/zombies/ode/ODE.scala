@@ -46,7 +46,7 @@ object Model {
   def run(panic0: Double, staminaH: Double, hunt0: Double, staminaZ: Double, inf0: Double,
           out0: Double = 0.0, fightback: Double = 0.0, die0: Double = 0.0,
           statesInit: Vector[Double],
-          t0: Int, dt: Double, tMax: Int, tWarp: Int,
+          t0: Int = 1, dt: Double = 0.01, tMax: Int = 500, tWarp: Int = 484,
           ABMTimeSerieSteps: Int = 500
          ) = {
     val exhaustH = 1.0 / staminaH

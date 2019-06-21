@@ -8,6 +8,9 @@ pareto_front <- data %>%
     ggplot(aes(x = parcimony, y = fitness)) +
     geom_point() +
     geom_line() +
+    scale_x_continuous(limits = c(0, 5)) +
+    xlab("Nb of activated mechanisms") +
+    ylab("Fitness") +
     theme_bw()
 pareto_front
 
