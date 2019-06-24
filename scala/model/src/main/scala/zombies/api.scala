@@ -162,6 +162,9 @@ trait DSL {
   }
 
 
+  type Army = simulation.Army
+  type RedCross = simulation.RedCross
+
   def Army(
     size: Int,
     fightBackProbability: Double = 1.0,

@@ -9,7 +9,7 @@ import scala.math._
 import org.apache.commons.math3.stat.regression.SimpleRegression
 import org.locationtech.jts.geom._
 
-object observable {
+object metrics {
 
   def cumSum(v: Seq[Int]) =
     v.foldLeft(List(0)) { (acc, el)=> (el + acc.head) :: acc  }.reverse.toVector
