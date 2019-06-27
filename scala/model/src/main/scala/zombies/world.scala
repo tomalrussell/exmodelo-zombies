@@ -229,6 +229,7 @@ object world {
       if(World.isWall(world, p._1, p._2)) randomPosition(world, rng) else v
     }
 
+
     def jaude = parse() {
       """+++++++00000+++++++++++0000+++++++++++++
         |+++++++00000+++++++++++0000+++++++++++++
@@ -278,7 +279,44 @@ object world {
         s"""+${"0" * (side - 2)}+\n""" * (side - 2) +
         s"""${"+" * side}\n"""
     }
+/*
+ def makeWorld(halfSide: Int, halfDoorSize: Int) = {
+      val side = halfSide * 2
+      val doorSize = halfDoorSize * 2
+      assert(side > doorSize)
 
+      val wallSize = (side - doorSize) / 2
+      
+      World(
+        ("+" * wallSize) + ("0" * doorSize) + ("+" * wallSize) + "\n" +
+        ("+" + "0" * (side - 2) + "+\n") * (wallSize - 1) +
+        ("0" * side + "\n") * (halfDoorSize - 1) +
+        ("0" * wallSize) + ("0" * (halfDoorSize - 1)) + "e" + ("0" * halfDoorSize) + ("0" * wallSize) + "\n" +
+        ("0" * side + "\n") * halfDoorSize +
+        ("+" + "0" * (side - 2) + "+\n") * (wallSize - 1) +
+        ("+" * wallSize) + ("0" * doorSize) + ("+" * wallSize) + "\n"
+      )
+    }
+*/
+  
+    // the world as seen by Tom
+    def tomsworld(halfSide: Int, halfDoorSize: Int) = parse()  { 
+      val side = halfSide * 2
+      val doorSize = halfDoorSize * 2
+      assert(side > doorSize) 
+
+      val wallSize = (side - doorSize) / 2 
+
+      (  
+	("+" * wallSize) + ("0" * doorSize) + ("+" * wallSize) + "\n" +
+        ("+" + "0" * (side - 2) + "+\n") * (wallSize - 2) +
+        ("0" * side + "\n") * (halfDoorSize) +
+        ("0" * (wallSize - 1)) + ("0" * (halfDoorSize)) + "e" + ("0" * halfDoorSize) + ("0" * wallSize) + "\n" +
+        ("0" * side + "\n") * halfDoorSize +
+        ("+" + "0" * (side - 2) + "+\n") * (wallSize - 1) +
+        ("+" * wallSize) + ("0" * doorSize) + ("+" * wallSize) + "\n"
+      )
+    }
 
     def place(side: Int, halfDoorSize: Int) = parse() {
       val doorSize = halfDoorSize * 2

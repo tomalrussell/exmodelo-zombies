@@ -306,6 +306,7 @@ object simulation {
     def jaude = world.World.jaude
     def quarantine = world.World.quarantineStadium(15, 15)
     def square = world.World.square(15)
+    def tomsworld = world.World.tomsworld(15, 3)
   }
 
   object physic {
